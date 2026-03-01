@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
@@ -10,6 +13,9 @@ import '../../../../core/services/supabase_service.dart';
 /// Checks whether the user is already logged in and redirects:
 /// - Logged in → Home screen
 /// - Not logged in → Login screen
+///
+/// Also listens for auth state changes (e.g., after Google Sign-In
+/// redirect) and navigates accordingly.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -18,10 +24,33 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  late final StreamSubscription _authSubscription;
+
   @override
   void initState() {
     super.initState();
+
+    // Listen for auth state changes (login, logout, token refresh)
+    _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+
+      if (!mounted) return;
+
+      if (event == AuthChangeEvent.signedIn) {
+        context.go(AppRoutes.home);
+      } else if (event == AuthChangeEvent.signedOut) {
+        context.go(AppRoutes.login);
+      }
+    });
+
+    // Also check immediately after a brief delay
     _checkAuthAndRedirect();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _checkAuthAndRedirect() async {
