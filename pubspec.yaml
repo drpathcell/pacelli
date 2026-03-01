@@ -1,0 +1,57 @@
+name: pacelli
+description: "A household management app born from love and peace."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase - Backend (auth, database, real-time)
+  supabase_flutter: ^2.8.0
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.16
+  google_fonts: ^6.2.1
+  lucide_icons: ^0.257.0
+
+  # Local Storage (for caching preferences)
+  shared_preferences: ^2.3.4
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  equatable: ^2.0.7
+
+  # Image handling
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+  # Code generation (for Riverpod)
+  riverpod_generator: ^2.6.3
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+
+  # Assets will be added later when we have images and icons
+  # assets:
+  #   - assets/images/
+  #   - assets/icons/

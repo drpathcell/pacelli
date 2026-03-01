@@ -1,0 +1,83 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../config/routes/app_router.dart';
+import '../../../../config/theme/app_colors.dart';
+import '../../../../core/services/supabase_service.dart';
+
+/// Splash screen — shown briefly on app launch.
+///
+/// Checks whether the user is already logged in and redirects:
+/// - Logged in → Home screen
+/// - Not logged in → Login screen
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndRedirect();
+  }
+
+  Future<void> _checkAuthAndRedirect() async {
+    // Small delay so the splash screen is visible briefly
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (!mounted) return;
+
+    // Check if a user session exists
+    if (currentUser != null) {
+      context.go(AppRoutes.home);
+    } else {
+      context.go(AppRoutes.login);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.primaryLight,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // App icon placeholder — replace with actual logo later
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Icon(
+                Icons.home_rounded,
+                size: 56,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Pacelli',
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'A peaceful home, organised with love.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
