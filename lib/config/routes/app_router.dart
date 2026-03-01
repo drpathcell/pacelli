@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/household/presentation/screens/create_household_screen.dart';
+import '../../features/household/presentation/screens/household_screen.dart';
 import '../../features/tasks/presentation/screens/home_screen.dart';
+import '../../features/tasks/presentation/screens/tasks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../shared/widgets/main_shell.dart';
 
 /// Route path constants — use these instead of hardcoded strings.
 class AppRoutes {
@@ -16,13 +20,16 @@ class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String tasks = '/tasks';
   static const String settings = '/settings';
+  static const String createHousehold = '/create-household';
+  static const String household = '/household';
 }
 
+/// Key for the shell navigator (bottom nav tabs).
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
 /// GoRouter provider — accessible throughout the app via Riverpod.
-///
-/// GoRouter handles declarative routing, deep linking, and
-/// redirect logic (e.g., redirecting unauthenticated users to login).
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -33,7 +40,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Authentication routes
+      // Authentication routes (no bottom nav)
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
@@ -43,14 +50,63 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignupScreen(),
       ),
 
-      // Main app routes
+      // Create household (no bottom nav — modal-style)
       GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const HomeScreen(),
+        path: AppRoutes.createHousehold,
+        builder: (context, state) => const CreateHouseholdScreen(),
       ),
+
+      // Household management
       GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsScreen(),
+        path: AppRoutes.household,
+        builder: (context, state) => const HouseholdScreen(),
+      ),
+
+      // ── Main app with bottom navigation ──────────────────────
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        builder: (context, state, child) {
+          // Determine the current tab index based on the route
+          int currentIndex = 0;
+          final location = state.uri.path;
+          if (location == AppRoutes.tasks) {
+            currentIndex = 1;
+          } else if (location == AppRoutes.settings) {
+            currentIndex = 2;
+          }
+
+          return MainShell(
+            currentIndex: currentIndex,
+            onTabChanged: (index) {
+              switch (index) {
+                case 0:
+                  context.go(AppRoutes.home);
+                  break;
+                case 1:
+                  context.go(AppRoutes.tasks);
+                  break;
+                case 2:
+                  context.go(AppRoutes.settings);
+                  break;
+              }
+            },
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutes.home,
+            builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.tasks,
+            builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.settings,
+            builder: (context, state) => const SettingsScreen(),
+          ),
+        ],
       ),
     ],
 

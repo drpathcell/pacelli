@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/services/supabase_service.dart';
@@ -11,13 +12,22 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _handleLogout(BuildContext context) async {
     try {
+      // Also sign out from Google if they used Google Sign-In
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {
+        // Ignore — user might not have signed in with Google
+      }
+
       await supabase.auth.signOut();
+
       if (context.mounted) {
         context.go(AppRoutes.login);
       }
     } catch (e) {
       if (context.mounted) {
-        context.showSnackBar('Failed to log out. Please try again.', isError: true);
+        context.showSnackBar('Failed to log out. Please try again.',
+            isError: true);
       }
     }
   }
@@ -41,7 +51,8 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: context.colorScheme.primary.withOpacity(0.2),
+                    backgroundColor:
+                        context.colorScheme.primary.withOpacity(0.2),
                     child: Text(
                       (user?.userMetadata?['full_name'] as String?)
                               ?.substring(0, 1)
@@ -79,9 +90,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.home_outlined,
             title: 'Household',
             subtitle: 'Manage household & members',
-            onTap: () {
-              context.showSnackBar('Coming soon!');
-            },
+            onTap: () => context.push(AppRoutes.household),
           ),
           _SettingsTile(
             icon: Icons.notifications_outlined,
@@ -146,7 +155,8 @@ class _SettingsTile extends StatelessWidget {
         subtitle: Text(subtitle, style: context.textTheme.bodyMedium),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
