@@ -186,15 +186,56 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               data: (categories) => Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: categories.map((cat) {
-                  final isSelected = _categoryId == cat['id'];
-                  return ChoiceChip(
-                    label: Text(cat['name'] as String),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() =>
-                        _categoryId = isSelected ? null : cat['id'] as String),
-                  );
-                }).toList(),
+                children: [
+                  ...categories.map((cat) {
+                    final isSelected = _categoryId == cat['id'];
+                    return ChoiceChip(
+                      label: Text(cat['name'] as String),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() =>
+                          _categoryId = isSelected ? null : cat['id'] as String),
+                    );
+                  }),
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: const Text('New'),
+                    onPressed: () async {
+                      final name = await showDialog<String>(
+                        context: context,
+                        builder: (ctx) {
+                          final controller = TextEditingController();
+                          return AlertDialog(
+                            title: const Text('New Category'),
+                            content: TextField(
+                              controller: controller,
+                              autofocus: true,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(hintText: 'Category name'),
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+                                child: const Text('Add'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (name != null && name.isNotEmpty) {
+                        try {
+                          await TaskService.createCategory(
+                            householdId: widget.householdId,
+                            name: name,
+                          );
+                          ref.invalidate(taskCategoriesProvider(widget.householdId));
+                        } catch (e) {
+                          if (mounted) context.showSnackBar('Error: $e', isError: true);
+                        }
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),

@@ -229,7 +229,35 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+
+                    // Forgot password
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () async {
+                          if (_emailController.text.trim().isEmpty) {
+                            context.showSnackBar('Enter your email first', isError: true);
+                            return;
+                          }
+                          try {
+                            await supabase.auth.resetPasswordForEmail(
+                              _emailController.text.trim(),
+                            );
+                            if (mounted) {
+                              context.showSnackBar('Password reset email sent! Check your inbox.');
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              context.showSnackBar('Error: $e', isError: true);
+                            }
+                          }
+                        },
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
 
                     // Login button
                     ElevatedButton(
