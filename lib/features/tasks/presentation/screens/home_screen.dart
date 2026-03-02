@@ -7,6 +7,7 @@ import '../../../../config/theme/app_colors.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../household/data/household_providers.dart';
+import '../../data/task_providers.dart';
 
 /// Home screen — the main hub of the Pacelli app.
 ///
@@ -55,13 +56,12 @@ class HomeScreen extends ConsumerWidget {
         ),
         data: (data) {
           if (data == null) {
-            // No household — show creation prompt
             return _NoHouseholdView();
           }
 
-          // Has household — show dashboard
           final household = data['household'] as Map<String, dynamic>;
           return _HouseholdDashboard(
+            householdId: household['id'] as String,
             householdName: household['name'] ?? 'My Household',
           );
         },
@@ -111,112 +111,209 @@ class _NoHouseholdView extends StatelessWidget {
 }
 
 /// Dashboard view shown when the user has a household.
-class _HouseholdDashboard extends StatelessWidget {
+class _HouseholdDashboard extends ConsumerWidget {
+  final String householdId;
   final String householdName;
 
-  const _HouseholdDashboard({required this.householdName});
+  const _HouseholdDashboard({
+    required this.householdId,
+    required this.householdName,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Household card
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.home_rounded,
-                  size: 32,
-                  color: context.colorScheme.primary,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        householdName,
-                        style: context.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Your household is set up!',
-                        style: context.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(taskStatsProvider(householdId));
+    final tasksAsync = ref.watch(householdTasksProvider(householdId));
+
+    final stats = statsAsync.valueOrNull ??
+        {'completed': 0, 'pending': 0, 'overdue': 0};
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(taskStatsProvider(householdId));
+        ref.invalidate(householdTasksProvider(householdId));
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Household card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.home_rounded,
+                    size: 32,
+                    color: context.colorScheme.primary,
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Quick stats placeholder
-        Text(
-          'Today\'s Overview',
-          style: context.textTheme.titleLarge,
-        ),
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                icon: Icons.check_circle_outline,
-                label: 'Completed',
-                value: '0',
-                color: AppColors.success,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.pending_outlined,
-                label: 'Pending',
-                value: '0',
-                color: AppColors.warning,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.warning_amber_outlined,
-                label: 'Overdue',
-                value: '0',
-                color: AppColors.error,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        // Recent tasks placeholder
-        Text(
-          'Recent Tasks',
-          style: context.textTheme.titleLarge,
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: Text(
-                'No tasks yet — they\'ll show up here once you create some!',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondaryLight,
-                ),
-                textAlign: TextAlign.center,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(householdName,
+                            style: context.textTheme.titleLarge),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Your household is set up!',
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Stats
+          Text("Today's Overview",
+              style: context.textTheme.titleLarge),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.check_circle_outline,
+                  label: 'Completed',
+                  value: '${stats['completed']}',
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.pending_outlined,
+                  label: 'Pending',
+                  value: '${stats['pending']}',
+                  color: AppColors.warning,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.warning_amber_outlined,
+                  label: 'Overdue',
+                  value: '${stats['overdue']}',
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Recent tasks
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Recent Tasks', style: context.textTheme.titleLarge),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.tasks),
+                child: const Text('View all'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          tasksAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => const Text('Failed to load tasks'),
+            data: (tasks) {
+              final recentTasks = tasks
+                  .where((t) => t['status'] != 'completed')
+                  .take(5)
+                  .toList();
+
+              if (recentTasks.isEmpty) {
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            "No tasks yet — they'll show up here once you create some!",
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondaryLight,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => context.push(
+                                '${AppRoutes.tasks}/create',
+                                extra: householdId),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Create Task'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: recentTasks
+                    .map((task) => _RecentTaskTile(
+                          task: task,
+                          householdId: householdId,
+                        ))
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentTaskTile extends ConsumerWidget {
+  final Map<String, dynamic> task;
+  final String householdId;
+
+  const _RecentTaskTile({
+    required this.task,
+    required this.householdId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dueDateStr = task['due_date'] as String?;
+    DateTime? dueDate;
+    if (dueDateStr != null) dueDate = DateTime.tryParse(dueDateStr);
+    final isOverdue = dueDate != null && dueDate.isOverdue;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => context.push('${AppRoutes.tasks}/${task['id']}'),
+        leading: Icon(
+          Icons.circle_outlined,
+          color: isOverdue ? AppColors.error : AppColors.textSecondaryLight,
         ),
-      ],
+        title: Text(task['title'] as String),
+        subtitle: dueDate != null
+            ? Text(
+                dueDate.isToday
+                    ? 'Due today'
+                    : dueDate.isTomorrow
+                        ? 'Due tomorrow'
+                        : 'Due ${dueDate.formatted}',
+                style: TextStyle(
+                  color: isOverdue ? AppColors.error : null,
+                  fontWeight: isOverdue ? FontWeight.w600 : null,
+                ),
+              )
+            : null,
+        trailing: const Icon(Icons.chevron_right),
+      ),
     );
   }
 }

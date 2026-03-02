@@ -7,7 +7,9 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/household/presentation/screens/create_household_screen.dart';
 import '../../features/household/presentation/screens/household_screen.dart';
+import '../../features/tasks/presentation/screens/create_task_screen.dart';
 import '../../features/tasks/presentation/screens/home_screen.dart';
+import '../../features/tasks/presentation/screens/task_detail_screen.dart';
 import '../../features/tasks/presentation/screens/tasks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../shared/widgets/main_shell.dart';
@@ -60,6 +62,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.household,
         builder: (context, state) => const HouseholdScreen(),
+      ),
+
+      // Create task (full-screen, no bottom nav)
+      GoRoute(
+        path: '${AppRoutes.tasks}/create',
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return CreateTaskScreen(householdId: householdId);
+        },
+      ),
+
+      // Task detail (full-screen, no bottom nav)
+      GoRoute(
+        path: '${AppRoutes.tasks}/:taskId',
+        builder: (context, state) {
+          final taskId = state.pathParameters['taskId']!;
+          return TaskDetailScreen(taskId: taskId);
+        },
       ),
 
       // ── Main app with bottom navigation ──────────────────────
