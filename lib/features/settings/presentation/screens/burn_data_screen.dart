@@ -61,7 +61,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
     if (!_burnStarted) {
       _burnStarted = true;
       _statusText = context.l10n.burnStatusBurning;
-      _burnEverything();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _burnEverything());
     }
   }
 
@@ -119,7 +119,8 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
         ],
       ),
     );
-    controller.dispose();
+    // Dispose after a frame so the dialog exit animation finishes.
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     return result;
   }
 

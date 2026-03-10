@@ -1241,7 +1241,8 @@ class FirebaseDataRepository implements DataRepository {
     debugPrint('[BURN] householdIds=$householdIds');
 
     if (householdIds.isEmpty) {
-      throw Exception('[BURN] No households found for user — nothing to delete');
+      debugPrint('[BURN] No households found for user — skipping Firestore wipe');
+      return;
     }
 
     for (final hid in householdIds) {
