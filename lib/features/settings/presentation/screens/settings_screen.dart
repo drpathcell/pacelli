@@ -17,7 +17,7 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.construction_rounded, size: 40),
-        title: Text('$feature'),
+        title: Text(feature),
         content: Text(
           context.l10n.settingsComingSoon(feature),
         ),
@@ -194,7 +194,7 @@ class SettingsScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor:
-                        context.colorScheme.primary.withOpacity(0.2),
+                        context.colorScheme.primary.withValues(alpha: 0.2),
                     child: Text(
                       (user?.displayName ?? '?').substring(0, 1).toUpperCase(),
                       style: context.textTheme.titleLarge?.copyWith(
@@ -303,7 +303,7 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.withOpacity(0.3),
+                  color: Colors.red.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

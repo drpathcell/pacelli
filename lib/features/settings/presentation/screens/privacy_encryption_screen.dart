@@ -25,8 +25,8 @@ class PrivacyEncryptionScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  context.colorScheme.primary.withOpacity(0.08),
-                  context.colorScheme.primary.withOpacity(0.02),
+                  context.colorScheme.primary.withValues(alpha: 0.08),
+                  context.colorScheme.primary.withValues(alpha: 0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -38,7 +38,7 @@ class PrivacyEncryptionScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: context.colorScheme.primary.withOpacity(0.12),
+                    color: context.colorScheme.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -262,7 +262,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+        color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

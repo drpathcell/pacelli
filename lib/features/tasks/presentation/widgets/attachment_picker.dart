@@ -203,7 +203,7 @@ class AttachmentPicker {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textSecondaryLight.withOpacity(0.3),
+                color: AppColors.textSecondaryLight.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -296,13 +296,13 @@ class AttachmentPicker {
     }
 
     final config = HouseholdDriveConfig.fromMap(configDoc.data()!);
-    if (!config.isEnabled || config.driveFolderId == null) {
+    if (!config.isEnabled) {
       throw Exception(context.l10n.attachDriveDisabled);
     }
 
     final driveService = GoogleDriveService();
     return driveService.uploadFile(
-      folderId: config.driveFolderId!,
+      folderId: config.driveFolderId,
       file: picked.file,
       fileName: picked.fileName,
       mimeType: picked.mimeType,

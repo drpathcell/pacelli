@@ -207,12 +207,12 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(glow),
+                              color: Colors.orange.withValues(alpha: glow),
                               blurRadius: 60,
                               spreadRadius: 20,
                             ),
                             BoxShadow(
-                              color: Colors.red.withOpacity(glow * 0.6),
+                              color: Colors.red.withValues(alpha: glow * 0.6),
                               blurRadius: 100,
                               spreadRadius: 40,
                             ),
@@ -302,7 +302,7 @@ class _EmberPainter extends CustomPainter {
           Colors.red.shade700,
           ember.colorMix,
         )!
-            .withOpacity(opacity.clamp(0.0, 1.0));
+            .withValues(alpha: opacity.clamp(0.0, 1.0));
 
       canvas.drawCircle(Offset(x, y), ember.size, paint);
     }

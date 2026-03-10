@@ -27,6 +27,7 @@ class HouseholdService {
   static String _enc(String plaintext) =>
       _key != null ? EncryptionService.encrypt(plaintext, _key!) : plaintext;
 
+  // ignore: unused_element
   static String _dec(String ciphertext) =>
       _key != null ? EncryptionService.decrypt(ciphertext, _key!) : ciphertext;
 

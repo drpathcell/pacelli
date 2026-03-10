@@ -345,7 +345,7 @@ class _TaskList extends ConsumerWidget {
               Icon(
                 Icons.check_circle_outline,
                 size: 64,
-                color: context.colorScheme.primary.withOpacity(0.3),
+                color: context.colorScheme.primary.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
@@ -386,7 +386,7 @@ class _TaskCard extends ConsumerStatefulWidget {
   final String householdId;
   final VoidCallback? onCompleted;
 
-  _TaskCard({
+  const _TaskCard({
     super.key,
     required this.task,
     required this.householdId,

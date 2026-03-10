@@ -314,8 +314,8 @@ class _CalendarChecklistsSectionState
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: group.isPlan
-                      ? AppColors.primaryLight.withOpacity(0.12)
-                      : AppColors.info.withOpacity(0.12),
+                      ? AppColors.primaryLight.withValues(alpha: 0.12)
+                      : AppColors.info.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(

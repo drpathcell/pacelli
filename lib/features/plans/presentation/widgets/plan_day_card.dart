@@ -52,13 +52,13 @@ class PlanDayCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: isToday
-                  ? AppColors.primaryLight.withOpacity(0.08)
+                  ? AppColors.primaryLight.withValues(alpha: 0.08)
                   : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isToday
-                    ? AppColors.primaryLight.withOpacity(0.4)
-                    : Theme.of(context).dividerColor.withOpacity(0.3),
+                    ? AppColors.primaryLight.withValues(alpha: 0.4)
+                    : Theme.of(context).dividerColor.withValues(alpha: 0.3),
               ),
             ),
             padding: const EdgeInsets.all(8),
@@ -93,7 +93,7 @@ class PlanDayCard extends StatelessWidget {
                       child: Icon(
                         Icons.add_rounded,
                         size: 20,
-                        color: AppColors.textSecondaryLight.withOpacity(0.3),
+                        color: AppColors.textSecondaryLight.withValues(alpha: 0.3),
                       ),
                     ),
                   )

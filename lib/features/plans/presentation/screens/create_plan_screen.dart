@@ -26,10 +26,6 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
   DateTime? _endDate;
   bool _isLoading = false;
 
-  // Built-in templates (titles/descriptions are keyed by ID for localization at build time)
-  static const Map<String, String> _builtInTemplateIds = {
-    'built-in-weekly-dinner': 'weeklyDinner',
-  };
 
   static DateTime _nextMonday() {
     final now = DateTime.now();
@@ -375,7 +371,7 @@ class _TemplateCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppColors.accentLight.withOpacity(0.15),
+          backgroundColor: AppColors.accentLight.withValues(alpha: 0.15),
           child: Icon(icon, color: AppColors.accentLight),
         ),
         title: Text(title),

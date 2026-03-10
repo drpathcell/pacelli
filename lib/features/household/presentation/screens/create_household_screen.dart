@@ -78,7 +78,7 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
               Icon(
                 Icons.home_rounded,
                 size: 80,
-                color: context.colorScheme.primary.withOpacity(0.3),
+                color: context.colorScheme.primary.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 24),
 

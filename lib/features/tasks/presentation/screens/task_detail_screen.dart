@@ -204,8 +204,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? AppColors.success.withOpacity(0.15)
-                          : priorityColor(priority).withOpacity(0.15),
+                          ? AppColors.success.withValues(alpha: 0.15)
+                          : priorityColor(priority).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -325,7 +325,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         ? 0
                         : completedSubtasks / subtasks.length,
                     backgroundColor: AppColors.textSecondaryLight
-                        .withOpacity(0.2),
+                        .withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                         AppColors.success),
                     borderRadius: BorderRadius.circular(4),

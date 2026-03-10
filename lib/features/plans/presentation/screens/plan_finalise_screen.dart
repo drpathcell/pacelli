@@ -144,7 +144,7 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
                 children: [
                   Icon(Icons.event_busy_rounded,
                       size: 48,
-                      color: AppColors.textSecondaryLight.withOpacity(0.4)),
+                      color: AppColors.textSecondaryLight.withValues(alpha: 0.4)),
                   const SizedBox(height: 12),
                   Text(context.l10n.planNoEntriesToFinalise),
                   const SizedBox(height: 16),
@@ -163,7 +163,7 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                color: AppColors.info.withOpacity(0.08),
+                color: AppColors.info.withValues(alpha: 0.08),
                 child: Text(
                   context.l10n.planInfoBanner,
                   style: context.textTheme.bodySmall?.copyWith(
@@ -227,7 +227,7 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
                                                 ? TextStyle(
                                                     color: AppColors
                                                         .textSecondaryLight
-                                                        .withOpacity(
+                                                        .withValues(alpha:
                                                             0.5),
                                                     decoration:
                                                         TextDecoration

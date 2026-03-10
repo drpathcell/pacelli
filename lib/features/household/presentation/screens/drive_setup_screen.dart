@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/models/attachment.dart';
@@ -49,7 +48,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
 
       if (doc.exists) {
         final config = HouseholdDriveConfig.fromMap(doc.data()!);
-        if (config.isEnabled && config.driveFolderId != null) {
+        if (config.isEnabled) {
           setState(() {
             _isConnected = true;
             _folderId = config.driveFolderId;
@@ -191,8 +190,8 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                       height: 80,
                       decoration: BoxDecoration(
                         color: _isConnected
-                            ? AppColors.success.withOpacity(0.1)
-                            : context.colorScheme.primary.withOpacity(0.1),
+                            ? AppColors.success.withValues(alpha: 0.1)
+                            : context.colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -264,7 +263,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.info.withOpacity(0.06),
+                        color: AppColors.info.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -371,7 +370,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isConnected
-                              ? AppColors.error.withOpacity(0.9)
+                              ? AppColors.error.withValues(alpha: 0.9)
                               : null,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
@@ -381,7 +380,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.08),
+                        color: AppColors.warning.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(

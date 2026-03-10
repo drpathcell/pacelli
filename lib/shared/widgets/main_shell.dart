@@ -29,7 +29,7 @@ class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late Animation<Offset> _slideAnimation;
-  int _previousIndex = 0;
+  int _previousIndex = 0; // ignore: unused_field
 
   @override
   void initState() {

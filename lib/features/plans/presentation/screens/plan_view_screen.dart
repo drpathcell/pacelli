@@ -237,7 +237,7 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Chip(
                           label: Text(context.l10n.planFinalisedChip),
-                          backgroundColor: AppColors.success.withOpacity(0.15),
+                          backgroundColor: AppColors.success.withValues(alpha: 0.15),
                           labelStyle: const TextStyle(
                               color: AppColors.success, fontSize: 12),
                           visualDensity: VisualDensity.compact,
@@ -252,7 +252,7 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
                         child: Text(
                           context.l10n.planTapToAdd,
                           style: context.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondaryLight.withOpacity(0.6),
+                            color: AppColors.textSecondaryLight.withValues(alpha: 0.6),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -360,7 +360,7 @@ class _ChecklistDrawer extends StatelessWidget {
                 const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),
@@ -377,7 +377,7 @@ class _ChecklistDrawer extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.textSecondaryLight.withOpacity(0.3),
+                    color: AppColors.textSecondaryLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -414,7 +414,7 @@ class _ChecklistDrawer extends StatelessWidget {
                               ? checkedCount / totalCount
                               : 0,
                           backgroundColor:
-                              AppColors.textSecondaryLight.withOpacity(0.15),
+                              AppColors.textSecondaryLight.withValues(alpha: 0.15),
                           color: AppColors.success,
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -504,7 +504,7 @@ class _ChecklistDrawer extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color:
-                              AppColors.textSecondaryLight.withOpacity(0.6),
+                              AppColors.textSecondaryLight.withValues(alpha: 0.6),
                           fontStyle: FontStyle.italic,
                         ),
                   ),

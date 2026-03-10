@@ -108,7 +108,7 @@ class Task extends Equatable {
         'completed_by': completedBy,
       };
 
-  /// Convenience: converts back to the Map<String, dynamic> shape the UI
+  /// Convenience: converts back to the `Map<String, dynamic>` shape the UI
   /// currently expects (with nested 'task_categories', 'assigned', etc.).
   Map<String, dynamic> toDisplayMap() => {
         ...toMap(),

@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               context.l10n.authTagline,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
             ),
           ],

@@ -218,7 +218,7 @@ class _SwatchCircle extends StatelessWidget {
         color: color,
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withValues(alpha: 0.08),
           width: 1,
         ),
       ),

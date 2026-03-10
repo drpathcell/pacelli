@@ -160,7 +160,7 @@ class _StorageSetupScreenState extends ConsumerState<StorageSetupScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.info.withOpacity(0.06),
+                        color: AppColors.info.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -203,7 +203,7 @@ class _BackendOptionCard extends StatelessWidget {
     required this.title,
     required this.description,
     this.isSelected = false,
-    this.isDisabled = false,
+    this.isDisabled = false, // ignore: unused_element_parameter
     required this.onTap,
     this.badge,
   });
@@ -230,7 +230,7 @@ class _BackendOptionCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: primaryColor.withOpacity(0.1),
+                  backgroundColor: primaryColor.withValues(alpha: 0.1),
                   child: Icon(icon, color: primaryColor),
                 ),
                 const SizedBox(width: 16),
@@ -252,7 +252,7 @@ class _BackendOptionCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withOpacity(0.15),
+                                color: AppColors.success.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(

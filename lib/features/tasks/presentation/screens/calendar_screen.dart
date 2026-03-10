@@ -174,7 +174,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     },
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: AppColors.primaryLight.withOpacity(0.3),
+                        color: AppColors.primaryLight.withValues(alpha: 0.3),
                         shape: BoxShape.circle,
                       ),
                       todayTextStyle: const TextStyle(

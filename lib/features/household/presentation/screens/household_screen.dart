@@ -185,7 +185,7 @@ class _HouseholdContent extends ConsumerWidget {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor:
-                          context.colorScheme.primary.withOpacity(0.2),
+                          context.colorScheme.primary.withValues(alpha: 0.2),
                       child: Text(
                         name.toString().isNotEmpty
                             ? name.toString()[0].toUpperCase()
@@ -229,7 +229,7 @@ class _HouseholdContent extends ConsumerWidget {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor:
-                  context.colorScheme.primary.withOpacity(0.1),
+                  context.colorScheme.primary.withValues(alpha: 0.1),
               child: Icon(
                 Icons.cloud_outlined,
                 color: context.colorScheme.primary,
@@ -324,7 +324,7 @@ class _DataStorageCard extends ConsumerWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: context.colorScheme.primary.withOpacity(0.1),
+          backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
           child: Icon(icon, color: context.colorScheme.primary),
         ),
         title: Text(

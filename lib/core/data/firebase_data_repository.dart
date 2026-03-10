@@ -72,6 +72,7 @@ class FirebaseDataRepository implements DataRepository {
     return null;
   }
 
+  // ignore: unused_element
   static String? _tsToIso(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate().toIso8601String();

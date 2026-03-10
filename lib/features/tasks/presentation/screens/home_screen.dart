@@ -92,7 +92,7 @@ class _NoHouseholdView extends StatelessWidget {
             Icon(
               Icons.home_rounded,
               size: 80,
-              color: context.colorScheme.primary.withOpacity(0.3),
+              color: context.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 24),
             Text(
@@ -339,7 +339,7 @@ class _RecentTaskTile extends ConsumerStatefulWidget {
   final String householdId;
   final VoidCallback? onCompleted;
 
-  _RecentTaskTile({
+  const _RecentTaskTile({
     super.key,
     required this.task,
     required this.householdId,

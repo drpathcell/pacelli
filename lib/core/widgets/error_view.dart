@@ -24,7 +24,7 @@ class ErrorView extends StatelessWidget {
             Icon(
               Icons.cloud_off_rounded,
               size: 56,
-              color: Theme.of(context).colorScheme.error.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(

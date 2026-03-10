@@ -427,7 +427,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
                       textAlign: TextAlign.center,
                       style: context.textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondaryLight
-                            .withOpacity(0.6),
+                            .withValues(alpha: 0.6),
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -447,7 +447,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
                           decoration: BoxDecoration(
-                            color: AppColors.error.withOpacity(0.1),
+                            color: AppColors.error.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.delete_outline,
@@ -477,7 +477,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
                                       ? TextStyle(
                                           color: AppColors
                                               .textSecondaryLight
-                                              .withOpacity(0.6),
+                                              .withValues(alpha: 0.6),
                                           fontStyle: FontStyle.italic)
                                       : null,
                                 ),
@@ -536,7 +536,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
               color: Theme.of(context).scaffoldBackgroundColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
