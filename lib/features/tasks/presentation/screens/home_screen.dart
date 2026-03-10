@@ -45,6 +45,22 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
+        actions: [
+          householdAsync.whenOrNull(
+                data: (data) {
+                  if (data == null) return null;
+                  final household = data['household'] as Map<String, dynamic>;
+                  final householdId = household['id'] as String;
+                  return IconButton(
+                    icon: const Icon(Icons.search),
+                    tooltip: context.l10n.searchTitle,
+                    onPressed: () =>
+                        context.push(AppRoutes.search, extra: householdId),
+                  );
+                },
+              ) ??
+              const SizedBox.shrink(),
+        ],
       ),
       body: householdAsync.when(
         loading: () => LoadingView(message: context.l10n.homeLoadingHousehold),

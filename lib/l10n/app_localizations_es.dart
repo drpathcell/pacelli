@@ -1694,4 +1694,43 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ieInfoNote =>
       'Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.';
+
+  @override
+  String get searchTitle => 'Buscar';
+
+  @override
+  String get searchHint => 'Buscar tareas, listas, planes...';
+
+  @override
+  String get searchNoResults => 'No se encontraron resultados';
+
+  @override
+  String get searchFilterTasks => 'Tareas';
+
+  @override
+  String get searchFilterChecklists => 'Listas';
+
+  @override
+  String get searchFilterPlans => 'Planes';
+
+  @override
+  String get searchFilterAttachments => 'Adjuntos';
+
+  @override
+  String get searchLoading => 'Buscando...';
+
+  @override
+  String get searchEmptyState => 'Empieza a escribir para buscar en tu hogar';
+
+  @override
+  String get searchResultTask => 'Tarea';
+
+  @override
+  String get searchResultChecklist => 'Lista';
+
+  @override
+  String get searchResultPlan => 'Plan';
+
+  @override
+  String get searchResultAttachment => 'Adjunto';
 }

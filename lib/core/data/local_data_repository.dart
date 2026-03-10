@@ -1148,6 +1148,177 @@ class LocalDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  SEARCH
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<List<SearchResult>> searchHousehold({
+    required String householdId,
+    required String query,
+    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment'],
+  }) async {
+    final results = <SearchResult>[];
+    final like = '%$query%';
+
+    // ── Tasks ──
+    if (entityTypes.contains('task')) {
+      final rows = await _db.query(
+        'tasks',
+        where:
+            "household_id = ? AND (title LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE)",
+        whereArgs: [householdId, like, like],
+        orderBy: 'created_at DESC',
+        limit: 200,
+      );
+      for (final r in rows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'task',
+          householdId: householdId,
+          title: r['title'] as String,
+          subtitle: r['description'] as String?,
+          relevanceDate: r['due_date'] != null
+              ? DateTime.tryParse(r['due_date'] as String)
+              : DateTime.tryParse(r['created_at'] as String),
+        ));
+      }
+    }
+
+    // ── Checklists + items ──
+    if (entityTypes.contains('checklist')) {
+      final clRows = await _db.query(
+        'checklists',
+        where: "household_id = ? AND title LIKE ? COLLATE NOCASE",
+        whereArgs: [householdId, like],
+        orderBy: 'created_at DESC',
+        limit: 200,
+      );
+      final clNames = <String, String>{};
+      for (final r in clRows) {
+        final id = r['id'] as String;
+        final title = r['title'] as String;
+        clNames[id] = title;
+        results.add(SearchResult(
+          id: id,
+          entityType: 'checklist',
+          householdId: householdId,
+          title: title,
+          relevanceDate: DateTime.tryParse(r['created_at'] as String? ?? ''),
+        ));
+      }
+
+      // Also search checklist items.
+      final itemRows = await _db.rawQuery(
+        '''SELECT ci.*, c.title AS checklist_title, c.household_id
+           FROM checklist_items ci
+           JOIN checklists c ON c.id = ci.checklist_id
+           WHERE c.household_id = ? AND ci.title LIKE ? COLLATE NOCASE
+           LIMIT 500''',
+        [householdId, like],
+      );
+      for (final r in itemRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'checklist',
+          householdId: householdId,
+          title: r['title'] as String,
+          subtitle: r['checklist_title'] as String?,
+          parentId: r['checklist_id'] as String?,
+          relevanceDate: DateTime.tryParse(r['created_at'] as String? ?? ''),
+        ));
+      }
+    }
+
+    // ── Plans + entries ──
+    if (entityTypes.contains('plan')) {
+      final planRows = await _db.query(
+        'scratch_plans',
+        where:
+            "household_id = ? AND is_template = 0 AND title LIKE ? COLLATE NOCASE",
+        whereArgs: [householdId, like],
+        orderBy: 'start_date DESC',
+        limit: 200,
+      );
+      for (final r in planRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'plan',
+          householdId: householdId,
+          title: r['title'] as String,
+          relevanceDate: DateTime.tryParse(r['start_date'] as String? ?? ''),
+        ));
+      }
+
+      final entryRows = await _db.rawQuery(
+        '''SELECT pe.*, sp.title AS plan_title
+           FROM plan_entries pe
+           JOIN scratch_plans sp ON sp.id = pe.plan_id
+           WHERE sp.household_id = ?
+             AND sp.is_template = 0
+             AND (pe.title LIKE ? COLLATE NOCASE OR pe.description LIKE ? COLLATE NOCASE)
+           LIMIT 500''',
+        [householdId, like, like],
+      );
+      for (final r in entryRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'plan',
+          householdId: householdId,
+          title: r['title'] as String,
+          subtitle: r['plan_title'] as String?,
+          parentId: r['plan_id'] as String?,
+          relevanceDate: DateTime.tryParse(r['entry_date'] as String? ?? ''),
+        ));
+      }
+    }
+
+    // ── Attachments (task + plan) ──
+    if (entityTypes.contains('attachment')) {
+      final taskAttRows = await _db.query(
+        'task_attachments',
+        where:
+            "household_id = ? AND (file_name LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE)",
+        whereArgs: [householdId, like, like],
+        limit: 200,
+      );
+      for (final r in taskAttRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'attachment',
+          householdId: householdId,
+          title: r['file_name'] as String,
+          subtitle: r['description'] as String?,
+          parentId: r['task_id'] as String?,
+          metadata: const {'source': 'task'},
+          relevanceDate: DateTime.tryParse(r['created_at'] as String? ?? ''),
+        ));
+      }
+
+      final planAttRows = await _db.query(
+        'plan_attachments',
+        where:
+            "household_id = ? AND (file_name LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE)",
+        whereArgs: [householdId, like, like],
+        limit: 200,
+      );
+      for (final r in planAttRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'attachment',
+          householdId: householdId,
+          title: r['file_name'] as String,
+          subtitle: r['description'] as String?,
+          parentId: r['plan_id'] as String?,
+          metadata: const {'source': 'plan'},
+          relevanceDate: DateTime.tryParse(r['created_at'] as String? ?? ''),
+        ));
+      }
+    }
+
+    return results;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  DATA WIPE
   // ═══════════════════════════════════════════════════════════════════
 

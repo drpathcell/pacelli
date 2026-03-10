@@ -813,5 +813,19 @@
       "error": {"type": "String"}
     }
   },
-  "ieInfoNote": "Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export."
+  "ieInfoNote": "Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.",
+
+  "searchTitle": "Search",
+  "searchHint": "Search tasks, checklists, plans...",
+  "searchNoResults": "No results found",
+  "searchFilterTasks": "Tasks",
+  "searchFilterChecklists": "Checklists",
+  "searchFilterPlans": "Plans",
+  "searchFilterAttachments": "Attachments",
+  "searchLoading": "Searching...",
+  "searchEmptyState": "Start typing to search your household",
+  "searchResultTask": "Task",
+  "searchResultChecklist": "Checklist",
+  "searchResultPlan": "Plan",
+  "searchResultAttachment": "Attachment"
 }

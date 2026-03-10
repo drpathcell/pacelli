@@ -1220,6 +1220,208 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  SEARCH
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<List<SearchResult>> searchHousehold({
+    required String householdId,
+    required String query,
+    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment'],
+  }) async {
+    final q = query.toLowerCase();
+    final results = <SearchResult>[];
+
+    bool matches(String? text) =>
+        text != null && text.toLowerCase().contains(q);
+
+    // ── Tasks ──
+    if (entityTypes.contains('task')) {
+      final snap = await _db
+          .collection('tasks')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+      for (final doc in snap.docs) {
+        final d = doc.data();
+        final title = _dec(d['title'] as String? ?? '');
+        final desc = _decN(d['description'] as String?);
+        if (matches(title) || matches(desc)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'task',
+            householdId: householdId,
+            title: title,
+            subtitle: desc,
+            relevanceDate: _parseDate(d['due_date']) ??
+                _parseDate(d['created_at']),
+          ));
+        }
+      }
+    }
+
+    // ── Checklists + items ──
+    if (entityTypes.contains('checklist')) {
+      final clSnap = await _db
+          .collection('checklists')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+
+      // Build name lookup for parent context on items.
+      final clNames = <String, String>{};
+      for (final doc in clSnap.docs) {
+        final title = _dec(doc.data()['title'] as String? ?? '');
+        clNames[doc.id] = title;
+        if (matches(title)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'checklist',
+            householdId: householdId,
+            title: title,
+            relevanceDate: _parseDate(doc.data()['created_at']),
+          ));
+        }
+      }
+
+      // Search checklist items.
+      if (clNames.isNotEmpty) {
+        final itemSnap = await _db
+            .collection('checklist_items')
+            .where('checklist_id', whereIn: clNames.keys.take(10).toList())
+            .limit(500)
+            .get();
+        for (final doc in itemSnap.docs) {
+          final d = doc.data();
+          final title = _dec(d['title'] as String? ?? '');
+          if (matches(title)) {
+            final parentId = d['checklist_id'] as String?;
+            results.add(SearchResult(
+              id: doc.id,
+              entityType: 'checklist',
+              householdId: householdId,
+              title: title,
+              subtitle: parentId != null ? clNames[parentId] : null,
+              parentId: parentId,
+              relevanceDate: _parseDate(d['created_at']),
+            ));
+          }
+        }
+      }
+    }
+
+    // ── Plans + entries ──
+    if (entityTypes.contains('plan')) {
+      final planSnap = await _db
+          .collection('scratch_plans')
+          .where('household_id', isEqualTo: householdId)
+          .where('is_template', isEqualTo: false)
+          .limit(200)
+          .get();
+
+      final planNames = <String, String>{};
+      for (final doc in planSnap.docs) {
+        final title = _dec(doc.data()['title'] as String? ?? '');
+        planNames[doc.id] = title;
+        if (matches(title)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'plan',
+            householdId: householdId,
+            title: title,
+            relevanceDate: _parseDate(doc.data()['start_date']),
+          ));
+        }
+      }
+
+      // Search plan entries.
+      if (planNames.isNotEmpty) {
+        final entrySnap = await _db
+            .collection('plan_entries')
+            .where('plan_id', whereIn: planNames.keys.take(10).toList())
+            .limit(500)
+            .get();
+        for (final doc in entrySnap.docs) {
+          final d = doc.data();
+          final title = _dec(d['title'] as String? ?? '');
+          final desc = _decN(d['description'] as String?);
+          if (matches(title) || matches(desc)) {
+            final parentId = d['plan_id'] as String?;
+            results.add(SearchResult(
+              id: doc.id,
+              entityType: 'plan',
+              householdId: householdId,
+              title: title,
+              subtitle: parentId != null ? planNames[parentId] : null,
+              parentId: parentId,
+              relevanceDate: _parseDate(d['entry_date']),
+            ));
+          }
+        }
+      }
+    }
+
+    // ── Attachments (task + plan) ──
+    if (entityTypes.contains('attachment')) {
+      final taskAttSnap = await _db
+          .collection('task_attachments')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+      for (final doc in taskAttSnap.docs) {
+        final d = doc.data();
+        final name = _dec(d['file_name'] as String? ?? '');
+        final desc = _decN(d['description'] as String?);
+        if (matches(name) || matches(desc)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'attachment',
+            householdId: householdId,
+            title: name,
+            subtitle: desc,
+            parentId: d['task_id'] as String?,
+            metadata: {'source': 'task'},
+            relevanceDate: _parseDate(d['created_at']),
+          ));
+        }
+      }
+
+      final planAttSnap = await _db
+          .collection('plan_attachments')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+      for (final doc in planAttSnap.docs) {
+        final d = doc.data();
+        final name = _dec(d['file_name'] as String? ?? '');
+        final desc = _decN(d['description'] as String?);
+        if (matches(name) || matches(desc)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'attachment',
+            householdId: householdId,
+            title: name,
+            subtitle: desc,
+            parentId: d['plan_id'] as String?,
+            metadata: {'source': 'plan'},
+            relevanceDate: _parseDate(d['created_at']),
+          ));
+        }
+      }
+    }
+
+    // Sort by relevance date (most recent first), nulls last.
+    results.sort((a, b) {
+      if (a.relevanceDate == null && b.relevanceDate == null) return 0;
+      if (a.relevanceDate == null) return 1;
+      if (b.relevanceDate == null) return -1;
+      return b.relevanceDate!.compareTo(a.relevanceDate!);
+    });
+
+    return results;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  DATA WIPE
   // ═══════════════════════════════════════════════════════════════════
 

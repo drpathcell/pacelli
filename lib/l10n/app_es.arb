@@ -530,5 +530,19 @@
   "ieImportConfirmMessage": "Esto agregará los datos del respaldo a tu hogar actual. Los datos existentes no se eliminarán.",
   "ieImportSuccess": "Importación completa. {created} elementos creados, {skipped} omitidos.",
   "ieImportFailed": "Error al importar: {error}",
-  "ieInfoNote": "Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación."
+  "ieInfoNote": "Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.",
+
+  "searchTitle": "Buscar",
+  "searchHint": "Buscar tareas, listas, planes...",
+  "searchNoResults": "No se encontraron resultados",
+  "searchFilterTasks": "Tareas",
+  "searchFilterChecklists": "Listas",
+  "searchFilterPlans": "Planes",
+  "searchFilterAttachments": "Adjuntos",
+  "searchLoading": "Buscando...",
+  "searchEmptyState": "Empieza a escribir para buscar en tu hogar",
+  "searchResultTask": "Tarea",
+  "searchResultChecklist": "Lista",
+  "searchResultPlan": "Plan",
+  "searchResultAttachment": "Adjunto"
 }

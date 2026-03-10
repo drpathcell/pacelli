@@ -1694,4 +1694,43 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get ieInfoNote =>
       'I file esportati vengono salvati in testo semplice. Se i tuoi dati sono crittografati nel cloud, verranno decrittografati per l\'esportazione.';
+
+  @override
+  String get searchTitle => 'Cerca';
+
+  @override
+  String get searchHint => 'Cerca attività, liste, piani...';
+
+  @override
+  String get searchNoResults => 'Nessun risultato trovato';
+
+  @override
+  String get searchFilterTasks => 'Attività';
+
+  @override
+  String get searchFilterChecklists => 'Liste';
+
+  @override
+  String get searchFilterPlans => 'Piani';
+
+  @override
+  String get searchFilterAttachments => 'Allegati';
+
+  @override
+  String get searchLoading => 'Ricerca in corso...';
+
+  @override
+  String get searchEmptyState => 'Inizia a digitare per cercare nella tua casa';
+
+  @override
+  String get searchResultTask => 'Attività';
+
+  @override
+  String get searchResultChecklist => 'Lista';
+
+  @override
+  String get searchResultPlan => 'Piano';
+
+  @override
+  String get searchResultAttachment => 'Allegato';
 }

@@ -3111,6 +3111,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.'**
   String get ieInfoNote;
+
+  /// No description provided for @searchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchTitle;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search tasks, checklists, plans...'**
+  String get searchHint;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get searchNoResults;
+
+  /// No description provided for @searchFilterTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get searchFilterTasks;
+
+  /// No description provided for @searchFilterChecklists.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklists'**
+  String get searchFilterChecklists;
+
+  /// No description provided for @searchFilterPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get searchFilterPlans;
+
+  /// No description provided for @searchFilterAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get searchFilterAttachments;
+
+  /// No description provided for @searchLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching...'**
+  String get searchLoading;
+
+  /// No description provided for @searchEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'Start typing to search your household'**
+  String get searchEmptyState;
+
+  /// No description provided for @searchResultTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get searchResultTask;
+
+  /// No description provided for @searchResultChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get searchResultChecklist;
+
+  /// No description provided for @searchResultPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get searchResultPlan;
+
+  /// No description provided for @searchResultAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get searchResultAttachment;
 }
 
 class _AppLocalizationsDelegate

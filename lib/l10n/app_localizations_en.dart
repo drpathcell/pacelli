@@ -1678,4 +1678,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ieInfoNote =>
       'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.';
+
+  @override
+  String get searchTitle => 'Search';
+
+  @override
+  String get searchHint => 'Search tasks, checklists, plans...';
+
+  @override
+  String get searchNoResults => 'No results found';
+
+  @override
+  String get searchFilterTasks => 'Tasks';
+
+  @override
+  String get searchFilterChecklists => 'Checklists';
+
+  @override
+  String get searchFilterPlans => 'Plans';
+
+  @override
+  String get searchFilterAttachments => 'Attachments';
+
+  @override
+  String get searchLoading => 'Searching...';
+
+  @override
+  String get searchEmptyState => 'Start typing to search your household';
+
+  @override
+  String get searchResultTask => 'Task';
+
+  @override
+  String get searchResultChecklist => 'Checklist';
+
+  @override
+  String get searchResultPlan => 'Plan';
+
+  @override
+  String get searchResultAttachment => 'Attachment';
 }

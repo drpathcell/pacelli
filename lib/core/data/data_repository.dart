@@ -317,6 +317,25 @@ abstract class DataRepository {
   //  DATA WIPE
   // ═══════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════
+  //  SEARCH
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Searches across all entity types within a household.
+  ///
+  /// Returns matching [SearchResult]s filtered by [entityTypes].
+  /// The search is a case-insensitive substring match on titles and
+  /// descriptions.
+  Future<List<SearchResult>> searchHousehold({
+    required String householdId,
+    required String query,
+    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment'],
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DATA WIPE
+  // ═══════════════════════════════════════════════════════════════════
+
   /// Permanently deletes ALL user data from this backend.
   ///
   /// This is a destructive, irreversible operation used by the "Burn All
