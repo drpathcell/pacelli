@@ -164,51 +164,76 @@ class FirebaseDataRepository implements DataRepository {
     String? priority,
     bool? isShared,
   }) async {
-    Query<Map<String, dynamic>> query = _db
-        .collection('tasks')
-        .where('household_id', isEqualTo: householdId);
+    try {
+      Query<Map<String, dynamic>> query = _db
+          .collection('tasks')
+          .where('household_id', isEqualTo: householdId);
 
-    if (status != null) query = query.where('status', isEqualTo: status);
-    if (categoryId != null) {
-      query = query.where('category_id', isEqualTo: categoryId);
+      if (status != null) query = query.where('status', isEqualTo: status);
+      if (categoryId != null) {
+        query = query.where('category_id', isEqualTo: categoryId);
+      }
+      if (assignedTo != null) {
+        query = query.where('assigned_to', isEqualTo: assignedTo);
+      }
+      if (priority != null) {
+        query = query.where('priority', isEqualTo: priority);
+      }
+
+      // Limit results per query to avoid excessive reads.
+      final snapshot = await query
+          .orderBy('created_at', descending: true)
+          .limit(200)
+          .get();
+
+      if (snapshot.docs.isEmpty) return [];
+
+      // Collect task IDs for subtask query.
+      final taskIds = snapshot.docs.map((d) => d.id).toList();
+
+      // Bulk fetch subtasks, categories, and profiles — each wrapped in
+      // try-catch so a single failure doesn't crash the whole task list.
+      Map<String, List<Subtask>> allSubtasks;
+      try {
+        allSubtasks = await _getSubtasksForTasks(taskIds);
+      } catch (e) {
+        debugPrint('[FirebaseDataRepository] getTasks: subtask fetch failed: $e');
+        allSubtasks = {};
+      }
+
+      final categoryIds = <String>{};
+      final profileIds = <String>{};
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['category_id'] != null) categoryIds.add(data['category_id']);
+        if (data['assigned_to'] != null) profileIds.add(data['assigned_to']);
+        if (data['created_by'] != null) profileIds.add(data['created_by']);
+      }
+
+      Map<String, TaskCategory> categories;
+      try {
+        categories = await _getCategoriesByIds(categoryIds);
+      } catch (e) {
+        debugPrint('[FirebaseDataRepository] getTasks: category fetch failed: $e');
+        categories = {};
+      }
+
+      Map<String, ProfileRef> profiles;
+      try {
+        profiles = await _getProfilesByIds(profileIds);
+      } catch (e) {
+        debugPrint('[FirebaseDataRepository] getTasks: profile fetch failed: $e');
+        profiles = {};
+      }
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return _taskFromFirestore(data, allSubtasks, categories, profiles);
+      }).toList();
+    } catch (e) {
+      debugPrint('[FirebaseDataRepository] getTasks failed: $e');
+      rethrow;
     }
-    if (assignedTo != null) {
-      query = query.where('assigned_to', isEqualTo: assignedTo);
-    }
-    if (priority != null) {
-      query = query.where('priority', isEqualTo: priority);
-    }
-
-    // Limit results per query to avoid excessive reads.
-    // The UI should handle "load more" via pagination if needed.
-    final snapshot = await query
-        .orderBy('created_at', descending: true)
-        .limit(200)
-        .get();
-
-    if (snapshot.docs.isEmpty) return [];
-
-    // Collect task IDs for subtask query.
-    final taskIds = snapshot.docs.map((d) => d.id).toList();
-    final allSubtasks = await _getSubtasksForTasks(taskIds);
-
-    // Collect category IDs and profile IDs for bulk fetching.
-    final categoryIds = <String>{};
-    final profileIds = <String>{};
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      if (data['category_id'] != null) categoryIds.add(data['category_id']);
-      if (data['assigned_to'] != null) profileIds.add(data['assigned_to']);
-      if (data['created_by'] != null) profileIds.add(data['created_by']);
-    }
-
-    final categories = await _getCategoriesByIds(categoryIds);
-    final profiles = await _getProfilesByIds(profileIds);
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return _taskFromFirestore(data, allSubtasks, categories, profiles);
-    }).toList();
   }
 
   @override
