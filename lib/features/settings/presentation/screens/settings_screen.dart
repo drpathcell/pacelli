@@ -12,25 +12,6 @@ import '../../../../core/utils/extensions.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _showComingSoon(BuildContext context, String feature) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.construction_rounded, size: 40),
-        title: Text(feature),
-        content: Text(
-          context.l10n.settingsComingSoon(feature),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(context.l10n.commonOK),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
@@ -235,7 +216,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.notifications_outlined,
             title: context.l10n.settingsNotifications,
             subtitle: context.l10n.settingsNotificationsSubtitle,
-            onTap: () => _showComingSoon(context, context.l10n.settingsNotifications),
+            onTap: () => context.push(AppRoutes.notifications),
           ),
           _SettingsTile(
             icon: Icons.shield_outlined,

@@ -1560,4 +1560,44 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$count $_temp0';
   }
+
+  @override
+  String get notifTitle => 'Notifiche';
+
+  @override
+  String get notifEnable => 'Attiva notifiche';
+
+  @override
+  String get notifEnableSubtitle =>
+      'Ricevi promemoria quando le attività scadono';
+
+  @override
+  String get notifTimingTitle => 'Momento del promemoria';
+
+  @override
+  String get notifTimingSubtitle =>
+      'Quando vuoi essere avvisato delle attività in scadenza?';
+
+  @override
+  String get notifTimingAtDue => 'Alla scadenza';
+
+  @override
+  String get notifTimingAtDueDesc =>
+      'Notifica esattamente quando l\'attività scade';
+
+  @override
+  String get notifTimingOneHour => '1 ora prima';
+
+  @override
+  String get notifTimingOneHourDesc => 'Ricevi un avviso un\'ora prima';
+
+  @override
+  String get notifTimingOneDay => '1 giorno prima';
+
+  @override
+  String get notifTimingOneDayDesc => 'Promemoria alle 9 del giorno prima';
+
+  @override
+  String get notifInfoNote =>
+      'Le notifiche vengono inviate localmente su questo dispositivo. Funzionano anche con l\'app chiusa.';
 }

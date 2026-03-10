@@ -746,5 +746,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+
+  "notifTitle": "Notifications",
+  "notifEnable": "Enable notifications",
+  "notifEnableSubtitle": "Get reminders when tasks are due",
+  "notifTimingTitle": "Reminder timing",
+  "notifTimingSubtitle": "When should we remind you about due tasks?",
+  "notifTimingAtDue": "At due time",
+  "notifTimingAtDueDesc": "Notify exactly when the task is due",
+  "notifTimingOneHour": "1 hour before",
+  "notifTimingOneHourDesc": "Get a heads-up an hour early",
+  "notifTimingOneDay": "1 day before",
+  "notifTimingOneDayDesc": "Remind at 9 AM the day before",
+  "notifInfoNote": "Notifications are delivered locally on this device. They work even when the app is closed."
 }

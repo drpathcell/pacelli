@@ -1548,4 +1548,42 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$count $_temp0';
   }
+
+  @override
+  String get notifTitle => 'Notifications';
+
+  @override
+  String get notifEnable => 'Enable notifications';
+
+  @override
+  String get notifEnableSubtitle => 'Get reminders when tasks are due';
+
+  @override
+  String get notifTimingTitle => 'Reminder timing';
+
+  @override
+  String get notifTimingSubtitle =>
+      'When should we remind you about due tasks?';
+
+  @override
+  String get notifTimingAtDue => 'At due time';
+
+  @override
+  String get notifTimingAtDueDesc => 'Notify exactly when the task is due';
+
+  @override
+  String get notifTimingOneHour => '1 hour before';
+
+  @override
+  String get notifTimingOneHourDesc => 'Get a heads-up an hour early';
+
+  @override
+  String get notifTimingOneDay => '1 day before';
+
+  @override
+  String get notifTimingOneDayDesc => 'Remind at 9 AM the day before';
+
+  @override
+  String get notifInfoNote =>
+      'Notifications are delivered locally on this device. They work even when the app is closed.';
 }

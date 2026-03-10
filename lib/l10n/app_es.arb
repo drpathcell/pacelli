@@ -489,5 +489,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+
+  "notifTitle": "Notificaciones",
+  "notifEnable": "Activar notificaciones",
+  "notifEnableSubtitle": "Recibe recordatorios cuando las tareas venzan",
+  "notifTimingTitle": "Momento del recordatorio",
+  "notifTimingSubtitle": "¿Cuándo quieres que te recordemos las tareas pendientes?",
+  "notifTimingAtDue": "Al vencer",
+  "notifTimingAtDueDesc": "Notificar justo cuando la tarea vence",
+  "notifTimingOneHour": "1 hora antes",
+  "notifTimingOneHourDesc": "Recibir un aviso una hora antes",
+  "notifTimingOneDay": "1 día antes",
+  "notifTimingOneDayDesc": "Recordar a las 9 AM del día anterior",
+  "notifInfoNote": "Las notificaciones se envían localmente en este dispositivo. Funcionan incluso con la app cerrada."
 }

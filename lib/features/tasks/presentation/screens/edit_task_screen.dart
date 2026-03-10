@@ -10,6 +10,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../household/data/household_providers.dart';
 import '../../data/task_providers.dart';
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../widgets/attachment_list.dart' show AttachmentList, AttachmentDisplayItem;
 import '../widgets/attachment_picker.dart';
 
@@ -156,6 +157,15 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
         assignedTo: _isShared ? null : _assignedTo,
         isShared: _isShared,
         recurrence: _recurrence,
+      );
+
+      // Reschedule notification with the updated due date.
+      final notifService = ref.read(notificationServiceProvider);
+      await notifService.cancelTaskReminder(widget.taskId);
+      notifService.scheduleTaskReminder(
+        taskId: widget.taskId,
+        taskTitle: _titleController.text.trim(),
+        dueDate: _dueDate,
       );
 
       // Refresh providers

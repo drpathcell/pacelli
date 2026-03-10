@@ -489,5 +489,18 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+
+  "notifTitle": "Notifiche",
+  "notifEnable": "Attiva notifiche",
+  "notifEnableSubtitle": "Ricevi promemoria quando le attività scadono",
+  "notifTimingTitle": "Momento del promemoria",
+  "notifTimingSubtitle": "Quando vuoi essere avvisato delle attività in scadenza?",
+  "notifTimingAtDue": "Alla scadenza",
+  "notifTimingAtDueDesc": "Notifica esattamente quando l'attività scade",
+  "notifTimingOneHour": "1 ora prima",
+  "notifTimingOneHourDesc": "Ricevi un avviso un'ora prima",
+  "notifTimingOneDay": "1 giorno prima",
+  "notifTimingOneDayDesc": "Promemoria alle 9 del giorno prima",
+  "notifInfoNote": "Le notifiche vengono inviate localmente su questo dispositivo. Funzionano anche con l'app chiusa."
 }

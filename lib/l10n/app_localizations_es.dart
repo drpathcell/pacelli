@@ -1562,4 +1562,43 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$count $_temp0';
   }
+
+  @override
+  String get notifTitle => 'Notificaciones';
+
+  @override
+  String get notifEnable => 'Activar notificaciones';
+
+  @override
+  String get notifEnableSubtitle =>
+      'Recibe recordatorios cuando las tareas venzan';
+
+  @override
+  String get notifTimingTitle => 'Momento del recordatorio';
+
+  @override
+  String get notifTimingSubtitle =>
+      '¿Cuándo quieres que te recordemos las tareas pendientes?';
+
+  @override
+  String get notifTimingAtDue => 'Al vencer';
+
+  @override
+  String get notifTimingAtDueDesc => 'Notificar justo cuando la tarea vence';
+
+  @override
+  String get notifTimingOneHour => '1 hora antes';
+
+  @override
+  String get notifTimingOneHourDesc => 'Recibir un aviso una hora antes';
+
+  @override
+  String get notifTimingOneDay => '1 día antes';
+
+  @override
+  String get notifTimingOneDayDesc => 'Recordar a las 9 AM del día anterior';
+
+  @override
+  String get notifInfoNote =>
+      'Las notificaciones se envían localmente en este dispositivo. Funcionan incluso con la app cerrada.';
 }

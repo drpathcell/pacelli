@@ -2883,6 +2883,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} {count, plural, =1{file} other{files}}'**
   String planAttachmentCount(int count);
+
+  /// No description provided for @notifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifTitle;
+
+  /// No description provided for @notifEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications'**
+  String get notifEnable;
+
+  /// No description provided for @notifEnableSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get reminders when tasks are due'**
+  String get notifEnableSubtitle;
+
+  /// No description provided for @notifTimingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder timing'**
+  String get notifTimingTitle;
+
+  /// No description provided for @notifTimingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When should we remind you about due tasks?'**
+  String get notifTimingSubtitle;
+
+  /// No description provided for @notifTimingAtDue.
+  ///
+  /// In en, this message translates to:
+  /// **'At due time'**
+  String get notifTimingAtDue;
+
+  /// No description provided for @notifTimingAtDueDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify exactly when the task is due'**
+  String get notifTimingAtDueDesc;
+
+  /// No description provided for @notifTimingOneHour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before'**
+  String get notifTimingOneHour;
+
+  /// No description provided for @notifTimingOneHourDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a heads-up an hour early'**
+  String get notifTimingOneHourDesc;
+
+  /// No description provided for @notifTimingOneDay.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before'**
+  String get notifTimingOneDay;
+
+  /// No description provided for @notifTimingOneDayDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind at 9 AM the day before'**
+  String get notifTimingOneDayDesc;
+
+  /// No description provided for @notifInfoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are delivered locally on this device. They work even when the app is closed.'**
+  String get notifInfoNote;
 }
 
 class _AppLocalizationsDelegate

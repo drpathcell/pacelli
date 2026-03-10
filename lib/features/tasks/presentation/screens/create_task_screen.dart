@@ -8,6 +8,7 @@ import '../../../../core/utils/extensions.dart';
 import '../../../household/data/household_providers.dart';
 import '../../data/task_providers.dart';
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../widgets/attachment_picker.dart';
 
 /// Screen for creating a new task.
@@ -173,6 +174,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
           );
         }
       }
+
+      // Schedule a notification reminder if the task has a due date.
+      ref.read(notificationServiceProvider).scheduleTaskReminder(
+        taskId: createdTask.id,
+        taskTitle: createdTask.title,
+        dueDate: createdTask.dueDate,
+      );
 
       // Refresh task lists
       ref.invalidate(householdTasksProvider(widget.householdId));

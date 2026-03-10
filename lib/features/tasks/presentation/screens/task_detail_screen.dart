@@ -14,6 +14,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/task_providers.dart';
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../utils/task_helpers.dart';
 import '../widgets/attachment_list.dart'
     show AttachmentList, AttachmentDisplayItem;
@@ -137,6 +138,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     ),
                   );
                   if (confirm == true && mounted) {
+                    await ref.read(notificationServiceProvider).cancelTaskReminder(widget.taskId);
                     await ref.read(dataRepositoryProvider).deleteTask(widget.taskId);
                     ref.invalidate(householdTasksProvider(householdId));
                     ref.invalidate(taskStatsProvider(householdId));
@@ -156,6 +158,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   if (isCompleted) {
                     await ref.read(dataRepositoryProvider).reopenTask(widget.taskId);
                   } else {
+                    await ref.read(notificationServiceProvider).cancelTaskReminder(widget.taskId);
                     await ref.read(dataRepositoryProvider).completeTask(widget.taskId);
                     _confettiController.play();
                   }

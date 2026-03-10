@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 import 'app.dart';
 import 'core/data/data_repository_provider.dart';
 import 'core/data/local_database.dart';
+import 'core/services/notification_service.dart';
 import 'firebase_options.dart';
 
 /// Entry point for the Pacelli app.
@@ -31,11 +32,16 @@ void main() async {
     localDb = await LocalDatabase.open();
   }
 
+  // Initialise local notifications.
+  final notificationService = NotificationService();
+  await notificationService.init();
+
   // Create a provider container so we can seed the local DB provider.
   final container = ProviderContainer(
     overrides: [
       if (localDb != null)
         localDatabaseProvider.overrideWith((ref) => localDb),
+      notificationServiceProvider.overrideWithValue(notificationService),
     ],
   );
 
