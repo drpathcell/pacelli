@@ -56,6 +56,9 @@ Check these screens for correct translations:
 - **Task Detail**: title, priority badge (Urgent/High/Medium/Low/None), field labels (Starts, Due, Assigned to, Repeats, Created by), subtasks section, action buttons
 - **Task Create/Edit**: all form labels and placeholders
 - **Attachments**: pick source bottom sheet, uploading overlay, success/failure messages
+- **Burn All Data**: confirmation dialog, password prompt, fire animation status messages, Drive/local warning
+- **Notification Settings**: toggle labels, reminder descriptions, permission prompts
+- **Import/Export**: export data button, import data, format labels, success/failure messages
 - **Bottom Nav Bar**: Home/Tasks/Calendar/Settings labels
 - **Dialogs & Alerts**: delete confirmations, error messages, coming-soon messages
 
@@ -66,7 +69,7 @@ Check these screens for correct translations:
 - **Metadata entries**: Including `@key` entries in non-template ARB files causes warnings (harmless but messy)
 
 ## Key Count Reference
-As of March 2026, `app_en.arb` contains approximately 464 translation keys covering:
+As of March 2026, `app_en.arb` contains approximately 510 translation keys (634 lines including `@key` metadata) covering:
 - Tasks & task detail (~77 keys)
 - Plans & checklists (~77 keys)
 - Settings (~38 keys)
@@ -79,8 +82,10 @@ As of March 2026, `app_en.arb` contains approximately 464 translation keys cover
 - Attachments (~16 keys)
 - Calendar (~14 keys)
 - Appearance/themes (~14 keys)
+- Burn/wipe (~29 keys including password prompt, status messages, Drive warning)
+- Notifications & reminders (~15 keys)
+- Import/Export (~12 keys)
 - Navigation (~4 keys)
 - Priority labels (~5 keys)
 - Recurrence labels (~5 keys)
-- Burn/wipe (~8 keys)
 - Error/loading states (~remaining)

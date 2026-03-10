@@ -14,6 +14,9 @@ The Pacelli project is at the user's local path (typically `~/Developer/pacelli`
 - **Encryption**: Applied at the repository level before write, decrypted after read
 - **File storage**: Google Drive via household owner's account
 - **Auth**: Firebase Auth + Google Sign-In
+- **Notifications**: Local push notifications via `flutter_local_notifications` (`lib/core/services/notification_service.dart`)
+- **Import/Export**: JSON export/import of household data (`lib/features/import_export/data/`)
+- **Burn All Data**: Full wipe sequence including Firestore, local DB, secure storage, SharedPreferences, and Firebase Auth account deletion with re-authentication (`lib/features/settings/presentation/screens/burn_data_screen.dart`)
 
 ## Audit Checklist
 
@@ -25,10 +28,10 @@ The Pacelli project is at the user's local path (typically `~/Developer/pacelli`
 - [ ] Repository methods return typed data (or `Map<String, dynamic>` consistently)
 - [ ] No business logic leaks into the repository — it's a pure data layer
 - [ ] `local_data_repository.dart` mirrors all read/write methods from the Firebase implementation
-- [ ] `local_database.dart` schema includes tables for: tasks, plans, categories, task_attachments, plan_attachments
+- [ ] `local_database.dart` schema includes tables for: tasks, subtasks, plans, plan_entries, plan_checklist_items, categories, checklists, checklist_items, task_attachments, plan_attachments, household_members, households
 
 #### 1.2 Feature Providers
-For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth`, `attachments`):
+For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth`, `attachments`, `import_export`, `onboarding`):
 - [ ] Providers use `ref.watch(dataRepositoryProvider)` to get the repo
 - [ ] `FutureProvider.family` is used for household-scoped queries (takes `householdId`)
 - [ ] Providers are properly scoped — no global state that should be per-household
@@ -116,11 +119,15 @@ For each screen, check:
 
 ### Phase 5: Security
 
-#### 5.1 Auth rules
+#### 5.1 Auth & Firestore rules
 - [ ] Firestore security rules enforce household membership
 - [ ] Users can only read/write data in their own household
 - [ ] Admin-only operations (e.g., Drive connect) are enforced server-side
 - [ ] No sensitive data in Firestore document IDs or collection paths
+- [ ] All Firestore collections referenced in code have corresponding security rules in `firestore.rules`
+- [ ] Verify `plan_attachments` rule exists (was missing historically — caused burn failures with permission-denied)
+- [ ] Verify `household_invites` rule exists
+- [ ] Burn flow: `wipeAllData()` deletes from ALL collections including `household_invites` and `plan_attachments`
 
 #### 5.2 Google Drive
 - [ ] Drive access scope is minimal (only Pacelli folder)
@@ -160,9 +167,27 @@ For each screen, check:
 4. Fix issues in priority order: security > encryption > data integrity > error handling > i18n > state management
 5. After fixes, rebuild and test: `flutter clean && flutter pub get && flutter run`
 
+### Phase 7: Notifications & Import/Export
+
+#### 7.1 Notification service
+- [ ] `NotificationService` properly initialises `flutter_local_notifications`
+- [ ] Notification permissions requested gracefully (no crash on denial)
+- [ ] Task reminders schedule correctly based on due date/time
+- [ ] Notification settings screen toggles persist via SharedPreferences
+- [ ] Notifications cleared on burn/sign-out
+
+#### 7.2 Import/Export
+- [ ] Export service serialises all household data (tasks, plans, checklists, categories, attachments)
+- [ ] Encrypted fields are decrypted before export (export is plaintext JSON)
+- [ ] Import service validates JSON structure before writing
+- [ ] Import handles both Firebase and SQLite backends
+- [ ] Import does not create duplicate entries (check for existing IDs)
+- [ ] Error handling for corrupt/malformed import files
+- [ ] All import/export status messages use l10n keys
+
 ## Audit Frequency
 - **Before every release**: Full audit (all phases)
-- **After adding a new feature**: Phases 1, 3, 4, and 6
+- **After adding a new feature**: Phases 1, 3, 4, 6, and 7
 - **After changing auth/encryption**: Phases 2 and 5
 - **After adding a new locale**: Phase 6 only
 - **After adding/changing attachment support**: Phases 2 and 5

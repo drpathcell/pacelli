@@ -34,7 +34,9 @@ lib/
 │   │   ├── plan.dart                   # Plan + PlanEntry models
 │   │   └── task.dart                   # Task + Subtask models
 │   ├── services/
-│   │   └── google_drive_service.dart   # Google Drive upload/download
+│   │   ├── firebase_service.dart       # Firebase init + analytics helpers
+│   │   ├── google_drive_service.dart   # Google Drive upload/download
+│   │   └── notification_service.dart   # Local push notifications (flutter_local_notifications)
 │   ├── utils/
 │   │   └── extensions.dart             # context.l10n, context.textTheme, etc.
 │   └── widgets/
@@ -42,22 +44,31 @@ lib/
 │       └── loading_view.dart           # Reusable loading widget
 ├── features/
 │   ├── auth/
+│   ├── checklists/
+│   │   ├── data/checklist_providers.dart
+│   │   └── presentation/
+│   │       └── widgets/               # checklist_card, checklist_item_tile
 │   ├── home/
 │   ├── household/
+│   ├── import_export/
+│   │   ├── data/                      # export_service.dart, import_service.dart
+│   │   └── presentation/screens/      # import_export_screen
+│   ├── onboarding/
+│   │   └── presentation/screens/      # storage_setup_screen
 │   ├── plans/
 │   │   ├── data/plan_providers.dart
 │   │   └── presentation/
 │   │       ├── screens/                # create, view, finalise, day_editor
 │   │       └── widgets/               # entry_chip, plan_day_card
 │   ├── settings/
-│   │   └── presentation/screens/      # settings, appearance, privacy, burn_data
+│   │   └── presentation/screens/      # settings, appearance, privacy, burn_data, notification_settings
 │   └── tasks/
 │       ├── data/task_providers.dart
 │       └── presentation/
 │           ├── screens/               # tasks, create_task, edit_task, task_detail, calendar
 │           └── widgets/               # attachment_list, attachment_picker, calendar_*
 ├── l10n/
-│   ├── app_en.arb                      # English (template, ~464 keys)
+│   ├── app_en.arb                      # English (template, ~634 keys)
 │   ├── app_es.arb                      # Spanish
 │   └── app_it.arb                      # Italian
 └── shared/
@@ -194,6 +205,8 @@ flutter clean && flutter pub get && flutter run
 - [ ] If the screen handles user content, encrypt sensitive fields via `_enc()`/`_encN()` in the repository
 - [ ] If the screen supports attachments, use `AttachmentPicker` and `AttachmentList` widgets
 - [ ] If the screen has a create flow, consider deferred uploads (pick files first, upload after save)
+- [ ] If the screen needs notifications, use `NotificationService` from `lib/core/services/notification_service.dart`
+- [ ] If the screen supports import/export, follow patterns in `lib/features/import_export/`
 
 ## Common Pitfalls
 - **Forgetting the extensions import**: Without it, `context.l10n` won't resolve — causes build failure

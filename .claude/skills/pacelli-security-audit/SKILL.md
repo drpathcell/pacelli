@@ -129,28 +129,57 @@ The privacy screen makes user-facing claims. Every claim must match the code.
 - [ ] Shows Google Drive / local storage manual deletion note
 - [ ] Requires explicit tap on "Burn Everything" — no accidental triggers
 
-#### 4.2 Burn sequence (`burn_data_screen.dart`)
-Verify each step actually runs and succeeds:
-- [ ] **Step 1**: `repo.wipeAllData(userId)` — deletes all Firestore user data (tasks, plans, categories, subtasks, checklists, task_attachments, plan_attachments, household_keys)
-- [ ] **Step 2**: `LocalDatabase.deleteDatabase()` — deletes local SQLite file (cached tasks, plans, categories, task_attachments, plan_attachments)
-- [ ] **Step 3**: `FlutterSecureStorage().deleteAll()` — clears encryption keys from secure storage
-- [ ] **Step 4a**: `FirebaseAuth.instance.signOut()` — Firebase sign-out
-- [ ] **Step 4b**: `GoogleSignIn().signOut()` + `disconnect()` — Google sign-out + token revocation
-- [ ] **Step 5**: `SharedPreferences.clear()` — clears all app preferences
-- [ ] **Step 6**: Navigates to login screen after completion
+#### 4.2 Pre-burn authentication
+- [ ] For email/password users: password prompt dialog shown BEFORE burn starts
+- [ ] Dialog uses `barrierDismissible: false` — user cannot tap outside to dismiss
+- [ ] Cancel button returns `null` → burn is aborted, user returns to settings
+- [ ] Password stored in memory only (`emailPassword` variable) — never persisted
+- [ ] TextEditingController disposed after dialog animation finishes via `addPostFrameCallback`
+- [ ] `_burnEverything()` deferred with `addPostFrameCallback` to prevent dialog dismissal during `didChangeDependencies`
 
-#### 4.3 What burn does NOT delete (and warns the user)
+#### 4.3 Burn sequence (`burn_data_screen.dart`)
+Verify each step actually runs and succeeds:
+- [ ] **Step 1**: `repo.wipeAllData(userId)` — deletes all Firestore user data:
+  - tasks, subtasks, checklists, checklist_items, scratch_plans, plan_entries, plan_checklist_items
+  - task_categories, task_attachments, plan_attachments, household_invites
+  - household_members, households, household_drive_config
+  - profiles, household_keys (encryption keys)
+  - Granular `debugPrint` logging for each collection's doc count
+  - Batch deletes in chunks of 400 (under Firestore 500-op limit)
+  - Empty households case: graceful return (no throw), logs warning
+- [ ] **Step 2**: `LocalDatabase.deleteDatabase()` — deletes local SQLite file
+- [ ] **Step 3**: `FlutterSecureStorage().deleteAll()` — clears encryption keys from secure storage
+- [ ] **Step 4**: Firebase Auth account deletion:
+  - Google users: re-authenticate via `GoogleSignIn().signIn()` + `reauthenticateWithCredential()`
+  - Email/password users: re-authenticate via `EmailAuthProvider.credential()` with prompted password
+  - `user.delete()` — permanently deletes the Firebase Auth account
+  - Wrong password: catches `wrong-password`/`invalid-credential`, shows localised error, sets `_hasFailed = true`
+  - Other auth errors: caught silently (account stays but data is gone)
+- [ ] **Step 5a**: `FirebaseAuth.instance.signOut()` — Firebase sign-out
+- [ ] **Step 5b**: `GoogleSignIn().signOut()` + `disconnect()` — Google sign-out + token revocation
+- [ ] **Step 6**: `SharedPreferences.clear()` — clears all app preferences
+- [ ] **Step 7**: Navigates to login screen after completion
+
+#### 4.4 What burn does NOT delete (and warns the user)
 - [ ] Google Drive Pacelli folder and files → user must delete manually
 - [ ] Files on device storage → user must delete manually
 - [ ] Firestore household key docs for OTHER members (they keep their own copies)
 - [ ] Drive warning shown in both confirmation dialog AND burn completion screen
-- [ ] All burn status messages are localised (`burnStatus*` l10n keys)
+- [ ] All burn status messages are localised (`burnStatus*` and `burnPassword*` l10n keys)
 
-#### 4.4 Edge cases
+#### 4.5 Error handling during burn
+- [ ] If `wipeAllData` throws → shows error status → sets `_hasFailed = true` → shows Retry/Cancel buttons
+- [ ] Does NOT proceed to sign-out on failure — prevents false success
+- [ ] Retry button calls `_burnEverything()` again from the beginning
+- [ ] Cancel button navigates back to settings
+
+#### 4.6 Edge cases
 - [ ] Burn works even if user has no internet (local wipe still succeeds, Firestore wipe handled gracefully)
 - [ ] Burn works if Google Sign-In was never used (catches thrown error)
 - [ ] Burn works if local DB doesn't exist (catches thrown error)
-- [ ] Fatal error during burn → shows error message → redirects to login
+- [ ] Burn works if no households found for user (graceful return, continues to auth deletion)
+- [ ] Wrong password during burn → shows error → allows retry
+- [ ] Fatal error during burn → shows error message with Retry/Cancel
 - [ ] `mounted` checks before `setState` and navigation
 
 ### Phase 5: Key Derivation Migration Tracking
@@ -186,5 +215,6 @@ Verify each step actually runs and succeeds:
 | Modified privacy screen or its l10n keys | 3 |
 | Modified burn flow or settings dialog | 4 |
 | Changed attachment model or upload flow | 2, 3 |
+| Modified Firestore security rules | 4, 5 |
 | Before any release | All phases |
 | Starting PBKDF2 migration | 1, 5 |

@@ -84,7 +84,9 @@ Follow the existing patterns:
 | Errors | `error` | `errorDefault` |
 | Attachments | `attach` | `attachTitle`, `attachUploadFailed`, `attachSuccess` |
 | Appearance | `appearance` | `appearanceSchemePacelli`, `appearanceDarkMode` |
-| Burn/wipe | `burn` | `burnConfirmTitle`, `burnStatusDeletingCloud` |
+| Burn/wipe | `burn` | `burnConfirmTitle`, `burnStatusDeletingCloud`, `burnPasswordTitle` |
+| Notifications | `notification` | `notificationSettingsTitle`, `notificationTaskReminders` |
+| Import/Export | `importExport` | `importExportTitle`, `importExportExportData` |
 
 ### 7. Using the new keys in Dart code
 In any widget that needs the new string:
@@ -112,4 +114,4 @@ flutter clean && flutter pub get && flutter run
 - **Missing `@key` metadata**: If a key uses placeholders but has no `@key` entry in `app_en.arb`, the generated code won't have typed parameters
 
 ## Quick Reference: Current Key Count
-As of March 2026: ~464 keys across 3 locales (EN, ES, IT).
+As of March 2026: ~634 keys in EN, ~510 in ES/IT across 3 locales. Note: EN has more keys due to `@key` metadata entries for parameterised strings (these are not counted as translation keys in ES/IT).
