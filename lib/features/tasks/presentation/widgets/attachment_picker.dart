@@ -286,18 +286,19 @@ class AttachmentPicker {
     String householdId,
     _PickedFile picked,
   ) async {
+    final l10n = context.l10n;
     final configDoc = await FirebaseFirestore.instance
         .collection('household_drive_config')
         .doc(householdId)
         .get();
 
     if (!configDoc.exists) {
-      throw Exception(context.l10n.attachDriveNotSetUp);
+      throw Exception(l10n.attachDriveNotSetUp);
     }
 
     final config = HouseholdDriveConfig.fromMap(configDoc.data()!);
     if (!config.isEnabled) {
-      throw Exception(context.l10n.attachDriveDisabled);
+      throw Exception(l10n.attachDriveDisabled);
     }
 
     final driveService = GoogleDriveService();

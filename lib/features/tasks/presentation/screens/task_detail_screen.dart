@@ -117,6 +117,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () async {
+                  final navigator = Navigator.of(context);
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
@@ -139,7 +140,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     await ref.read(dataRepositoryProvider).deleteTask(widget.taskId);
                     ref.invalidate(householdTasksProvider(householdId));
                     ref.invalidate(taskStatsProvider(householdId));
-                    if (mounted) context.pop();
+                    if (mounted) navigator.pop();
                   }
                 },
               ),

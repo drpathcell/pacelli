@@ -93,13 +93,14 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: _dueDate != null
             ? TimeOfDay.fromDateTime(_dueDate!)
             : TimeOfDay.now(),
       );
+      if (!mounted) return;
       setState(() {
         if (time != null) {
           _dueDate = DateTime(
@@ -118,11 +119,12 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_startDate),
       );
+      if (!mounted) return;
       setState(() {
         if (time != null) {
           _startDate = DateTime(

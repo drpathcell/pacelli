@@ -73,13 +73,14 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
   }
 
   Future<void> _burnEverything() async {
+    final l10n = context.l10n;
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       debugPrint('[BURN] Starting burn for userId=$userId');
 
       // ── Step 1: Wipe user data via the active DataRepository ──
       // Must happen FIRST — we still have a valid auth token.
-      _updateStatus(context.l10n.burnStatusDestroying);
+      _updateStatus(l10n.burnStatusDestroying);
       await Future.delayed(const Duration(milliseconds: 600));
       try {
         final repo = ref.read(dataRepositoryProvider);
@@ -93,7 +94,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
       // ── Step 2: Delete local SQLite database file ──
       // Even if backend is Firebase — user might have used local before.
-      _updateStatus(context.l10n.burnStatusClearingLocal);
+      _updateStatus(l10n.burnStatusClearingLocal);
       await Future.delayed(const Duration(milliseconds: 600));
       try {
         await LocalDatabase.deleteDatabase();
@@ -104,7 +105,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       ref.read(localDatabaseProvider.notifier).state = null;
 
       // ── Step 3: Clear encryption keys from secure storage ──
-      _updateStatus(context.l10n.burnStatusClearingKeys);
+      _updateStatus(l10n.burnStatusClearingKeys);
       await Future.delayed(const Duration(milliseconds: 600));
       try {
         const secureStorage = FlutterSecureStorage();
@@ -115,7 +116,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       }
 
       // ── Step 4: Sign out BEFORE clearing prefs ──
-      _updateStatus(context.l10n.burnStatusSigningOut);
+      _updateStatus(l10n.burnStatusSigningOut);
       await Future.delayed(const Duration(milliseconds: 600));
 
       // Firebase sign out.
@@ -139,7 +140,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       // ── Step 5: Clear SharedPreferences (belt & suspenders) ──
       // Catches any leftover tokens, backend choice, and all other app
       // preferences.
-      _updateStatus(context.l10n.burnStatusRemovingSettings);
+      _updateStatus(l10n.burnStatusRemovingSettings);
       await Future.delayed(const Duration(milliseconds: 600));
       try {
         final prefs = await SharedPreferences.getInstance();
@@ -150,7 +151,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       }
 
       // ── Step 6: Done ──
-      _updateStatus(context.l10n.burnStatusComplete);
+      _updateStatus(l10n.burnStatusComplete);
       debugPrint('[BURN] ══ Burn complete ══');
       setState(() => _isComplete = true);
 
@@ -160,7 +161,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       context.go(AppRoutes.login);
     } catch (e) {
       debugPrint('[BURN] Fatal error: $e');
-      _updateStatus(context.l10n.burnStatusError);
+      _updateStatus(l10n.burnStatusError);
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) context.go(AppRoutes.login);
     }

@@ -52,11 +52,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
       );
+      if (!mounted) return;
       setState(() {
         if (time != null) {
           _dueDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -74,11 +75,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
       );
+      if (!mounted) return;
       setState(() {
         if (time != null) {
           _startDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -201,8 +203,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        final navigator = Navigator.of(context);
         if (await _confirmDiscard()) {
-          if (mounted) context.pop();
+          if (mounted) navigator.pop();
         }
       },
       child: Scaffold(
@@ -210,8 +213,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () async {
+            final navigator = Navigator.of(context);
             if (await _confirmDiscard()) {
-              if (mounted) context.pop();
+              if (mounted) navigator.pop();
             }
           },
         ),
@@ -293,6 +297,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     avatar: const Icon(Icons.add, size: 18),
                     label: Text(context.l10n.commonNew),
                     onPressed: () async {
+                      final errorColor = Theme.of(context).colorScheme.error;
+                      final messenger = ScaffoldMessenger.of(context);
                       final name = await showDialog<String>(
                         context: context,
                         builder: (ctx) {
@@ -323,7 +329,15 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           );
                           ref.invalidate(taskCategoriesProvider(widget.householdId));
                         } catch (e) {
-                          if (mounted) context.showSnackBar('Error: $e', isError: true);
+                          if (mounted) {
+                            messenger.showSnackBar(SnackBar(
+                              content: Text('Error: $e'),
+                              backgroundColor: errorColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              margin: const EdgeInsets.all(16),
+                            ));
+                          }
                         }
                       }
                     },

@@ -106,6 +106,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
   Future<void> _createFromBuiltInTemplate(
       Map<String, dynamic> template) async {
     setState(() => _isLoading = true);
+    final dinnerLabel = context.l10n.planLabelDinner;
     try {
       final start = _nextMonday();
       final end = start.add(const Duration(days: 6));
@@ -125,7 +126,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
           planId: plan.id,
           entryDate: day,
           title: '',
-          label: context.l10n.planLabelDinner,
+          label: dinnerLabel,
           sortOrder: 0,
         );
       }

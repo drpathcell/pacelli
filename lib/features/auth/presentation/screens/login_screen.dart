@@ -222,16 +222,32 @@ class _LoginScreenState extends State<LoginScreen> {
                             context.showSnackBar(context.l10n.authEnterEmailFirst, isError: true);
                             return;
                           }
+                          final l10n = context.l10n;
+                          final messenger = ScaffoldMessenger.of(context);
+                          final primaryColor = Theme.of(context).colorScheme.primary;
+                          final errorColor = Theme.of(context).colorScheme.error;
                           try {
                             await FirebaseAuth.instance.sendPasswordResetEmail(
                               email: _emailController.text.trim(),
                             );
                             if (mounted) {
-                              context.showSnackBar(context.l10n.authPasswordResetSent);
+                              messenger.showSnackBar(SnackBar(
+                                content: Text(l10n.authPasswordResetSent),
+                                backgroundColor: primaryColor,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                margin: const EdgeInsets.all(16),
+                              ));
                             }
                           } catch (e) {
                             if (mounted) {
-                              context.showSnackBar(context.l10n.commonError(e.toString()), isError: true);
+                              messenger.showSnackBar(SnackBar(
+                                content: Text(l10n.commonError(e.toString())),
+                                backgroundColor: errorColor,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                margin: const EdgeInsets.all(16),
+                              ));
                             }
                           }
                         },
