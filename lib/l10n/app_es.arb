@@ -502,5 +502,28 @@
   "notifTimingOneHourDesc": "Recibir un aviso una hora antes",
   "notifTimingOneDay": "1 día antes",
   "notifTimingOneDayDesc": "Recordar a las 9 AM del día anterior",
-  "notifInfoNote": "Las notificaciones se envían localmente en este dispositivo. Funcionan incluso con la app cerrada."
+  "notifInfoNote": "Las notificaciones se envían localmente en este dispositivo. Funcionan incluso con la app cerrada.",
+
+  "settingsImportExport": "Importar / Exportar",
+  "settingsImportExportSubtitle": "Respaldo y restauración de tus datos",
+
+  "ieTitle": "Importar / Exportar",
+  "ieExportSection": "EXPORTAR",
+  "ieExportJson": "Exportar como JSON",
+  "ieExportJsonDesc": "Respaldo completo de tareas, listas, planes y categorías",
+  "ieExportCsv": "Exportar tareas como CSV",
+  "ieExportCsvDesc": "Lista de tareas en formato de hoja de cálculo",
+  "ieExportSuccess": "Exportación guardada correctamente.",
+  "ieExportFailed": "Error al exportar: {error}",
+  "ieLastExport": "Última exportación: {date}",
+  "ieImportSection": "IMPORTAR",
+  "ieImportButton": "Importar desde respaldo",
+  "ieImportDesc": "Restaurar datos desde un archivo JSON de Pacelli",
+  "ieImportReading": "Leyendo archivo...",
+  "ieImportInvalid": "Archivo de respaldo inválido: {error}",
+  "ieImportConfirmTitle": "¿Importar datos?",
+  "ieImportConfirmMessage": "Esto agregará los datos del respaldo a tu hogar actual. Los datos existentes no se eliminarán.",
+  "ieImportSuccess": "Importación completa. {created} elementos creados, {skipped} omitidos.",
+  "ieImportFailed": "Error al importar: {error}",
+  "ieInfoNote": "Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación."
 }

@@ -1601,4 +1601,81 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get notifInfoNote =>
       'Las notificaciones se envían localmente en este dispositivo. Funcionan incluso con la app cerrada.';
+
+  @override
+  String get settingsImportExport => 'Importar / Exportar';
+
+  @override
+  String get settingsImportExportSubtitle =>
+      'Respaldo y restauración de tus datos';
+
+  @override
+  String get ieTitle => 'Importar / Exportar';
+
+  @override
+  String get ieExportSection => 'EXPORTAR';
+
+  @override
+  String get ieExportJson => 'Exportar como JSON';
+
+  @override
+  String get ieExportJsonDesc =>
+      'Respaldo completo de tareas, listas, planes y categorías';
+
+  @override
+  String get ieExportCsv => 'Exportar tareas como CSV';
+
+  @override
+  String get ieExportCsvDesc => 'Lista de tareas en formato de hoja de cálculo';
+
+  @override
+  String get ieExportSuccess => 'Exportación guardada correctamente.';
+
+  @override
+  String ieExportFailed(String error) {
+    return 'Error al exportar: $error';
+  }
+
+  @override
+  String ieLastExport(String date) {
+    return 'Última exportación: $date';
+  }
+
+  @override
+  String get ieImportSection => 'IMPORTAR';
+
+  @override
+  String get ieImportButton => 'Importar desde respaldo';
+
+  @override
+  String get ieImportDesc => 'Restaurar datos desde un archivo JSON de Pacelli';
+
+  @override
+  String get ieImportReading => 'Leyendo archivo...';
+
+  @override
+  String ieImportInvalid(String error) {
+    return 'Archivo de respaldo inválido: $error';
+  }
+
+  @override
+  String get ieImportConfirmTitle => '¿Importar datos?';
+
+  @override
+  String get ieImportConfirmMessage =>
+      'Esto agregará los datos del respaldo a tu hogar actual. Los datos existentes no se eliminarán.';
+
+  @override
+  String ieImportSuccess(int created, int skipped) {
+    return 'Importación completa. $created elementos creados, $skipped omitidos.';
+  }
+
+  @override
+  String ieImportFailed(String error) {
+    return 'Error al importar: $error';
+  }
+
+  @override
+  String get ieInfoNote =>
+      'Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.';
 }

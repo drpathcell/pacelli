@@ -32,6 +32,16 @@ class KeyManager {
   /// The household ID whose key is currently cached.
   String? _cachedHouseholdId;
 
+  /// Shared singleton instance used by both Riverpod providers and
+  /// HouseholdService so the loaded encryption key is available everywhere.
+  static final KeyManager instance = KeyManager._internal();
+
+  KeyManager._internal()
+      : _db = FirebaseFirestore.instance,
+        _auth = FirebaseAuth.instance,
+        _secureStorage = const FlutterSecureStorage();
+
+  /// Named constructor for testing with custom dependencies.
   KeyManager({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
@@ -218,5 +228,5 @@ class KeyManager {
 // ═══════════════════════════════════════════════════════════════════════
 
 final keyManagerProvider = Provider<KeyManager>((ref) {
-  return KeyManager();
+  return KeyManager.instance;
 });

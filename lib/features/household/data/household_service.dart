@@ -51,7 +51,7 @@ class HouseholdService {
 
     final householdId = _uuid.v4();
     final now = DateTime.now();
-    final km = keyManager ?? KeyManager();
+    final km = keyManager ?? KeyManager.instance;
 
     // Generate a new household encryption key.
     final householdKey = await km.createHouseholdKey(householdId);
@@ -117,7 +117,7 @@ class HouseholdService {
       final householdId = membership['household_id'] as String;
 
       // Load the household encryption key.
-      final km = keyManager ?? KeyManager();
+      final km = keyManager ?? KeyManager.instance;
       await km.loadHouseholdKey(householdId);
 
       // Fetch the household doc.

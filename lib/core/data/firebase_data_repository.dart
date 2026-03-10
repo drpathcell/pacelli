@@ -42,23 +42,38 @@ class FirebaseDataRepository implements DataRepository {
   String _enc(String plaintext) =>
       _key != null ? EncryptionService.encrypt(plaintext, _key!) : plaintext;
 
-  /// Decrypts a non-null ciphertext. Returns `'[encrypted]'` on failure
-  /// rather than throwing or leaking raw ciphertext to the UI.
+  /// Decrypts a non-null ciphertext.
+  ///
+  /// If decryption fails (e.g. the value is already plaintext), returns the
+  /// original string rather than a placeholder.
   String _dec(String ciphertext) {
     if (_key == null) return ciphertext;
     try {
       return EncryptionService.decrypt(ciphertext, _key!);
     } catch (e) {
-      debugPrint('[FirebaseDataRepository] _dec failed: $e');
-      return '[encrypted]';
+      debugPrint('[FirebaseDataRepository] _dec failed (returning as-is): $e');
+      return ciphertext;
     }
   }
 
   String? _encN(String? plaintext) =>
       _key != null ? EncryptionService.encryptNullable(plaintext, _key!) : plaintext;
 
-  String? _decN(String? ciphertext) =>
-      _key != null ? EncryptionService.decryptNullable(ciphertext, _key!) : ciphertext;
+  /// Decrypts a nullable ciphertext.
+  ///
+  /// If decryption fails (e.g. the value is already plaintext), returns the
+  /// original string rather than a placeholder.
+  String? _decN(String? ciphertext) {
+    if (_key == null || ciphertext == null || ciphertext.isEmpty) {
+      return ciphertext;
+    }
+    try {
+      return EncryptionService.decrypt(ciphertext, _key!);
+    } catch (e) {
+      debugPrint('[FirebaseDataRepository] _decN failed (returning as-is): $e');
+      return ciphertext;
+    }
+  }
 
   // ── Firestore timestamp helpers ──
 

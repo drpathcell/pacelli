@@ -21,6 +21,7 @@ import '../../features/plans/presentation/screens/plan_finalise_screen.dart';
 import '../../features/plans/presentation/screens/plan_view_screen.dart';
 import '../../features/settings/presentation/screens/appearance_screen.dart';
 import '../../features/settings/presentation/screens/burn_data_screen.dart';
+import '../../features/import_export/presentation/screens/import_export_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
 import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -45,6 +46,7 @@ class AppRoutes {
   static const String privacyEncryption = '/privacy-encryption';
   static const String driveSetup = '/drive-setup';
   static const String notifications = '/notifications';
+  static const String importExport = '/import-export';
 }
 
 /// Key for the shell navigator (bottom nav tabs).
@@ -99,6 +101,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationSettingsScreen(),
+      ),
+
+      // Import/Export
+      GoRoute(
+        path: AppRoutes.importExport,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return ImportExportScreen(householdId: householdId);
+        },
       ),
 
       // Create household (no bottom nav — modal-style)

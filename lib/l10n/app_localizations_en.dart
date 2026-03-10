@@ -1586,4 +1586,80 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notifInfoNote =>
       'Notifications are delivered locally on this device. They work even when the app is closed.';
+
+  @override
+  String get settingsImportExport => 'Import / Export';
+
+  @override
+  String get settingsImportExportSubtitle => 'Backup & restore your data';
+
+  @override
+  String get ieTitle => 'Import / Export';
+
+  @override
+  String get ieExportSection => 'EXPORT';
+
+  @override
+  String get ieExportJson => 'Export as JSON';
+
+  @override
+  String get ieExportJsonDesc =>
+      'Full backup of all tasks, checklists, plans, and categories';
+
+  @override
+  String get ieExportCsv => 'Export tasks as CSV';
+
+  @override
+  String get ieExportCsvDesc => 'Spreadsheet-friendly list of tasks only';
+
+  @override
+  String get ieExportSuccess => 'Export saved successfully!';
+
+  @override
+  String ieExportFailed(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String ieLastExport(String date) {
+    return 'Last export: $date';
+  }
+
+  @override
+  String get ieImportSection => 'IMPORT';
+
+  @override
+  String get ieImportButton => 'Import from backup';
+
+  @override
+  String get ieImportDesc => 'Restore data from a Pacelli JSON backup file';
+
+  @override
+  String get ieImportReading => 'Reading file...';
+
+  @override
+  String ieImportInvalid(String error) {
+    return 'Invalid backup file: $error';
+  }
+
+  @override
+  String get ieImportConfirmTitle => 'Import data?';
+
+  @override
+  String get ieImportConfirmMessage =>
+      'This will add the backed-up data to your current household. Existing data will not be deleted.';
+
+  @override
+  String ieImportSuccess(int created, int skipped) {
+    return 'Import complete! $created items created, $skipped skipped.';
+  }
+
+  @override
+  String ieImportFailed(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String get ieInfoNote =>
+      'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.';
 }

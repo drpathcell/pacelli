@@ -2955,6 +2955,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications are delivered locally on this device. They work even when the app is closed.'**
   String get notifInfoNote;
+
+  /// No description provided for @settingsImportExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import / Export'**
+  String get settingsImportExport;
+
+  /// No description provided for @settingsImportExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore your data'**
+  String get settingsImportExportSubtitle;
+
+  /// No description provided for @ieTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import / Export'**
+  String get ieTitle;
+
+  /// No description provided for @ieExportSection.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPORT'**
+  String get ieExportSection;
+
+  /// No description provided for @ieExportJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as JSON'**
+  String get ieExportJson;
+
+  /// No description provided for @ieExportJsonDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Full backup of all tasks, checklists, plans, and categories'**
+  String get ieExportJsonDesc;
+
+  /// No description provided for @ieExportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export tasks as CSV'**
+  String get ieExportCsv;
+
+  /// No description provided for @ieExportCsvDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet-friendly list of tasks only'**
+  String get ieExportCsvDesc;
+
+  /// No description provided for @ieExportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Export saved successfully!'**
+  String get ieExportSuccess;
+
+  /// No description provided for @ieExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String ieExportFailed(String error);
+
+  /// No description provided for @ieLastExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Last export: {date}'**
+  String ieLastExport(String date);
+
+  /// No description provided for @ieImportSection.
+  ///
+  /// In en, this message translates to:
+  /// **'IMPORT'**
+  String get ieImportSection;
+
+  /// No description provided for @ieImportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from backup'**
+  String get ieImportButton;
+
+  /// No description provided for @ieImportDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore data from a Pacelli JSON backup file'**
+  String get ieImportDesc;
+
+  /// No description provided for @ieImportReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading file...'**
+  String get ieImportReading;
+
+  /// No description provided for @ieImportInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid backup file: {error}'**
+  String ieImportInvalid(String error);
+
+  /// No description provided for @ieImportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import data?'**
+  String get ieImportConfirmTitle;
+
+  /// No description provided for @ieImportConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will add the backed-up data to your current household. Existing data will not be deleted.'**
+  String get ieImportConfirmMessage;
+
+  /// No description provided for @ieImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Import complete! {created} items created, {skipped} skipped.'**
+  String ieImportSuccess(int created, int skipped);
+
+  /// No description provided for @ieImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed: {error}'**
+  String ieImportFailed(String error);
+
+  /// No description provided for @ieInfoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.'**
+  String get ieInfoNote;
 }
 
 class _AppLocalizationsDelegate

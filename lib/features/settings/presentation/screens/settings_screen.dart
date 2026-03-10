@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../household/data/household_providers.dart';
 
 /// Settings screen — app preferences, account management, logout.
 class SettingsScreen extends ConsumerWidget {
@@ -158,6 +159,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = FirebaseAuth.instance.currentUser;
+    final householdAsync = ref.watch(currentHouseholdProvider);
+    final householdId = householdAsync.valueOrNull?['household']?['id'] as String?;
 
     return Scaffold(
       appBar: AppBar(
@@ -230,6 +233,14 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: context.l10n.settingsAppearanceSubtitle,
             onTap: () => context.push(AppRoutes.appearance),
           ),
+          if (householdId != null)
+            _SettingsTile(
+              icon: Icons.swap_vert_rounded,
+              title: context.l10n.settingsImportExport,
+              subtitle: context.l10n.settingsImportExportSubtitle,
+              onTap: () =>
+                  context.push(AppRoutes.importExport, extra: householdId),
+            ),
           _SettingsTile(
             icon: Icons.info_outlined,
             title: context.l10n.settingsAbout,

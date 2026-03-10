@@ -759,5 +759,54 @@
   "notifTimingOneHourDesc": "Get a heads-up an hour early",
   "notifTimingOneDay": "1 day before",
   "notifTimingOneDayDesc": "Remind at 9 AM the day before",
-  "notifInfoNote": "Notifications are delivered locally on this device. They work even when the app is closed."
+  "notifInfoNote": "Notifications are delivered locally on this device. They work even when the app is closed.",
+
+  "settingsImportExport": "Import / Export",
+  "settingsImportExportSubtitle": "Backup & restore your data",
+
+  "ieTitle": "Import / Export",
+  "ieExportSection": "EXPORT",
+  "ieExportJson": "Export as JSON",
+  "ieExportJsonDesc": "Full backup of all tasks, checklists, plans, and categories",
+  "ieExportCsv": "Export tasks as CSV",
+  "ieExportCsvDesc": "Spreadsheet-friendly list of tasks only",
+  "ieExportSuccess": "Export saved successfully!",
+  "ieExportFailed": "Export failed: {error}",
+  "@ieExportFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "ieLastExport": "Last export: {date}",
+  "@ieLastExport": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "ieImportSection": "IMPORT",
+  "ieImportButton": "Import from backup",
+  "ieImportDesc": "Restore data from a Pacelli JSON backup file",
+  "ieImportReading": "Reading file...",
+  "ieImportInvalid": "Invalid backup file: {error}",
+  "@ieImportInvalid": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "ieImportConfirmTitle": "Import data?",
+  "ieImportConfirmMessage": "This will add the backed-up data to your current household. Existing data will not be deleted.",
+  "ieImportSuccess": "Import complete! {created} items created, {skipped} skipped.",
+  "@ieImportSuccess": {
+    "placeholders": {
+      "created": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "ieImportFailed": "Import failed: {error}",
+  "@ieImportFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "ieInfoNote": "Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export."
 }

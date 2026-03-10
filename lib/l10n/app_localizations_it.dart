@@ -1600,4 +1600,82 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get notifInfoNote =>
       'Le notifiche vengono inviate localmente su questo dispositivo. Funzionano anche con l\'app chiusa.';
+
+  @override
+  String get settingsImportExport => 'Importa / Esporta';
+
+  @override
+  String get settingsImportExportSubtitle =>
+      'Backup e ripristino dei tuoi dati';
+
+  @override
+  String get ieTitle => 'Importa / Esporta';
+
+  @override
+  String get ieExportSection => 'ESPORTA';
+
+  @override
+  String get ieExportJson => 'Esporta come JSON';
+
+  @override
+  String get ieExportJsonDesc =>
+      'Backup completo di attività, liste, piani e categorie';
+
+  @override
+  String get ieExportCsv => 'Esporta attività come CSV';
+
+  @override
+  String get ieExportCsvDesc =>
+      'Lista di attività in formato foglio di calcolo';
+
+  @override
+  String get ieExportSuccess => 'Esportazione salvata con successo!';
+
+  @override
+  String ieExportFailed(String error) {
+    return 'Errore nell\'esportazione: $error';
+  }
+
+  @override
+  String ieLastExport(String date) {
+    return 'Ultima esportazione: $date';
+  }
+
+  @override
+  String get ieImportSection => 'IMPORTA';
+
+  @override
+  String get ieImportButton => 'Importa da backup';
+
+  @override
+  String get ieImportDesc => 'Ripristina i dati da un file JSON di Pacelli';
+
+  @override
+  String get ieImportReading => 'Lettura del file...';
+
+  @override
+  String ieImportInvalid(String error) {
+    return 'File di backup non valido: $error';
+  }
+
+  @override
+  String get ieImportConfirmTitle => 'Importare i dati?';
+
+  @override
+  String get ieImportConfirmMessage =>
+      'Questo aggiungerà i dati del backup alla tua famiglia attuale. I dati esistenti non verranno eliminati.';
+
+  @override
+  String ieImportSuccess(int created, int skipped) {
+    return 'Importazione completata! $created elementi creati, $skipped saltati.';
+  }
+
+  @override
+  String ieImportFailed(String error) {
+    return 'Errore nell\'importazione: $error';
+  }
+
+  @override
+  String get ieInfoNote =>
+      'I file esportati vengono salvati in testo semplice. Se i tuoi dati sono crittografati nel cloud, verranno decrittografati per l\'esportazione.';
 }

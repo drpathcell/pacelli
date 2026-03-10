@@ -1,0 +1,121 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/data/data_repository.dart';
+import '../../../core/data/data_repository_provider.dart';
+
+const _kLastExportDate = 'last_export_date';
+
+/// Service that exports household data as JSON (full backup) or CSV (tasks only).
+class ExportService {
+  final DataRepository _repo;
+
+  ExportService(this._repo);
+
+  /// Exports all household data as a JSON file and opens the share sheet.
+  ///
+  /// The JSON includes tasks (with subtasks), categories, checklists (with
+  /// items), and plans (with entries and checklist items).
+  ///
+  /// Data from the repository is already decrypted by the time it reaches
+  /// the model layer, so no extra decryption step is needed here.
+  Future<File> exportAsJson(String householdId) async {
+    final tasks = await _repo.getTasks(householdId: householdId);
+    final categories = await _repo.getCategories(householdId);
+    final checklists = await _repo.getChecklists(householdId);
+    final plans = await _repo.getPlans(householdId);
+
+    final export = {
+      'version': 1,
+      'exported_at': DateTime.now().toIso8601String(),
+      'household_id': householdId,
+      'tasks': tasks.map((t) => {
+            ...t.toMap(),
+            'subtasks': t.subtasks.map((s) => s.toMap()).toList(),
+          }).toList(),
+      'categories': categories.map((c) => c.toMap()).toList(),
+      'checklists': checklists.map((cl) => cl.toDisplayMap()).toList(),
+      'plans': plans.map((p) => p.toDisplayMap()).toList(),
+    };
+
+    final json = const JsonEncoder.withIndent('  ').convert(export);
+    final dir = await getApplicationDocumentsDirectory();
+    final timestamp = DateFormat('yyyy-MM-dd_HHmmss').format(DateTime.now());
+    final file = File('${dir.path}/pacelli_backup_$timestamp.json');
+    await file.writeAsString(json);
+
+    await _saveLastExportDate();
+    debugPrint('[ExportService] JSON backup saved to ${file.path}');
+    return file;
+  }
+
+  /// Exports tasks as a simplified CSV file and opens the share sheet.
+  ///
+  /// Columns: Title, Status, Priority, Due Date, Category, Assigned To.
+  Future<File> exportTasksCsv(String householdId) async {
+    final tasks = await _repo.getTasks(householdId: householdId);
+
+    final buffer = StringBuffer();
+    buffer.writeln('Title,Status,Priority,Due Date,Category,Assigned To');
+
+    for (final task in tasks) {
+      buffer.writeln([
+        _csvEscape(task.title),
+        _csvEscape(task.status),
+        _csvEscape(task.priority),
+        _csvEscape(task.dueDate?.toIso8601String() ?? ''),
+        _csvEscape(task.category?.name ?? ''),
+        _csvEscape(task.assignedProfile?.fullName ?? task.assignedTo ?? ''),
+      ].join(','));
+    }
+
+    final dir = await getApplicationDocumentsDirectory();
+    final timestamp = DateFormat('yyyy-MM-dd_HHmmss').format(DateTime.now());
+    final file = File('${dir.path}/pacelli_tasks_$timestamp.csv');
+    await file.writeAsString(buffer.toString());
+
+    await _saveLastExportDate();
+    debugPrint('[ExportService] CSV export saved to ${file.path}');
+    return file;
+  }
+
+  /// Opens the native share sheet for the given file.
+  Future<void> shareFile(File file) async {
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)]),
+    );
+  }
+
+  /// Returns the last export date, or null if never exported.
+  static Future<DateTime?> getLastExportDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final iso = prefs.getString(_kLastExportDate);
+    return iso != null ? DateTime.tryParse(iso) : null;
+  }
+
+  Future<void> _saveLastExportDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kLastExportDate, DateTime.now().toIso8601String());
+  }
+
+  /// Escapes a value for CSV (wraps in quotes if it contains commas/quotes/newlines).
+  static String _csvEscape(String value) {
+    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
+  }
+}
+
+/// Provider for the export service.
+final exportServiceProvider = Provider<ExportService>((ref) {
+  final repo = ref.watch(dataRepositoryProvider);
+  return ExportService(repo);
+});

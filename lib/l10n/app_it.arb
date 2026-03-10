@@ -502,5 +502,28 @@
   "notifTimingOneHourDesc": "Ricevi un avviso un'ora prima",
   "notifTimingOneDay": "1 giorno prima",
   "notifTimingOneDayDesc": "Promemoria alle 9 del giorno prima",
-  "notifInfoNote": "Le notifiche vengono inviate localmente su questo dispositivo. Funzionano anche con l'app chiusa."
+  "notifInfoNote": "Le notifiche vengono inviate localmente su questo dispositivo. Funzionano anche con l'app chiusa.",
+
+  "settingsImportExport": "Importa / Esporta",
+  "settingsImportExportSubtitle": "Backup e ripristino dei tuoi dati",
+
+  "ieTitle": "Importa / Esporta",
+  "ieExportSection": "ESPORTA",
+  "ieExportJson": "Esporta come JSON",
+  "ieExportJsonDesc": "Backup completo di attività, liste, piani e categorie",
+  "ieExportCsv": "Esporta attività come CSV",
+  "ieExportCsvDesc": "Lista di attività in formato foglio di calcolo",
+  "ieExportSuccess": "Esportazione salvata con successo!",
+  "ieExportFailed": "Errore nell'esportazione: {error}",
+  "ieLastExport": "Ultima esportazione: {date}",
+  "ieImportSection": "IMPORTA",
+  "ieImportButton": "Importa da backup",
+  "ieImportDesc": "Ripristina i dati da un file JSON di Pacelli",
+  "ieImportReading": "Lettura del file...",
+  "ieImportInvalid": "File di backup non valido: {error}",
+  "ieImportConfirmTitle": "Importare i dati?",
+  "ieImportConfirmMessage": "Questo aggiungerà i dati del backup alla tua famiglia attuale. I dati esistenti non verranno eliminati.",
+  "ieImportSuccess": "Importazione completata! {created} elementi creati, {skipped} saltati.",
+  "ieImportFailed": "Errore nell'importazione: {error}",
+  "ieInfoNote": "I file esportati vengono salvati in testo semplice. Se i tuoi dati sono crittografati nel cloud, verranno decrittografati per l'esportazione."
 }
