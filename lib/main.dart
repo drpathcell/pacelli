@@ -1,28 +1,49 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'app.dart';
-import 'config/constants/app_constants.dart';
+import 'core/data/data_repository_provider.dart';
+import 'core/data/local_database.dart';
+import 'firebase_options.dart';
 
 /// Entry point for the Pacelli app.
 ///
-/// Initialises Supabase and wraps the app in a Riverpod [ProviderScope]
-/// so that state management is available throughout the widget tree.
+/// Initialises Firebase, checks the user's storage preference, and if they
+/// previously chose "local" opens the SQLite database before launching.
 void main() async {
   // Ensure Flutter bindings are initialised before async work.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialise Supabase with your project credentials.
-  await Supabase.initialize(
-    url: AppConstants.supabaseUrl,
-    anonKey: AppConstants.supabaseAnonKey,
+  // Initialise Firebase (reads GoogleService-Info.plist / google-services.json).
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Launch the app wrapped in Riverpod's ProviderScope.
+  // Check if the user previously chose local storage — if so, open the DB
+  // now so the provider is ready before the first frame.
+  Database? localDb;
+  final prefs = await SharedPreferences.getInstance();
+  final backend = prefs.getString('storage_backend');
+  if (backend == 'local') {
+    localDb = await LocalDatabase.open();
+  }
+
+  // Create a provider container so we can seed the local DB provider.
+  final container = ProviderContainer(
+    overrides: [
+      if (localDb != null)
+        localDatabaseProvider.overrideWith((ref) => localDb),
+    ],
+  );
+
+  // Launch the app wrapped in Riverpod's UncontrolledProviderScope.
   runApp(
-    const ProviderScope(
-      child: PacelliApp(),
+    UncontrolledProviderScope(
+      container: container,
+      child: const PacelliApp(),
     ),
   );
 }

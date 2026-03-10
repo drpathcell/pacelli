@@ -1,111 +1,262 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../../core/services/supabase_service.dart';
+import '../../../core/crypto/encryption_service.dart';
+import '../../../core/crypto/key_manager.dart';
 
-/// Service for household CRUD operations via Supabase.
+/// Service for household CRUD operations via Cloud Firestore.
+///
+/// Household names are end-to-end encrypted. Profile names in this service
+/// are decrypted for display.
 class HouseholdService {
+  static final _db = FirebaseFirestore.instance;
+  static final _auth = FirebaseAuth.instance;
+  static const _uuid = Uuid();
+
+  /// The [KeyManager] instance — must be set before calling household
+  /// operations that need encryption/decryption.
+  static KeyManager? keyManager;
+
+  static String? get _uid => _auth.currentUser?.uid;
+
+  /// The household key (if loaded).
+  static String? get _key => keyManager?.householdKey;
+
+  static String _enc(String plaintext) =>
+      _key != null ? EncryptionService.encrypt(plaintext, _key!) : plaintext;
+
+  static String _dec(String ciphertext) =>
+      _key != null ? EncryptionService.decrypt(ciphertext, _key!) : ciphertext;
+
+  static String? _decN(String? ciphertext) => _key != null
+      ? EncryptionService.decryptNullable(ciphertext, _key!)
+      : ciphertext;
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  CREATE HOUSEHOLD
+  // ═══════════════════════════════════════════════════════════════════
+
   /// Creates a new household and adds the current user as admin.
+  ///
+  /// Generates a per-household encryption key, encrypts the household name,
+  /// and stores the key encrypted for the current user.
   ///
   /// Returns the created household data.
   static Future<Map<String, dynamic>> createHousehold(String name) async {
-    final userId = currentUserId;
-    if (userId == null) throw Exception('Not authenticated');
+    final uid = _uid;
+    if (uid == null) throw Exception('Not authenticated');
 
-    // Call the SECURITY DEFINER function that handles both inserts atomically
-    final response = await supabase.rpc('create_household', params: {
-      'household_name': name,
+    final householdId = _uuid.v4();
+    final now = DateTime.now();
+    final km = keyManager ?? KeyManager();
+
+    // Generate a new household encryption key.
+    final householdKey = await km.createHouseholdKey(householdId);
+
+    // Now encrypt the household name with the new key.
+    final encryptedName = EncryptionService.encrypt(name, householdKey);
+
+    final batch = _db.batch();
+
+    // Create household doc.
+    batch.set(_db.collection('households').doc(householdId), {
+      'id': householdId,
+      'name': encryptedName,
+      'created_by': uid,
+      'created_at': now.toIso8601String(),
     });
 
-    // The function returns a JSON object with the household data
-    return Map<String, dynamic>.from(response as Map);
+    // Add creator as admin member.
+    // Doc ID = {uid}_{householdId} — deterministic for Firestore security rules.
+    final memberId = '${uid}_$householdId';
+    batch.set(_db.collection('household_members').doc(memberId), {
+      'household_id': householdId,
+      'user_id': uid,
+      'role': 'admin',
+      'joined_at': now.toIso8601String(),
+    });
+
+    await batch.commit();
+
+    debugPrint('[HouseholdService] ✓ Created household $householdId');
+
+    return {
+      'id': householdId,
+      'name': name,
+      'created_by': uid,
+      'created_at': now.toIso8601String(),
+    };
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  GET CURRENT HOUSEHOLD
+  // ═══════════════════════════════════════════════════════════════════
 
   /// Fetches the current user's household (if any).
   ///
+  /// Also loads the household encryption key so data can be decrypted.
   /// Returns null if the user hasn't joined a household yet.
   static Future<Map<String, dynamic>?> getCurrentHousehold() async {
-    final userId = currentUserId;
-    if (userId == null) return null;
+    final uid = _uid;
+    if (uid == null) return null;
 
     try {
-      // Find the user's household membership
-      final membership = await supabase
-          .from('household_members')
-          .select('household_id, role, households(id, name, created_by, created_at)')
-          .eq('user_id', userId)
-          .maybeSingle();
+      // Find the user's household membership.
+      final memberSnap = await _db
+          .collection('household_members')
+          .where('user_id', isEqualTo: uid)
+          .limit(1)
+          .get();
 
-      if (membership == null) return null;
+      if (memberSnap.docs.isEmpty) return null;
+
+      final membership = memberSnap.docs.first.data();
+      final householdId = membership['household_id'] as String;
+
+      // Load the household encryption key.
+      final km = keyManager ?? KeyManager();
+      await km.loadHouseholdKey(householdId);
+
+      // Fetch the household doc.
+      final householdDoc =
+          await _db.collection('households').doc(householdId).get();
+      if (!householdDoc.exists) return null;
+
+      final householdData = householdDoc.data()!;
+
+      // Decrypt name using the now-loaded key.
+      final decryptedName = km.householdKey != null
+          ? EncryptionService.decrypt(
+              householdData['name'] as String, km.householdKey!)
+          : householdData['name'] as String;
 
       return {
         'membership': membership,
-        'household': membership['households'],
+        'household': {
+          'id': householdId,
+          'name': decryptedName,
+          'created_by': householdData['created_by'],
+          'created_at': householdData['created_at'],
+        },
         'role': membership['role'],
       };
     } catch (e) {
-      // If query fails (e.g., RLS blocks or no membership), return null
-      // so the home screen shows the "Create Household" prompt.
+      debugPrint('[HouseholdService] ✗ getCurrentHousehold: $e');
       return null;
     }
   }
 
-  /// Fetches all members of a household.
+  // ═══════════════════════════════════════════════════════════════════
+  //  MEMBERS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Fetches all members of a household with their profile info.
   static Future<List<Map<String, dynamic>>> getHouseholdMembers(
       String householdId) async {
-    final members = await supabase
-        .from('household_members')
-        .select('user_id, role, joined_at, profiles(id, full_name, avatar_url)')
-        .eq('household_id', householdId);
+    final memberSnap = await _db
+        .collection('household_members')
+        .where('household_id', isEqualTo: householdId)
+        .get();
 
-    return List<Map<String, dynamic>>.from(members);
+    final results = <Map<String, dynamic>>[];
+
+    for (final doc in memberSnap.docs) {
+      final data = doc.data();
+      final userId = data['user_id'] as String;
+
+      // Fetch profile.
+      Map<String, dynamic>? profile;
+      final profileDoc = await _db.collection('profiles').doc(userId).get();
+      if (profileDoc.exists) {
+        final pData = profileDoc.data()!;
+        profile = {
+          'id': userId,
+          'full_name': _decN(pData['full_name'] as String?),
+          'avatar_url': pData['avatar_url'] as String?,
+        };
+      }
+
+      results.add({
+        'user_id': userId,
+        'role': data['role'],
+        'joined_at': data['joined_at'],
+        'profiles': profile,
+      });
+    }
+
+    return results;
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  //  INVITES
+  // ═══════════════════════════════════════════════════════════════════
+
   /// Invites a user to the household by email.
-  ///
-  /// Creates a pending membership entry. The invited user will see the
-  /// household when they sign up / log in.
   static Future<void> inviteByEmail({
     required String householdId,
     required String email,
   }) async {
-    // Check if a user with this email already exists
-    // We'll use the Supabase edge function or just create a pending invite
-    await supabase.from('household_invites').insert({
+    final id = _uuid.v4();
+    await _db.collection('household_invites').doc(id).set({
+      'id': id,
       'household_id': householdId,
       'invited_email': email,
-      'invited_by': currentUserId,
+      'invited_by': _uid,
       'status': 'pending',
+      'created_at': DateTime.now().toIso8601String(),
     });
   }
 
   /// Checks if the current user has a pending invite and accepts it.
+  ///
+  /// When accepting, the inviter's device must share the household key
+  /// with the new member. For now, we handle this by having the accepting
+  /// user request the key from an existing member's device.
   static Future<Map<String, dynamic>?> checkAndAcceptInvite() async {
-    final user = currentUser;
+    final user = _auth.currentUser;
     if (user == null || user.email == null) return null;
 
-    final invite = await supabase
-        .from('household_invites')
-        .select('id, household_id, households(id, name)')
-        .eq('invited_email', user.email!)
-        .eq('status', 'pending')
-        .maybeSingle();
+    final inviteSnap = await _db
+        .collection('household_invites')
+        .where('invited_email', isEqualTo: user.email!)
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
 
-    if (invite == null) return null;
+    if (inviteSnap.docs.isEmpty) return null;
 
-    // Accept the invite — add user as member
-    await supabase.from('household_members').insert({
-      'household_id': invite['household_id'],
-      'user_id': user.id,
+    final invite = inviteSnap.docs.first.data();
+    final householdId = invite['household_id'] as String;
+
+    final batch = _db.batch();
+
+    // Add user as member.
+    // Doc ID = {uid}_{householdId} — deterministic for Firestore security rules.
+    final memberId = '${user.uid}_$householdId';
+    batch.set(_db.collection('household_members').doc(memberId), {
+      'household_id': householdId,
+      'user_id': user.uid,
       'role': 'member',
+      'joined_at': DateTime.now().toIso8601String(),
     });
 
-    // Mark invite as accepted
-    await supabase
-        .from('household_invites')
-        .update({'status': 'accepted'})
-        .eq('id', invite['id']);
+    // Mark invite as accepted.
+    batch.update(inviteSnap.docs.first.reference, {'status': 'accepted'});
 
-    return invite['households'] as Map<String, dynamic>?;
+    await batch.commit();
+
+    // Fetch the household info.
+    final householdDoc =
+        await _db.collection('households').doc(householdId).get();
+    if (!householdDoc.exists) return null;
+
+    final hData = householdDoc.data()!;
+    return {
+      'id': householdId,
+      'name': hData['name'], // Still encrypted — caller will decrypt.
+    };
   }
 
   /// Removes a member from the household.
@@ -113,21 +264,95 @@ class HouseholdService {
     required String householdId,
     required String userId,
   }) async {
-    await supabase
-        .from('household_members')
-        .delete()
-        .eq('household_id', householdId)
-        .eq('user_id', userId);
+    final batch = _db.batch();
+
+    // Direct delete using deterministic doc ID.
+    batch.delete(
+      _db.collection('household_members').doc('${userId}_$householdId'),
+    );
+
+    // Also clean up any legacy random-UUID member docs (migration safety).
+    final legacySnap = await _db
+        .collection('household_members')
+        .where('household_id', isEqualTo: householdId)
+        .where('user_id', isEqualTo: userId)
+        .get();
+    for (final doc in legacySnap.docs) {
+      if (doc.id != '${userId}_$householdId') {
+        batch.delete(doc.reference);
+      }
+    }
+
+    // Also delete the member's household key.
+    final keySnap = await _db
+        .collection('household_keys')
+        .where('household_id', isEqualTo: householdId)
+        .where('user_id', isEqualTo: userId)
+        .get();
+    for (final doc in keySnap.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
   }
 
-  /// Updates the household name.
+  /// Updates the household name (encrypted).
   static Future<void> updateHouseholdName({
     required String householdId,
     required String name,
   }) async {
-    await supabase
-        .from('households')
-        .update({'name': name})
-        .eq('id', householdId);
+    await _db.collection('households').doc(householdId).update({
+      'name': _enc(name),
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DATA MIGRATION
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Migrates household_members docs from random UUIDs to deterministic
+  /// `{userId}_{householdId}` doc IDs.
+  ///
+  /// This is required for Firestore security rules that use `exists()` to
+  /// verify household membership. Safe to call multiple times (idempotent).
+  static Future<void> migrateMemberDocIds() async {
+    final uid = _uid;
+    if (uid == null) return;
+
+    try {
+      // Find all memberships for the current user.
+      final snap = await _db
+          .collection('household_members')
+          .where('user_id', isEqualTo: uid)
+          .get();
+
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final householdId = data['household_id'] as String;
+        final expectedId = '${uid}_$householdId';
+
+        // Skip if already using the correct deterministic ID.
+        if (doc.id == expectedId) continue;
+
+        debugPrint(
+          '[HouseholdService] Migrating member doc ${doc.id} → $expectedId',
+        );
+
+        final batch = _db.batch();
+
+        // Create new doc with deterministic ID.
+        batch.set(
+          _db.collection('household_members').doc(expectedId),
+          data,
+        );
+
+        // Delete the old random-UUID doc.
+        batch.delete(doc.reference);
+
+        await batch.commit();
+      }
+    } catch (e) {
+      debugPrint('[HouseholdService] ✗ migrateMemberDocIds: $e');
+    }
   }
 }

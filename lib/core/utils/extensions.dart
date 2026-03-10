@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:pacelli/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 /// Handy extension methods used throughout the app.
+
+/// Quick access to localised strings via `context.l10n`.
+extension AppLocalizationsX on BuildContext {
+  AppLocalizations get l10n => AppLocalizations.of(this);
+}
 
 /// DateTime formatting shortcuts.
 extension DateTimeExtensions on DateTime {
   /// "1 Mar 2026"
   String get formatted => DateFormat('d MMM yyyy').format(this);
+
+  /// "1 Mar" (short, no year)
+  String get shortFormatted => DateFormat('d MMM').format(this);
 
   /// "1 Mar 2026, 14:30"
   String get formattedWithTime => DateFormat('d MMM yyyy, HH:mm').format(this);

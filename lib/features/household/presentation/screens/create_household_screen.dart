@@ -40,13 +40,13 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
       ref.invalidate(currentHouseholdProvider);
 
       if (mounted) {
-        context.showSnackBar('Household created! Welcome home.');
+        context.showSnackBar(context.l10n.householdCreated);
         context.go(AppRoutes.home);
       }
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Failed to create household. Please try again.',
+          context.l10n.householdCreateFailed,
           isError: true,
         );
       }
@@ -63,7 +63,7 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Create Household'),
+        title: Text(context.l10n.householdCreateTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -83,13 +83,13 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
               const SizedBox(height: 24),
 
               Text(
-                'Name your household',
+                context.l10n.householdNameYour,
                 style: context.textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'This is what you and your partner will see.\nYou can change it anytime.',
+                context.l10n.householdNameSubtitle,
                 style: context.textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondaryLight,
                 ),
@@ -102,17 +102,17 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Household name',
-                  hintText: 'e.g. The Celis Home',
-                  prefixIcon: Icon(Icons.home_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l10n.householdNameLabel,
+                  hintText: context.l10n.householdNameHint,
+                  prefixIcon: const Icon(Icons.home_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name for your household';
+                    return context.l10n.householdEnterName;
                   }
                   if (value.trim().length < 2) {
-                    return 'Name must be at least 2 characters';
+                    return context.l10n.householdNameMinLength;
                   }
                   return null;
                 },
@@ -131,7 +131,7 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Create Household'),
+                    : Text(context.l10n.householdCreateButton),
               ),
             ],
           ),

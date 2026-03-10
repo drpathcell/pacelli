@@ -1,0 +1,750 @@
+{
+  "@@locale": "en",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonDelete": "Delete",
+  "commonAdd": "Add",
+  "commonCreate": "Create",
+  "commonClose": "Close",
+  "commonChange": "Change",
+  "commonOk": "OK",
+  "commonRetry": "Retry",
+  "commonToday": "Today",
+  "commonTomorrow": "Tomorrow",
+  "commonUnassigned": "Unassigned",
+  "commonUnknown": "Unknown",
+  "commonUntitled": "Untitled",
+  "commonShared": "Shared",
+  "commonError": "Error: {error}",
+  "@commonError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authWelcomeBack": "Welcome back",
+  "authSignInToHousehold": "Sign in to your household",
+  "authOrSignInWithEmail": "or sign in with email",
+  "authEmail": "Email",
+  "authPassword": "Password",
+  "authEnterEmail": "Please enter your email",
+  "authEnterValidEmail": "Please enter a valid email",
+  "authEnterPassword": "Please enter your password",
+  "authPasswordMinLength": "Password must be at least 6 characters",
+  "authEnterEmailFirst": "Enter your email first",
+  "authPasswordResetSent": "Password reset email sent! Check your inbox.",
+  "authForgotPassword": "Forgot password?",
+  "authSignIn": "Sign In",
+  "authNoAccount": "Don't have an account? ",
+  "authSignUp": "Sign Up",
+  "authContinueWithGoogle": "Continue with Google",
+  "authGoogleSignInFailed": "Google sign-in failed. Please try again.",
+  "authLoginFailed": "Login failed. Please check your email and password.",
+  "authCreateAccount": "Create account",
+  "authStartOrganising": "Start organising your home with love",
+  "authOrSignUpWithEmail": "or sign up with email",
+  "authFullName": "Full name",
+  "authConfirmPassword": "Confirm password",
+  "authEnterName": "Please enter your name",
+  "authEnterAPassword": "Please enter a password",
+  "authPasswordMin8": "Password must be at least 8 characters",
+  "authPasswordsDoNotMatch": "Passwords do not match",
+  "authCreateAccountButton": "Create Account",
+  "authAlreadyHaveAccount": "Already have an account? ",
+  "authAccountCreated": "Account created! Welcome to Pacelli.",
+  "authSignupFailed": "Signup failed. Please try again.",
+  "authAppName": "Pacelli",
+  "authTagline": "A peaceful home, organised with love.",
+  "homeHelloGreeting": "Hello, {userName}",
+  "@homeHelloGreeting": {
+    "placeholders": {
+      "userName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeLoadingHousehold": "Loading household…",
+  "homeSomethingWentWrong": "Something went wrong",
+  "homeTryAgain": "Try again",
+  "homeWelcomeToPacelli": "Welcome to Pacelli!",
+  "homeWelcomeSubtitle": "Your household tasks will appear here.\nLet's start by creating your household.",
+  "homeCreateHousehold": "Create Household",
+  "homeHouseholdSetUp": "Your household is set up!",
+  "homeTodaysOverview": "Today's Overview",
+  "homeCompleted": "Completed",
+  "homePending": "Pending",
+  "homeOverdue": "Overdue",
+  "homeRecentTasks": "Recent Tasks",
+  "homeViewAll": "View all",
+  "homeFailedToLoadTasks": "Failed to load tasks",
+  "homeNoTasksYet": "No tasks yet — they'll show up here once you create some!",
+  "homeCreateTask": "Create Task",
+  "homeCouldNotCompleteTask": "Could not complete task",
+  "homeDueToday": "Due today",
+  "homeDueTomorrow": "Due tomorrow",
+  "homeDueDate": "Due {date}",
+  "@homeDueDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "homeMyHousehold": "My Household",
+  "taskNewTask": "New Task",
+  "taskTitle": "Task title",
+  "taskTitleHint": "e.g. Clean the kitchen",
+  "taskEnterTitle": "Please enter a title",
+  "taskDescriptionOptional": "Description (optional)",
+  "taskDescriptionHint": "Add any details...",
+  "taskCategory": "Category",
+  "taskFailedToLoadCategories": "Failed to load categories",
+  "taskNewCategory": "New Category",
+  "taskCategoryName": "Category name",
+  "taskPriority": "Priority",
+  "taskPriorityLow": "Low",
+  "taskPriorityMedium": "Medium",
+  "taskPriorityHigh": "High",
+  "taskPriorityUrgent": "Urgent",
+  "taskStartsToday": "Starts: Today",
+  "taskStartsDate": "Starts: {date}",
+  "@taskStartsDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "taskNoDueDate": "No due date",
+  "taskDueDate": "Due: {date}",
+  "@taskDueDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "taskAssignTo": "Assign to",
+  "taskSharedTask": "Shared task (both of you)",
+  "taskSharedTaskSubtitle": "Anyone can complete it",
+  "taskFailedToLoadMembers": "Failed to load members",
+  "taskMeSuffix": "(me)",
+  "taskRepeat": "Repeat",
+  "taskRepeatNever": "Never",
+  "taskRepeatDaily": "Daily",
+  "taskRepeatWeekly": "Weekly",
+  "taskRepeatBiweekly": "Every 2 weeks",
+  "taskRepeatMonthly": "Monthly",
+  "taskSubtasks": "Subtasks",
+  "taskAddSubtaskHint": "Add a subtask...",
+  "taskDiscardTitle": "Discard task?",
+  "taskDiscardMessage": "You have unsaved changes. Are you sure you want to go back?",
+  "taskKeepEditing": "Keep editing",
+  "taskDiscard": "Discard",
+  "taskCreated": "Task created!",
+  "taskEditTask": "Edit Task",
+  "taskLoadingTask": "Loading task…",
+  "taskFailedToLoadTask": "Failed to load task",
+  "taskNoHousehold": "Task has no household",
+  "taskUpdated": "Task updated!",
+  "taskDetails": "Task Details",
+  "taskLoadingDetails": "Loading task details…",
+  "taskCouldNotLoadDetails": "Could not load task details.",
+  "taskDeleteTitle": "Delete task?",
+  "taskDeleteMessage": "This will permanently delete this task and all its subtasks.",
+  "taskStatusCompleted": "Completed",
+  "taskReopenTask": "Reopen Task",
+  "taskMarkComplete": "Mark Complete",
+  "taskLabelCategory": "Category",
+  "taskLabelStarts": "Starts",
+  "taskLabelDue": "Due",
+  "taskLabelAssignedTo": "Assigned to",
+  "taskSharedBoth": "Shared (both)",
+  "taskLabelRepeats": "Repeats",
+  "taskLabelCreatedBy": "Created by",
+  "taskRemoveAttachmentTitle": "Remove attachment?",
+  "taskRemoveAttachmentMessage": "Remove \"{fileName}\" from this task? The file will remain in Google Drive.",
+  "@taskRemoveAttachmentMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "taskRemove": "Remove",
+  "taskAttachFile": "Attach a file",
+  "taskAttachAfterSave": "You can attach files after saving the task.",
+  "taskPendingAttachments": "{count} {count, plural, =1{file} other{files}} ready to upload",
+  "@taskPendingAttachments": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "taskUploadingAttachments": "Uploading attachments…",
+  "tasksTitle": "Tasks",
+  "tasksCreateHouseholdFirst": "Create a household first",
+  "tasksFilterAll": "All",
+  "tasksFilterPending": "Pending",
+  "tasksFilterDone": "Done",
+  "tasksAllCategories": "All Categories",
+  "tasksMore": "More",
+  "tasksCouldNotLoad": "Could not load tasks.",
+  "tasksNoTasksYet": "No tasks yet.\nTap + to create one!",
+  "tasksAllCaughtUp": "All caught up!",
+  "tasksNoCompletedYet": "No completed tasks yet.",
+  "calendarTitle": "Calendar",
+  "calendarActivePlans": "Active plans",
+  "calendarNewPlan": "New Plan",
+  "calendarLoading": "Loading calendar…",
+  "calendarCouldNotLoad": "Could not load calendar.",
+  "calendarNoHousehold": "No household yet",
+  "calendarLoadingTasks": "Loading tasks…",
+  "calendarCouldNotLoadTasks": "Could not load tasks.",
+  "attachTitle": "Attach a File",
+  "attachPickFile": "Pick a file",
+  "attachPickFileSubtitle": "PDF, document, spreadsheet, or any file",
+  "attachTakePhoto": "Take a photo",
+  "attachTakePhotoSubtitle": "Open the camera",
+  "attachPickGallery": "Pick from gallery",
+  "attachPickGallerySubtitle": "Choose an existing photo",
+  "attachUploading": "Uploading file…",
+  "attachDriveNotSetUp": "Google Drive is not set up for this household. Ask the household admin to connect it.",
+  "attachDriveDisabled": "Google Drive storage is currently disabled.",
+  "attachSuccess": "File attached successfully!",
+  "attachUploadFailed": "Upload failed: {error}",
+  "@attachUploadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "checklistNewChecklist": "New Checklist",
+  "checklistHint": "e.g. Groceries, Travel Essentials",
+  "checklistAddItem": "Add Item",
+  "checklistItemName": "Item name",
+  "checklistDeleteTitle": "Delete Checklist?",
+  "checklistDeleteMessage": "This will delete the checklist and all its items.",
+  "checklistCouldNotCreate": "Could not create checklist",
+  "checklistCouldNotAdd": "Could not add item",
+  "checklistCouldNotUpdate": "Could not update item",
+  "checklistCouldNotPush": "Could not push item as task",
+  "checklistCouldNotDeleteItem": "Could not delete item",
+  "checklistCouldNotDeleteList": "Could not delete checklist",
+  "checklistAddedAsTask": "\"{title}\" added as task",
+  "@checklistAddedAsTask": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "checklistSectionTitle": "Checklists · {count}",
+  "@checklistSectionTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checklistNoChecklists": "No checklists yet",
+  "checklistBadgePlan": "Plan",
+  "checklistBadgeList": "List",
+  "checklistPushAsTask": "Push as Task",
+  "checklistCountProgress": "{checked}/{total}",
+  "@checklistCountProgress": {
+    "placeholders": {
+      "checked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "planNewPlan": "New Plan",
+  "planStartFromTemplate": "Start from a template",
+  "planWeeklyDinnerPlanner": "Weekly Dinner Planner",
+  "planWeeklyDinnerDescription": "7 dinners for the week — one per day",
+  "planOrStartFromScratch": "Or start from scratch",
+  "planTitle": "Plan title",
+  "planTitleHint": "e.g. Meal Prep Week, Holiday Trip",
+  "planGiveItAName": "Give it a name",
+  "planTypeWeek": "Week",
+  "planTypeMonth": "Month",
+  "planTypeCustom": "Custom",
+  "planCreatePlan": "Create Plan",
+  "planFailedToCreate": "Failed to create plan: {error}",
+  "@planFailedToCreate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planSelectDates": "Select start and end dates",
+  "planConfirm": "Confirm",
+  "planDaysCount": "{count} days",
+  "@planDaysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planStartsDate": "Starts: {date}",
+  "@planStartsDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "planTemplateEntries": "{type} plan • {count} entries",
+  "@planTemplateEntries": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planLoadingPlan": "Loading plan…",
+  "planCouldNotLoad": "Could not load plan.",
+  "planInvalidMissingDates": "Invalid plan: missing dates",
+  "planInvalidUnreadableDates": "Invalid plan: unreadable dates",
+  "planSaveAsTemplate": "Save as Template",
+  "planTemplateName": "Template name",
+  "planFinalise": "Finalise",
+  "planFinalisedChip": "Finalised",
+  "planTapToAdd": "Tap + to add meals, activities, or anything you're planning.",
+  "planChecklist": "Checklist",
+  "planAddItemHint": "Add item...",
+  "planNoItemsYet": "No items yet. Add things you need to buy or do.",
+  "planTemplateSaved": "Template \"{name}\" saved!",
+  "@planTemplateSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "planFailedToSaveTemplate": "Failed to save template: {error}",
+  "@planFailedToSaveTemplate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planFailedToAddItem": "Failed to add item: {error}",
+  "@planFailedToAddItem": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planFinalisePlan": "Finalise Plan",
+  "planLoadingEntries": "Loading plan entries…",
+  "planPushToCalendar": "Push to Calendar?",
+  "planPushSummary": "{tasks} task(s) and {notes} note(s) will be created.\n\nSkipped entries won't be added to the calendar.",
+  "@planPushSummary": {
+    "placeholders": {
+      "tasks": {
+        "type": "int"
+      },
+      "notes": {
+        "type": "int"
+      }
+    }
+  },
+  "planPushToCalendarButton": "Push to Calendar",
+  "planFinalisedSuccess": "Plan Finalised!",
+  "planEntriesPushed": "Your entries have been pushed to the calendar.",
+  "planViewCalendar": "View Calendar",
+  "planFailedToFinalise": "Failed to finalise: {error}",
+  "@planFailedToFinalise": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planNoEntriesToFinalise": "No entries to finalise.",
+  "planGoBack": "Go Back",
+  "planInfoBanner": "Choose what each entry becomes on your calendar. Tasks can be assigned and completed. Notes are lightweight reminders.",
+  "planActionTask": "Task",
+  "planActionNote": "Note",
+  "planActionSkip": "Skip",
+  "planLoadingDay": "Loading day entries…",
+  "planCouldNotLoadDay": "Could not load day entries.",
+  "planFailedToAdd": "Failed to add: {error}",
+  "@planFailedToAdd": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planFailedToDelete": "Failed to delete: {error}",
+  "@planFailedToDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planNewLabel": "New Label",
+  "planLabelHint": "e.g. Dessert, Outing",
+  "planEditEntry": "Edit Entry",
+  "planWhatsPlanned": "What's planned?",
+  "planCustomLabel": "Custom",
+  "planWhatsForLabel": "What's for {label}?",
+  "@planWhatsForLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "planAddNeedsFor": "Add needs for \"{entry}\"",
+  "@planAddNeedsFor": {
+    "placeholders": {
+      "entry": {
+        "type": "String"
+      }
+    }
+  },
+  "planNeedsHint": "e.g. pasta, mince, tomatoes",
+  "planNeedsHelper": "Separate with commas",
+  "planAddToList": "Add to List",
+  "planItemsAddedToChecklist": "{count} item(s) added to checklist",
+  "@planItemsAddedToChecklist": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planFailedToUpdate": "Failed to update: {error}",
+  "@planFailedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "planAddToChecklist": "Add to checklist",
+  "planEdit": "Edit",
+  "planLabelDinner": "Dinner",
+  "planLabelBreakfast": "Breakfast",
+  "planLabelLunch": "Lunch",
+  "planLabelSnack": "Snack",
+  "planLabelActivity": "Activity",
+  "planLabelTransport": "Transport",
+  "planLabelAccommodation": "Accommodation",
+  "householdCreateTitle": "Create Household",
+  "householdNameYour": "Name your household",
+  "householdNameSubtitle": "This is what you and your partner will see.\nYou can change it anytime.",
+  "householdNameLabel": "Household name",
+  "householdNameHint": "e.g. The Celis Home",
+  "householdEnterName": "Please enter a name for your household",
+  "householdNameMinLength": "Name must be at least 2 characters",
+  "householdCreateButton": "Create Household",
+  "householdCreated": "Household created! Welcome home.",
+  "householdCreateFailed": "Failed to create household. Please try again.",
+  "householdTitle": "Household",
+  "householdLoading": "Loading household…",
+  "householdCouldNotLoad": "Could not load household.",
+  "householdNotFound": "No household found.",
+  "householdMyHousehold": "My Household",
+  "householdRoleAdmin": "You are the admin",
+  "householdRoleMember": "You are a member",
+  "householdMembers": "Members",
+  "householdLoadingMembers": "Loading members…",
+  "householdCouldNotLoadMembers": "Could not load members. Pull down to retry.",
+  "householdYouSuffix": "(You)",
+  "householdRoleAdminLabel": "Admin",
+  "householdRoleMemberLabel": "Member",
+  "householdStorageSection": "Storage",
+  "householdFileStorage": "File Storage",
+  "householdFileStorageSubtitle": "Attach files to tasks via Google Drive",
+  "householdInvitePartner": "Invite Partner",
+  "householdInviteMessage": "Send an invite to your partner's email. They'll be added to your household when they sign up or log in.",
+  "householdPartnerEmail": "Partner's email",
+  "householdPartnerEmailHint": "partner@example.com",
+  "householdInvite": "Invite",
+  "householdInviteValidEmail": "Please enter a valid email address.",
+  "householdInviteSent": "Invite sent to {email}! They'll see the household when they sign up.",
+  "@householdInviteSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "householdInviteFailed": "Failed to send invite. Please try again.",
+  "driveTitle": "File Storage",
+  "driveConnected": "Google Drive Connected",
+  "driveConnect": "Connect Google Drive",
+  "driveConnectedSubtitle": "Household files are stored in your Google Drive.",
+  "driveConnectSubtitle": "Store photos, documents, and other files alongside your household tasks.",
+  "driveHowItWorks": "HOW IT WORKS",
+  "driveInfoFolder": "A \"Pacelli\" folder is created in your Google Drive.",
+  "driveInfoAttach": "Attach photos, PDFs, or spreadsheets to any task.",
+  "driveInfoMembers": "Household members can view attached files via links.",
+  "driveInfoQuota": "Files use YOUR Google Drive quota — no extra costs.",
+  "drivePrivacyNote": "Pacelli only accesses files it creates. It cannot see or modify your other Drive files.",
+  "driveStorageActive": "Drive storage is active",
+  "driveCanAttachNow": "You can now attach files to tasks.",
+  "drivePacelliFolder": "Pacelli folder in Google Drive",
+  "driveDisconnectTitle": "Disconnect Drive?",
+  "driveDisconnectMessage": "Existing file attachments will still be accessible via their links, but you won't be able to upload new files until you reconnect.",
+  "driveDisconnect": "Disconnect",
+  "driveConnectButton": "Connect Google Drive",
+  "driveDisconnectButton": "Disconnect Google Drive",
+  "driveAdminOnly": "Only the household admin can connect or disconnect Google Drive storage.",
+  "driveAccessNotGranted": "Drive access was not granted. Please try again.",
+  "driveConnectedSuccess": "Google Drive connected successfully!",
+  "driveConnectFailed": "Failed to connect Google Drive: {error}",
+  "@driveConnectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveDisconnected": "Google Drive disconnected.",
+  "driveDisconnectFailed": "Failed to disconnect: {error}",
+  "@driveDisconnectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsHousehold": "Household",
+  "settingsHouseholdSubtitle": "Manage household & members",
+  "settingsNotifications": "Notifications",
+  "settingsNotificationsSubtitle": "Reminders & alerts",
+  "settingsPrivacy": "Privacy & Encryption",
+  "settingsPrivacySubtitle": "How your data is protected",
+  "settingsDataStorage": "Data Storage",
+  "settingsAppearance": "Appearance",
+  "settingsAppearanceSubtitle": "Theme & display",
+  "settingsAbout": "About Pacelli",
+  "settingsAboutVersion": "Version 1.0.0",
+  "settingsSignOut": "Sign Out",
+  "settingsSignOutFailed": "Failed to log out. Please try again.",
+  "settingsComingSoon": "{feature} settings are coming in a future update. Stay tuned!",
+  "@settingsComingSoon": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutDescription": "Pacelli helps your household stay organised — tasks, plans, checklists, and more, all in one place.",
+  "settingsDataStorageTitle": "Data Storage",
+  "settingsCurrentBackend": "Current backend:",
+  "settingsBackendLocal": "On This Device (SQLite)",
+  "settingsBackendCloud": "Cloud Sync (Firebase)",
+  "settingsEndToEndEncrypted": "End-to-end encrypted",
+  "settingsSwitchBackend": "To switch backends, tap \"Change\" below. Note: existing data will not be migrated automatically.",
+  "settingsDangerZone": "DANGER ZONE",
+  "settingsBurnAllData": "Burn All My Data",
+  "settingsBurnExplanation": "Permanently delete all your data, saved settings, and sign out. This cannot be undone.",
+  "settingsBurnTitle": "Destroy All Data?",
+  "settingsBurnWillDelete": "This will permanently delete:",
+  "settingsBurnTasks": "All tasks, plans, and checklists",
+  "settingsBurnCategories": "All categories and settings",
+  "settingsBurnLocalDb": "Local database (if used)",
+  "settingsBurnCloudData": "Cloud data (if using Cloud Sync)",
+  "settingsBurnKeys": "Encryption keys and saved preferences",
+  "settingsBurnCredentials": "Your username & password (full sign-out)",
+  "settingsBurnSession": "Your session — you'll need to log in again",
+  "settingsBurnIrreversible": "This action is irreversible. There is no way to recover your data after this.",
+  "settingsBurnEverything": "Burn Everything",
+  "privacyTitle": "Privacy & Encryption",
+  "privacyE2ETitle": "End-to-End Encrypted",
+  "privacyE2ESubtitle": "AES-256 encryption — the same standard used by banks and governments.",
+  "privacyHowProtected": "How your data is protected",
+  "privacyAllContent": "All your personal content — task names, descriptions, plan titles, checklist items, your household name — is end-to-end encrypted before it leaves your device.",
+  "privacyOnlyYou": "Only you and your household members can read your data. Not even the app developers can see it.",
+  "privacyWhatEncrypted": "What is encrypted",
+  "privacyTaskTitles": "Task titles and descriptions",
+  "privacySubtaskTitles": "Subtask titles",
+  "privacyChecklistTitles": "Checklist and checklist item titles",
+  "privacyPlanTitles": "Plan titles, entry titles, labels, and descriptions",
+  "privacyCategoryNames": "Category names",
+  "privacyHouseholdName": "Household name",
+  "privacyDisplayName": "Your display name",
+  "privacyAttachmentNames": "File attachment names and descriptions",
+  "privacyAttachmentMetadata": "Attachment metadata (file type, links, thumbnails)",
+  "privacyWhatNotEncrypted": "What is not encrypted",
+  "privacyTaskStatus": "Task status (pending, completed, etc.)",
+  "privacyPriorityLevels": "Priority levels (low, medium, high, urgent)",
+  "privacyDueDates": "Due dates and timestamps",
+  "privacyCheckedStatus": "Whether items are checked or completed",
+  "privacySortOrder": "Sort order and display settings",
+  "privacyCategoryIcons": "Category icons and colours",
+  "privacyFileAttachments": "File attachments (Google Drive)",
+  "privacyDriveExplanation": "Files you attach to tasks are stored in the household owner's Google Drive, in a dedicated \"Pacelli\" folder. File names and descriptions are encrypted in Pacelli's database, but the actual files in Google Drive are protected by Google's own security — not Pacelli's E2E encryption.",
+  "privacyDriveAccess": "Household members access files via shareable view-only links. The files are stored using the owner's Google Drive storage quota — no extra costs for the app.",
+  "privacyWhyNotEncrypted": "Why some fields aren't encrypted",
+  "privacyWhyExplanation": "These structural fields are needed for the app to filter, sort, and organise your data on the server. They don't contain personal information — they're labels like \"completed\" or \"high priority\", not your actual content.",
+  "privacyYourControl": "Your data, your control",
+  "privacyDeleteAll": "You can delete ALL your data at any time using \"Burn All My Data\" in Settings. When you delete your data, the encrypted content is permanently removed from our servers.",
+  "privacyKeyGeneration": "Your encryption key is generated on your device and never stored in readable form on the server. Each household member receives their own encrypted copy of the shared key.",
+  "storageWhereDataLive": "Where should your data live?",
+  "storageSubtitle": "Your tasks, plans, and checklists are yours. Choose where to keep them.",
+  "storageOnDevice": "On This Device",
+  "storageOnDeviceDescription": "Data stays on your phone. No cloud, no sync, full privacy.",
+  "storageCloudSync": "Cloud Sync",
+  "storageCloudSyncDescription": "Multi-device sync in real time. All your content is end-to-end encrypted.",
+  "storageRecommended": "Recommended",
+  "storagePrivacyNote": "Cloud Sync uses AES-256 end-to-end encryption. Your personal content (task names, descriptions, checklist items) is encrypted on your device before it ever leaves. Not even we can read it.",
+  "storageFailedLocal": "Failed to set up local storage: {error}",
+  "@storageFailedLocal": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "storageFailedCloud": "Failed to set up cloud sync: {error}",
+  "@storageFailedCloud": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDefault": "Something went wrong.\nPlease try again.",
+  "taskRecurrenceDaily": "Daily",
+  "taskRecurrenceWeekly": "Weekly",
+  "taskRecurrenceBiweekly": "Every 2 weeks",
+  "taskRecurrenceMonthly": "Monthly",
+  "taskSubtaskProgress": "{completed}/{total}",
+  "@taskSubtaskProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "taskNew": "New",
+  "commonNew": "New",
+  "commonOK": "OK",
+  "taskAddSubtask": "Add a subtask...",
+  "taskDescription": "Description (optional)",
+  "taskLabelAssignTo": "Assign to",
+  "taskLabelPriority": "Priority",
+  "taskLabelRepeat": "Repeat",
+  "taskRecurrenceNone": "Never",
+  "taskUnassigned": "Unassigned",
+  "tasksFailedToLoadHousehold": "Failed to load household",
+  "tasksLoadingHousehold": "Loading household…",
+
+  "navHome": "Home",
+  "navTasks": "Tasks",
+  "navCalendar": "Calendar",
+  "navSettings": "Settings",
+
+  "priorityUrgent": "Urgent",
+  "priorityHigh": "High",
+  "priorityMedium": "Medium",
+  "priorityLow": "Low",
+  "priorityNone": "None",
+
+  "recurrenceDaily": "Daily",
+  "recurrenceWeekly": "Weekly",
+  "recurrenceEveryTwoWeeks": "Every 2 weeks",
+  "recurrenceMonthly": "Monthly",
+  "recurrenceNever": "Never",
+
+  "calendarTasksSectionTitle": "Tasks · {dayLabel} · {count}",
+  "@calendarTasksSectionTitle": {
+    "placeholders": {
+      "dayLabel": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "calendarNoTasksOnDay": "No tasks on this day",
+  "calendarPlansSectionTitle": "Plans · {count}",
+  "@calendarPlansSectionTitle": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "calendarNoDraftPlans": "No draft plans",
+  "calendarPlanEntries": "{count} entries",
+  "@calendarPlanEntries": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "calendarChecklistItems": "{count} checklist items",
+  "@calendarChecklistItems": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "settingsBurnDriveWarning": "Heads up — this won't delete your Pacelli folder in Google Drive or any files on your device. You'll need to remove those manually if you'd like.",
+  "settingsBurnDriveWarningShort": "Files in Google Drive or local storage must be deleted manually.",
+
+  "burnStatusBurning": "Burning your data...",
+  "burnStatusDestroying": "Destroying your data...",
+  "burnStatusClearingLocal": "Clearing local storage...",
+  "burnStatusClearingKeys": "Clearing encryption keys...",
+  "burnStatusSigningOut": "Signing out...",
+  "burnStatusRemovingSettings": "Removing saved settings...",
+  "burnStatusComplete": "All data destroyed.",
+  "burnStatusError": "Something went wrong. Please try again.",
+
+  "appearanceTitle": "Appearance",
+  "appearanceThemeMode": "Theme mode",
+  "appearanceThemeModeSubtitle": "Choose light, dark, or follow your device settings",
+  "appearanceModeSystem": "Auto",
+  "appearanceModeLight": "Light",
+  "appearanceModeDark": "Dark",
+  "appearanceColorScheme": "Colour scheme",
+  "appearanceColorSchemeSubtitle": "Pick a palette that suits you",
+  "appearanceSchemePacelli": "Pacelli",
+  "appearanceSchemePacelliDesc": "Sage green & terracotta",
+  "appearanceSchemeClaude": "Claude",
+  "appearanceSchemeClaudeDesc": "Warm purple & coral",
+  "appearanceSchemeGemini": "Gemini",
+  "appearanceSchemeGeminiDesc": "Ocean blue & coral",
+
+  "attachCount": "Attachments ({count})",
+  "@attachCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "attachInvalidLink": "Invalid link.",
+  "attachCouldNotOpen": "Could not open file.",
+  "attachRemoveTooltip": "Remove attachment",
+  "planAttachFile": "Attach a file",
+  "planRemoveAttachmentTitle": "Remove attachment?",
+  "planRemoveAttachmentMessage": "Remove \"{fileName}\" from this entry? The file will remain in Google Drive.",
+  "@planRemoveAttachmentMessage": {
+    "placeholders": {
+      "fileName": {"type": "String"}
+    }
+  },
+  "planAttachmentCount": "{count} {count, plural, =1{file} other{files}}",
+  "@planAttachmentCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
+}

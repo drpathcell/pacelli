@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
-import '../../../../core/services/supabase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/household_providers.dart';
 import '../../data/household_service.dart';
@@ -28,7 +33,7 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
   Future<void> _handleInvite(String householdId) async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.isValidEmail) {
-      context.showSnackBar('Please enter a valid email address.', isError: true);
+      context.showSnackBar(context.l10n.householdInviteValidEmail, isError: true);
       return;
     }
 
@@ -44,7 +49,7 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
 
       if (mounted) {
         context.showSnackBar(
-          'Invite sent to $email! They\'ll see the household when they sign up.',
+          context.l10n.householdInviteSent(email),
         );
         // Refresh members list
         ref.invalidate(householdMembersProvider(householdId));
@@ -52,7 +57,7 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Failed to send invite. Please try again.',
+          context.l10n.householdInviteFailed,
           isError: true,
         );
       }
@@ -67,16 +72,17 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Household'),
+        title: Text(context.l10n.householdTitle),
       ),
       body: householdAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text('Error loading household: $e'),
+        loading: () => LoadingView(message: context.l10n.householdLoading),
+        error: (e, _) => ErrorView(
+          message: context.l10n.householdCouldNotLoad,
+          onRetry: () => ref.invalidate(currentHouseholdProvider),
         ),
         data: (data) {
           if (data == null) {
-            return const Center(child: Text('No household found.'));
+            return Center(child: Text(context.l10n.householdNotFound));
           }
 
           final household = data['household'] as Map<String, dynamic>;
@@ -134,12 +140,12 @@ class _HouseholdContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  household['name'] ?? 'My Household',
+                  household['name'] ?? context.l10n.householdMyHousehold,
                   style: context.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'You are ${role == 'admin' ? 'the admin' : 'a member'}',
+                  role == 'admin' ? context.l10n.householdRoleAdmin : context.l10n.householdRoleMember,
                   style: context.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondaryLight,
                   ),
@@ -152,27 +158,28 @@ class _HouseholdContent extends ConsumerWidget {
 
         // Members section
         Text(
-          'Members',
+          context.l10n.householdMembers,
           style: context.textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
 
         membersAsync.when(
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(),
-            ),
+          loading: () => Padding(
+            padding: const EdgeInsets.all(20),
+            child: LoadingView(message: context.l10n.householdLoadingMembers),
           ),
-          error: (e, _) => Text('Error loading members: $e'),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(context.l10n.householdCouldNotLoadMembers),
+          ),
           data: (members) {
             return Column(
               children: members.map((member) {
                 final profile =
                     member['profiles'] as Map<String, dynamic>? ?? {};
-                final name = profile['full_name'] ?? 'Unknown';
+                final name = profile['full_name'] ?? context.l10n.commonUnknown;
                 final memberRole = member['role'] ?? 'member';
-                final isCurrentUser = member['user_id'] == currentUserId;
+                final isCurrentUser = member['user_id'] == FirebaseAuth.instance.currentUser?.uid;
 
                 return Card(
                   child: ListTile(
@@ -190,11 +197,11 @@ class _HouseholdContent extends ConsumerWidget {
                       ),
                     ),
                     title: Text(
-                      '$name${isCurrentUser ? ' (You)' : ''}',
+                      '$name${isCurrentUser ? ' ${context.l10n.householdYouSuffix}' : ''}',
                       style: context.textTheme.titleMedium,
                     ),
                     subtitle: Text(
-                      memberRole == 'admin' ? 'Admin' : 'Member',
+                      memberRole == 'admin' ? context.l10n.householdRoleAdminLabel : context.l10n.householdRoleMemberLabel,
                       style: context.textTheme.bodyMedium,
                     ),
                   ),
@@ -206,15 +213,56 @@ class _HouseholdContent extends ConsumerWidget {
 
         const SizedBox(height: 24),
 
+        // ── Storage section ──
+        Text(
+          context.l10n.householdStorageSection,
+          style: context.textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+
+        // Data Storage card — shows current backend (local vs cloud).
+        _DataStorageCard(householdId: householdId),
+        const SizedBox(height: 8),
+
+        // File Storage card — Google Drive integration.
+        Card(
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor:
+                  context.colorScheme.primary.withOpacity(0.1),
+              child: Icon(
+                Icons.cloud_outlined,
+                color: context.colorScheme.primary,
+              ),
+            ),
+            title: Text(
+              context.l10n.householdFileStorage,
+              style: context.textTheme.titleMedium,
+            ),
+            subtitle: Text(
+              context.l10n.householdFileStorageSubtitle,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondaryLight,
+              ),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+            onTap: () => context.push(
+              AppRoutes.driveSetup,
+              extra: householdId,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
         // Invite section (only for admins)
         if (role == 'admin') ...[
           Text(
-            'Invite Partner',
+            context.l10n.householdInvitePartner,
             style: context.textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Send an invite to your partner\'s email. They\'ll be added to your household when they sign up or log in.',
+            context.l10n.householdInviteMessage,
             style: context.textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondaryLight,
             ),
@@ -227,10 +275,10 @@ class _HouseholdContent extends ConsumerWidget {
                 child: TextFormField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Partner\'s email',
-                    hintText: 'partner@example.com',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.householdPartnerEmail,
+                    hintText: context.l10n.householdPartnerEmailHint,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                 ),
               ),
@@ -250,12 +298,71 @@ class _HouseholdContent extends ConsumerWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Invite'),
+                    : Text(context.l10n.householdInvite),
               ),
             ],
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Card showing current data backend (local vs cloud) with option to change.
+class _DataStorageCard extends ConsumerWidget {
+  final String householdId;
+  const _DataStorageCard({required this.householdId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final db = ref.watch(localDatabaseProvider);
+    final isLocal = db != null;
+    final backendLabel =
+        isLocal ? context.l10n.settingsBackendLocal : context.l10n.settingsBackendCloud;
+    final icon = isLocal ? Icons.phone_iphone_rounded : Icons.cloud_sync_outlined;
+
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: context.colorScheme.primary.withOpacity(0.1),
+          child: Icon(icon, color: context.colorScheme.primary),
+        ),
+        title: Text(
+          context.l10n.settingsDataStorage,
+          style: context.textTheme.titleMedium,
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              backendLabel,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondaryLight,
+              ),
+            ),
+            if (!isLocal) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.lock_outline_rounded,
+                      size: 12, color: AppColors.success),
+                  const SizedBox(width: 4),
+                  Text(
+                    context.l10n.settingsEndToEndEncrypted,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: AppColors.success,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+        onTap: () => context.push(AppRoutes.storageSetup),
+      ),
     );
   }
 }

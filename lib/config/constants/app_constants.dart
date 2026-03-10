@@ -1,19 +1,17 @@
 /// App-wide constants.
-///
-/// IMPORTANT: Replace the Supabase values below with your actual
-/// project credentials from Settings → API in your Supabase dashboard.
 class AppConstants {
   AppConstants._(); // Prevent instantiation
 
-  // ── Supabase ──────────────────────────────────────────────
-  static const String supabaseUrl = 'https://cgctdslvswicttaqnkea.supabase.co';
-  static const String supabaseAnonKey = 'sb_publishable_mYnrzNBfNw-EIpCx8ATmfw_IjH6o324';
-
-  // ── Google OAuth ────────────────────────────────────────────
+  // ── Google OAuth (Firebase project: pacelli-35621) ─────────
+  /// Web client ID — required as `serverClientId` for GoogleSignIn.
+  /// Find in Firebase Console → Authentication → Sign-in method →
+  /// Google → Web SDK configuration → Web client ID.
   static const String googleWebClientId =
-      '385951935537-ifsoc4s8hoe748uqpcu8fnhbatup84cv.apps.googleusercontent.com';
+      '506154778945-3iuom6m8sgd6aqj8pcum9v9744tnojt3.apps.googleusercontent.com';
+
+  /// iOS client ID — from GoogleService-Info.plist CLIENT_ID field.
   static const String googleiOSClientId =
-      '385951935537-ihda7pim8nn73vdlhj3eehb35doa4nrf.apps.googleusercontent.com';
+      '506154778945-68ta2sjllehr81l6ubl34e8htfcgtfig.apps.googleusercontent.com';
 
   // ── App Info ──────────────────────────────────────────────
   static const String appName = 'Pacelli';

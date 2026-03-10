@@ -1,16 +1,12 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../config/constants/app_constants.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
-import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/extensions.dart';
 
 /// Signup screen — Google Sign-In + email/password registration.
@@ -46,9 +42,6 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isGoogleLoading = true);
 
     try {
-      final rawNonce = _generateRandomString();
-      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-
       final googleSignIn = GoogleSignIn(
         clientId: AppConstants.googleiOSClientId,
         serverClientId: AppConstants.googleWebClientId,
@@ -68,12 +61,23 @@ class _SignupScreenState extends State<SignupScreen> {
         throw Exception('No ID token received from Google');
       }
 
-      await supabase.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
+      // Sign in to Firebase with the Google credential.
+      final credential = GoogleAuthProvider.credential(
         idToken: idToken,
         accessToken: accessToken,
-        nonce: rawNonce,
       );
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Create a profile doc in Firestore for new Google users.
+      final user = userCredential.user;
+      if (user != null && userCredential.additionalUserInfo?.isNewUser == true) {
+        await FirebaseFirestore.instance.collection('profiles').doc(user.uid).set({
+          'full_name': user.displayName ?? '',
+          'avatar_url': user.photoURL ?? '',
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+      }
 
       if (mounted) {
         context.go(AppRoutes.home);
@@ -81,21 +85,13 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Google sign-in failed. Please try again.',
+          context.l10n.authGoogleSignInFailed,
           isError: true,
         );
       }
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
-  }
-
-  String _generateRandomString([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
   }
 
   // ── Email/Password Sign-Up ──────────────────────────────────
@@ -106,22 +102,37 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await supabase.auth.signUp(
+      // Create the Firebase Auth account.
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        data: {
-          'full_name': _nameController.text.trim(),
-        },
       );
 
+      // Set the display name on the Auth profile.
+      await userCredential.user?.updateDisplayName(
+        _nameController.text.trim(),
+      );
+
+      // Create a Firestore profile doc (full_name will be encrypted later
+      // once the user joins/creates a household and has a household key).
+      final uid = userCredential.user?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection('profiles').doc(uid).set({
+          'full_name': _nameController.text.trim(),
+          'avatar_url': '',
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+      }
+
       if (mounted) {
-        context.showSnackBar('Account created! Welcome to Pacelli.');
+        context.showSnackBar(context.l10n.authAccountCreated);
         context.go(AppRoutes.home);
       }
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Signup failed. Please try again.',
+          context.l10n.authSignupFailed,
           isError: true,
         );
       }
@@ -153,12 +164,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
               // Header
               Text(
-                'Create account',
+                context.l10n.authCreateAccount,
                 style: context.textTheme.displayLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                'Start organising your home with love',
+                context.l10n.authStartOrganising,
                 style: context.textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondaryLight,
                 ),
@@ -179,7 +190,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'or sign up with email',
+                      context.l10n.authOrSignUpWithEmail,
                       style: context.textTheme.bodyMedium,
                     ),
                   ),
@@ -198,13 +209,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _nameController,
                       textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Full name',
-                        prefixIcon: Icon(Icons.person_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.authFullName,
+                        prefixIcon: const Icon(Icons.person_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your name';
+                          return context.l10n.authEnterName;
                         }
                         return null;
                       },
@@ -216,16 +227,16 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.authEmail,
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return context.l10n.authEnterEmail;
                         }
                         if (!value.trim().isValidEmail) {
-                          return 'Please enter a valid email';
+                          return context.l10n.authEnterValidEmail;
                         }
                         return null;
                       },
@@ -237,7 +248,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: context.l10n.authPassword,
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -253,10 +264,10 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return context.l10n.authEnterAPassword;
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return context.l10n.authPasswordMin8;
                         }
                         return null;
                       },
@@ -267,13 +278,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm password',
-                        prefixIcon: Icon(Icons.lock_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.authConfirmPassword,
+                        prefixIcon: const Icon(Icons.lock_outlined),
                       ),
                       validator: (value) {
                         if (value != _passwordController.text) {
-                          return 'Passwords do not match';
+                          return context.l10n.authPasswordsDoNotMatch;
                         }
                         return null;
                       },
@@ -292,7 +303,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Create Account'),
+                          : Text(context.l10n.authCreateAccountButton),
                     ),
                   ],
                 ),
@@ -304,13 +315,13 @@ class _SignupScreenState extends State<SignupScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account? ',
+                    context.l10n.authAlreadyHaveAccount,
                     style: context.textTheme.bodyMedium,
                   ),
                   GestureDetector(
                     onTap: () => context.go(AppRoutes.login),
                     child: Text(
-                      'Sign In',
+                      context.l10n.authSignIn,
                       style: context.textTheme.bodyMedium?.copyWith(
                         color: context.colorScheme.primary,
                         fontWeight: FontWeight.w600,
@@ -378,9 +389,9 @@ class _GoogleSignInButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Continue with Google',
-                  style: TextStyle(
+                Text(
+                  context.l10n.authContinueWithGoogle,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),

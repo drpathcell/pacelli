@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "506154778945",
+    "project_id": "pacelli-35621",
+    "storage_bucket": "pacelli-35621.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506154778945:android:ba0477f9d6bd70278fe1c0",
+        "android_client_info": {
+          "package_name": "com.pacelli.pacelli"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "506154778945-3iuom6m8sgd6aqj8pcum9v9744tnojt3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1NQssyQ7pK0qylIJkzBl9gxbGgGO7dqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "506154778945-3iuom6m8sgd6aqj8pcum9v9744tnojt3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "506154778945-68ta2sjllehr81l6ubl34e8htfcgtfig.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.pacelli.pacelli"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

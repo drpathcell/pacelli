@@ -1,11 +1,23 @@
+import 'dart:math';
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
+import 'package:flutter/services.dart';
+
+import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/task_providers.dart';
-import '../../data/task_service.dart';
+import '../../../../core/data/data_repository_provider.dart';
+import '../../utils/task_helpers.dart';
+import '../widgets/attachment_list.dart'
+    show AttachmentList, AttachmentDisplayItem;
+import '../widgets/attachment_picker.dart';
 
 /// Screen showing full task details with subtasks.
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -19,86 +31,29 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
 
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   final _subtaskController = TextEditingController();
+  late final ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 2));
+  }
 
   @override
   void dispose() {
     _subtaskController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
-  Color _priorityColor(String? priority) {
-    switch (priority) {
-      case 'urgent':
-        return AppColors.error;
-      case 'high':
-        return const Color(0xFFE88B5A);
-      case 'medium':
-        return AppColors.warning;
-      case 'low':
-        return AppColors.info;
-      default:
-        return AppColors.textSecondaryLight;
-    }
-  }
-
-  String _priorityLabel(String? priority) {
-    switch (priority) {
-      case 'urgent':
-        return 'Urgent';
-      case 'high':
-        return 'High';
-      case 'medium':
-        return 'Medium';
-      case 'low':
-        return 'Low';
-      default:
-        return 'None';
-    }
-  }
-
-  String _recurrenceLabel(String? recurrence) {
-    switch (recurrence) {
-      case 'daily':
-        return 'Daily';
-      case 'weekly':
-        return 'Weekly';
-      case 'biweekly':
-        return 'Every 2 weeks';
-      case 'monthly':
-        return 'Monthly';
-      default:
-        return 'Never';
-    }
-  }
-
-  IconData _categoryIcon(String? iconName) {
-    switch (iconName) {
-      case 'cleaning_services':
-        return Icons.cleaning_services;
-      case 'restaurant':
-        return Icons.restaurant;
-      case 'shopping_cart':
-        return Icons.shopping_cart;
-      case 'local_laundry_service':
-        return Icons.local_laundry_service;
-      case 'receipt_long':
-        return Icons.receipt_long;
-      case 'build':
-        return Icons.build;
-      case 'directions_run':
-        return Icons.directions_run;
-      case 'more_horiz':
-        return Icons.more_horiz;
-      default:
-        return Icons.category;
-    }
-  }
+  // Using shared helpers from task_helpers.dart
 
   Future<void> _addSubtask() async {
     final text = _subtaskController.text.trim();
     if (text.isEmpty) return;
 
-    await TaskService.addSubtask(taskId: widget.taskId, title: text);
+    await ref.read(dataRepositoryProvider).addSubtask(taskId: widget.taskId, title: text);
     _subtaskController.clear();
     ref.invalidate(taskDetailProvider(widget.taskId));
   }
@@ -108,12 +63,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final taskAsync = ref.watch(taskDetailProvider(widget.taskId));
 
     return taskAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: LoadingView(message: context.l10n.taskLoadingDetails),
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text('Error: $e')),
+        body: ErrorView(
+          message: context.l10n.taskCouldNotLoadDetails,
+          onRetry: () => ref.invalidate(taskDetailProvider(widget.taskId)),
+        ),
       ),
       data: (task) {
         final isCompleted = task['status'] == 'completed';
@@ -125,6 +83,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         final recurrence = task['recurrence'] as String?;
         final description = task['description'] as String?;
         final householdId = task['household_id'] as String;
+
+        final startDateStr = task['start_date'] as String?;
+        DateTime? startDate;
+        if (startDateStr != null) startDate = DateTime.tryParse(startDateStr);
 
         final dueDateStr = task['due_date'] as String?;
         DateTime? dueDate;
@@ -139,10 +101,18 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         final completedSubtasks =
             subtasks.where((s) => s['is_completed'] == true).length;
 
-        return Scaffold(
+        return Stack(
+          children: [
+            Scaffold(
           appBar: AppBar(
-            title: const Text('Task Details'),
+            title: Text(context.l10n.taskDetails),
             actions: [
+              // Edit
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () =>
+                    context.push('${AppRoutes.tasks}/${widget.taskId}/edit'),
+              ),
               // Delete
               IconButton(
                 icon: const Icon(Icons.delete_outline),
@@ -150,24 +120,23 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Delete task?'),
-                      content: const Text(
-                          'This will permanently delete this task and all its subtasks.'),
+                      title: Text(context.l10n.taskDeleteTitle),
+                      content: Text(context.l10n.taskDeleteMessage),
                       actions: [
                         TextButton(
                           onPressed: () => ctx.pop(false),
-                          child: const Text('Cancel'),
+                          child: Text(context.l10n.commonCancel),
                         ),
                         TextButton(
                           onPressed: () => ctx.pop(true),
-                          child: const Text('Delete',
-                              style: TextStyle(color: AppColors.error)),
+                          child: Text(context.l10n.commonDelete,
+                              style: const TextStyle(color: AppColors.error)),
                         ),
                       ],
                     ),
                   );
                   if (confirm == true && mounted) {
-                    await TaskService.deleteTask(widget.taskId);
+                    await ref.read(dataRepositoryProvider).deleteTask(widget.taskId);
                     ref.invalidate(householdTasksProvider(householdId));
                     ref.invalidate(taskStatsProvider(householdId));
                     if (mounted) context.pop();
@@ -182,10 +151,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               padding: const EdgeInsets.all(16),
               child: ElevatedButton.icon(
                 onPressed: () async {
+                  HapticFeedback.mediumImpact();
                   if (isCompleted) {
-                    await TaskService.reopenTask(widget.taskId);
+                    await ref.read(dataRepositoryProvider).reopenTask(widget.taskId);
                   } else {
-                    await TaskService.completeTask(widget.taskId);
+                    await ref.read(dataRepositoryProvider).completeTask(widget.taskId);
+                    _confettiController.play();
                   }
                   ref.invalidate(taskDetailProvider(widget.taskId));
                   ref.invalidate(householdTasksProvider(householdId));
@@ -194,7 +165,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 icon: Icon(isCompleted
                     ? Icons.replay
                     : Icons.check_circle_outline),
-                label: Text(isCompleted ? 'Reopen Task' : 'Mark Complete'),
+                label: Text(isCompleted ? context.l10n.taskReopenTask : context.l10n.taskMarkComplete),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       isCompleted ? AppColors.warning : AppColors.success,
@@ -202,19 +173,29 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               ),
             ),
           ),
-          body: ListView(
+          body: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(taskDetailProvider(widget.taskId));
+            },
+            child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // ── Title & Status ────────────────────────────
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      task['title'] as String,
-                      style: context.textTheme.headlineSmall?.copyWith(
-                        decoration: isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
+                    child: Hero(
+                      tag: 'task-title-${widget.taskId}',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Text(
+                          task['title'] as String,
+                          style: context.textTheme.headlineSmall?.copyWith(
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -224,15 +205,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     decoration: BoxDecoration(
                       color: isCompleted
                           ? AppColors.success.withOpacity(0.15)
-                          : _priorityColor(priority).withOpacity(0.15),
+                          : priorityColor(priority).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      isCompleted ? 'Completed' : _priorityLabel(priority),
+                      isCompleted ? context.l10n.taskStatusCompleted : priorityLabel(context, priority),
                       style: context.textTheme.bodySmall?.copyWith(
                         color: isCompleted
                             ? AppColors.success
-                            : _priorityColor(priority),
+                            : priorityColor(priority),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -256,18 +237,28 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     children: [
                       if (category != null)
                         _DetailRow(
-                          icon: _categoryIcon(category['icon'] as String?),
-                          label: 'Category',
+                          icon: categoryIcon(category['icon'] as String?),
+                          label: context.l10n.taskLabelCategory,
                           value: category['name'] as String,
+                        ),
+                      if (startDate != null)
+                        _DetailRow(
+                          icon: Icons.play_arrow_rounded,
+                          label: context.l10n.taskLabelStarts,
+                          value: startDate.isToday
+                              ? context.l10n.commonToday
+                              : startDate.isTomorrow
+                                  ? context.l10n.commonTomorrow
+                                  : startDate.formattedWithTime,
                         ),
                       if (dueDate != null)
                         _DetailRow(
                           icon: Icons.calendar_today,
-                          label: 'Due',
+                          label: context.l10n.taskLabelDue,
                           value: dueDate.isToday
-                              ? 'Today'
+                              ? context.l10n.commonToday
                               : dueDate.isTomorrow
-                                  ? 'Tomorrow'
+                                  ? context.l10n.commonTomorrow
                                   : dueDate.formattedWithTime,
                           valueColor:
                               isOverdue ? AppColors.error : null,
@@ -276,23 +267,23 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         icon: isShared
                             ? Icons.people_outline
                             : Icons.person_outline,
-                        label: 'Assigned to',
+                        label: context.l10n.taskLabelAssignedTo,
                         value: isShared
-                            ? 'Shared (both)'
+                            ? context.l10n.taskSharedBoth
                             : (assigned?['full_name'] as String? ??
-                                'Unassigned'),
+                                context.l10n.commonUnassigned),
                       ),
                       if (recurrence != null && recurrence != 'none')
                         _DetailRow(
                           icon: Icons.repeat,
-                          label: 'Repeats',
-                          value: _recurrenceLabel(recurrence),
+                          label: context.l10n.taskLabelRepeats,
+                          value: recurrenceLabel(context, recurrence),
                         ),
                       _DetailRow(
                         icon: Icons.person,
-                        label: 'Created by',
+                        label: context.l10n.taskLabelCreatedBy,
                         value:
-                            creator?['full_name'] as String? ?? 'Unknown',
+                            creator?['full_name'] as String? ?? context.l10n.commonUnknown,
                       ),
                     ],
                   ),
@@ -300,15 +291,22 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               ),
               const SizedBox(height: 24),
 
+              // ── Attachments ────────────────────────────────
+              _AttachmentSection(
+                taskId: widget.taskId,
+                householdId: householdId,
+              ),
+              const SizedBox(height: 24),
+
               // ── Subtasks ──────────────────────────────────
               Row(
                 children: [
-                  Text('Subtasks',
+                  Text(context.l10n.taskSubtasks,
                       style: context.textTheme.titleMedium),
                   if (subtasks.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Text(
-                      '$completedSubtasks/${subtasks.length}',
+                      context.l10n.taskSubtaskProgress(completedSubtasks, subtasks.length),
                       style: context.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondaryLight,
                       ),
@@ -351,13 +349,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     secondary: IconButton(
                       icon: const Icon(Icons.close, size: 18),
                       onPressed: () async {
-                        await TaskService.deleteSubtask(st['id']);
+                        await ref.read(dataRepositoryProvider).deleteSubtask(st['id']);
                         ref.invalidate(
                             taskDetailProvider(widget.taskId));
                       },
                     ),
                     onChanged: (v) async {
-                      await TaskService.toggleSubtask(
+                      HapticFeedback.selectionClick();
+                      await ref.read(dataRepositoryProvider).toggleSubtask(
                         subtaskId: st['id'],
                         isCompleted: v ?? false,
                       );
@@ -373,22 +372,48 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     child: TextField(
                       controller: _subtaskController,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        hintText: 'Add a subtask...',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.taskAddSubtask,
                         border: InputBorder.none,
-                        prefixIcon: Icon(Icons.add, size: 20),
+                        prefixIcon: const Icon(Icons.add, size: 20),
                       ),
                       onSubmitted: (_) => _addSubtask(),
                     ),
                   ),
                   TextButton(
                     onPressed: _addSubtask,
-                    child: const Text('Add'),
+                    child: Text(context.l10n.commonAdd),
                   ),
                 ],
               ),
             ],
           ),
+        ),
+        ),
+            // ── Confetti overlay ────────────────────────
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: pi / 2, // downward
+                blastDirectionality: BlastDirectionality.explosive,
+                maxBlastForce: 20,
+                minBlastForce: 8,
+                emissionFrequency: 0.05,
+                numberOfParticles: 25,
+                gravity: 0.2,
+                shouldLoop: false,
+                colors: const [
+                  AppColors.primaryLight,
+                  AppColors.accentLight,
+                  AppColors.success,
+                  AppColors.warning,
+                  AppColors.info,
+                  Color(0xFFE88B5A),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
@@ -427,6 +452,87 @@ class _DetailRow extends StatelessWidget {
               )),
         ],
       ),
+    );
+  }
+}
+
+/// Section that loads and displays task attachments, with an "Attach" button.
+class _AttachmentSection extends ConsumerWidget {
+  final String taskId;
+  final String householdId;
+
+  const _AttachmentSection({
+    required this.taskId,
+    required this.householdId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attachmentsAsync = ref.watch(taskAttachmentsProvider(taskId));
+
+    return attachmentsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (attachments) {
+        final displayItems = attachments
+            .map((a) => AttachmentDisplayItem.fromTask(a))
+            .toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Attachment list
+            AttachmentList(
+              attachments: displayItems,
+              onDelete: (item) async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(context.l10n.taskRemoveAttachmentTitle),
+                    content: Text(
+                      context.l10n.taskRemoveAttachmentMessage(item.fileName),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(context.l10n.commonCancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: Text(context.l10n.taskRemove,
+                            style: const TextStyle(color: AppColors.error)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await ref
+                      .read(dataRepositoryProvider)
+                      .deleteAttachment(item.id);
+                  ref.invalidate(taskAttachmentsProvider(taskId));
+                }
+              },
+            ),
+
+            // Attach button
+            TextButton.icon(
+              onPressed: () async {
+                final result = await AttachmentPicker.show(
+                  context: context,
+                  taskId: taskId,
+                  householdId: householdId,
+                  repo: ref.read(dataRepositoryProvider),
+                );
+                if (result != null) {
+                  ref.invalidate(taskAttachmentsProvider(taskId));
+                }
+              },
+              icon: const Icon(Icons.attach_file_rounded, size: 18),
+              label: Text(context.l10n.taskAttachFile),
+            ),
+          ],
+        );
+      },
     );
   }
 }

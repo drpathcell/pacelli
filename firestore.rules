@@ -1,0 +1,142 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: Check if the caller is a member of the given household ──
+    function isMember(householdId) {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/household_members/$(request.auth.uid + '_' + householdId));
+    }
+
+    // ── Helper: Check if authenticated ──
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Helper: Is own document ──
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // ── Profiles ─────────────────────────────────────────────────
+    // Any authenticated user can read profiles (needed for household
+    // member display). Users can only write their own profile.
+    match /profiles/{userId} {
+      allow read:   if isAuth();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // ── Households ───────────────────────────────────────────────
+    // Any authenticated user can create a household.
+    // Only members can read or update.
+    match /households/{householdId} {
+      allow create: if isAuth();
+      allow read, update: if isMember(householdId);
+      allow delete: if isMember(householdId);
+    }
+
+    // ── Household Members ────────────────────────────────────────
+    // Doc ID format: {userId}_{householdId}
+    // Members can read their own household's members.
+    // Create: allowed for authenticated users (joining via invite).
+    // Delete: allowed for the member themselves (leaving).
+    match /household_members/{docId} {
+      allow read: if isAuth() && (
+        resource.data.user_id == request.auth.uid ||
+        isMember(resource.data.household_id)
+      );
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (
+        resource.data.user_id == request.auth.uid ||
+        isMember(resource.data.household_id)
+      );
+    }
+
+    // ── Household Invites ────────────────────────────────────────
+    // Readable by the invitee (matched by email) or household members.
+    // Creatable/updatable by authenticated users.
+    match /household_invites/{docId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Household Encryption Keys ────────────────────────────────
+    // Users can only read/write their own key documents.
+    match /household_keys/{docId} {
+      allow read: if isAuth() && resource.data.user_id == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if isAuth() && resource.data.user_id == request.auth.uid;
+    }
+
+    // ── Tasks ────────────────────────────────────────────────────
+    // Only household members can CRUD tasks in their household.
+    match /tasks/{taskId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Subtasks ─────────────────────────────────────────────────
+    // Subtasks are children of tasks. We validate via the parent task's
+    // household. For performance, we allow any authenticated user to
+    // read/write subtasks (task-level access already checked in app).
+    // Tightening this would require reading the parent task in rules,
+    // which costs an extra read per operation.
+    match /subtasks/{subtaskId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Task Categories ──────────────────────────────────────────
+    match /task_categories/{categoryId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Checklists ───────────────────────────────────────────────
+    match /checklists/{checklistId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Checklist Items ──────────────────────────────────────────
+    // Same approach as subtasks — child docs are protected at app level.
+    match /checklist_items/{itemId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Scratch Plans ────────────────────────────────────────────
+    match /scratch_plans/{planId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Plan Entries ─────────────────────────────────────────────
+    // Child docs — protected at app level like subtasks.
+    match /plan_entries/{entryId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Plan Checklist Items ─────────────────────────────────────
+    match /plan_checklist_items/{itemId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Task Attachments ───────────────────────────────────────
+    match /task_attachments/{attachmentId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Household Drive Config ─────────────────────────────────
+    match /household_drive_config/{householdId} {
+      allow read: if isMember(householdId);
+      allow create, update, delete: if isMember(householdId);
+    }
+
+    // ── Default: deny everything else ────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

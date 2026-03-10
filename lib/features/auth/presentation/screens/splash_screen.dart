@@ -1,17 +1,19 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
-import '../../../../core/services/supabase_service.dart';
+import '../../../../core/utils/extensions.dart';
+import '../../../household/data/household_service.dart';
 
 /// Splash screen — shown briefly on app launch.
 ///
 /// Checks whether the user is already logged in and redirects:
-/// - Logged in → Home screen
+/// - Logged in → Home screen (or storage setup if not configured)
 /// - Not logged in → Login screen
 ///
 /// Also listens for auth state changes (e.g., after Google Sign-In
@@ -24,26 +26,36 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  late final StreamSubscription _authSubscription;
+  late final StreamSubscription<User?> _authSubscription;
 
   @override
   void initState() {
     super.initState();
 
-    // Listen for auth state changes (login, logout, token refresh)
-    _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
-      final event = data.event;
-
+    // Listen for Firebase auth state changes (login, logout, token refresh).
+    _authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (!mounted) return;
 
-      if (event == AuthChangeEvent.signedIn) {
-        context.go(AppRoutes.home);
-      } else if (event == AuthChangeEvent.signedOut) {
+      if (user != null) {
+        // Run one-time migration for deterministic member doc IDs.
+        unawaited(HouseholdService.migrateMemberDocIds());
+
+        // User is signed in — check storage backend before going home.
+        final prefs = await SharedPreferences.getInstance();
+        final backend = prefs.getString('storage_backend');
+        if (!mounted) return;
+        if (backend == null) {
+          context.go(AppRoutes.storageSetup);
+        } else {
+          context.go(AppRoutes.home);
+        }
+      } else {
         context.go(AppRoutes.login);
       }
     });
 
-    // Also check immediately after a brief delay
+    // Also check immediately after a brief delay.
     _checkAuthAndRedirect();
   }
 
@@ -54,14 +66,25 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthAndRedirect() async {
-    // Small delay so the splash screen is visible briefly
+    // Small delay so the splash screen is visible briefly.
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
-    // Check if a user session exists
-    if (currentUser != null) {
-      context.go(AppRoutes.home);
+    // Check if a user session exists.
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Check if storage backend is configured.
+      final prefs = await SharedPreferences.getInstance();
+      final backend = prefs.getString('storage_backend');
+      if (!mounted) return;
+
+      if (backend == null) {
+        // Not configured yet — send to storage selection.
+        context.go(AppRoutes.storageSetup);
+      } else {
+        context.go(AppRoutes.home);
+      }
     } else {
       context.go(AppRoutes.login);
     }
@@ -91,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Pacelli',
+              context.l10n.authAppName,
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -99,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'A peaceful home, organised with love.',
+              context.l10n.authTagline,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.white.withOpacity(0.8),
                   ),

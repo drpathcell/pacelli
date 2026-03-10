@@ -5,12 +5,23 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/onboarding/presentation/screens/storage_setup_screen.dart';
 import '../../features/household/presentation/screens/create_household_screen.dart';
+import '../../features/household/presentation/screens/drive_setup_screen.dart';
 import '../../features/household/presentation/screens/household_screen.dart';
 import '../../features/tasks/presentation/screens/create_task_screen.dart';
+import '../../features/tasks/presentation/screens/edit_task_screen.dart';
+import '../../features/tasks/presentation/screens/calendar_screen.dart';
 import '../../features/tasks/presentation/screens/home_screen.dart';
 import '../../features/tasks/presentation/screens/task_detail_screen.dart';
 import '../../features/tasks/presentation/screens/tasks_screen.dart';
+import '../../features/plans/presentation/screens/create_plan_screen.dart';
+import '../../features/plans/presentation/screens/plan_day_editor_screen.dart';
+import '../../features/plans/presentation/screens/plan_finalise_screen.dart';
+import '../../features/plans/presentation/screens/plan_view_screen.dart';
+import '../../features/settings/presentation/screens/appearance_screen.dart';
+import '../../features/settings/presentation/screens/burn_data_screen.dart';
+import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 
@@ -23,9 +34,15 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String home = '/home';
   static const String tasks = '/tasks';
+  static const String calendar = '/calendar';
   static const String settings = '/settings';
   static const String createHousehold = '/create-household';
   static const String household = '/household';
+  static const String storageSetup = '/storage-setup';
+  static const String appearance = '/appearance';
+  static const String burnData = '/burn-data';
+  static const String privacyEncryption = '/privacy-encryption';
+  static const String driveSetup = '/drive-setup';
 }
 
 /// Key for the shell navigator (bottom nav tabs).
@@ -52,10 +69,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignupScreen(),
       ),
 
+      // Storage setup onboarding (no bottom nav)
+      GoRoute(
+        path: AppRoutes.storageSetup,
+        builder: (context, state) => const StorageSetupScreen(),
+      ),
+
+      // Burn data — full-screen fire animation during data wipe
+      GoRoute(
+        path: AppRoutes.burnData,
+        builder: (context, state) => const BurnDataScreen(),
+      ),
+
+      // Appearance settings — theme mode & colour scheme
+      GoRoute(
+        path: AppRoutes.appearance,
+        builder: (context, state) => const AppearanceScreen(),
+      ),
+
+      // Privacy & Encryption info screen
+      GoRoute(
+        path: AppRoutes.privacyEncryption,
+        builder: (context, state) => const PrivacyEncryptionScreen(),
+      ),
+
       // Create household (no bottom nav — modal-style)
       GoRoute(
         path: AppRoutes.createHousehold,
         builder: (context, state) => const CreateHouseholdScreen(),
+      ),
+
+      // Drive setup (full-screen, no bottom nav)
+      GoRoute(
+        path: AppRoutes.driveSetup,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return DriveSetupScreen(householdId: householdId);
+        },
       ),
 
       // Household management
@@ -82,6 +132,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // Edit task (full-screen, no bottom nav)
+      GoRoute(
+        path: '${AppRoutes.tasks}/:taskId/edit',
+        builder: (context, state) {
+          final taskId = state.pathParameters['taskId']!;
+          return EditTaskScreen(taskId: taskId);
+        },
+      ),
+
+      // ── Scratch Plans (full-screen, no bottom nav) ────────────
+      GoRoute(
+        path: '/plans/create',
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return CreatePlanScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: '/plans/:planId',
+        builder: (context, state) {
+          final planId = state.pathParameters['planId']!;
+          return PlanViewScreen(planId: planId);
+        },
+      ),
+      GoRoute(
+        path: '/plans/:planId/day/:date',
+        builder: (context, state) {
+          final planId = state.pathParameters['planId']!;
+          final date = DateTime.parse(state.pathParameters['date']!);
+          return PlanDayEditorScreen(planId: planId, date: date);
+        },
+      ),
+      GoRoute(
+        path: '/plans/:planId/finalise',
+        builder: (context, state) {
+          final planId = state.pathParameters['planId']!;
+          return PlanFinaliseScreen(planId: planId);
+        },
+      ),
+
       // ── Main app with bottom navigation ──────────────────────
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -91,8 +181,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final location = state.uri.path;
           if (location == AppRoutes.tasks) {
             currentIndex = 1;
-          } else if (location == AppRoutes.settings) {
+          } else if (location == AppRoutes.calendar) {
             currentIndex = 2;
+          } else if (location == AppRoutes.settings) {
+            currentIndex = 3;
           }
 
           return MainShell(
@@ -106,6 +198,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   context.go(AppRoutes.tasks);
                   break;
                 case 2:
+                  context.go(AppRoutes.calendar);
+                  break;
+                case 3:
                   context.go(AppRoutes.settings);
                   break;
               }
@@ -121,6 +216,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.tasks,
             builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.calendar,
+            builder: (context, state) => const CalendarScreen(),
           ),
           GoRoute(
             path: AppRoutes.settings,

@@ -1,16 +1,11 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../config/constants/app_constants.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
-import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/extensions.dart';
 
 /// Login screen — Google Sign-In + email/password authentication.
@@ -42,10 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isGoogleLoading = true);
 
     try {
-      // Generate a random nonce for security
-      final rawNonce = _generateRandomString();
-      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-
       final googleSignIn = GoogleSignIn(
         clientId: AppConstants.googleiOSClientId,
         serverClientId: AppConstants.googleWebClientId,
@@ -66,12 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('No ID token received from Google');
       }
 
-      await supabase.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
+      // Sign in to Firebase with the Google credential.
+      final credential = GoogleAuthProvider.credential(
         idToken: idToken,
         accessToken: accessToken,
-        nonce: rawNonce,
       );
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
       if (mounted) {
         context.go(AppRoutes.home);
@@ -79,22 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Google sign-in failed. Please try again.',
+          context.l10n.authGoogleSignInFailed,
           isError: true,
         );
       }
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
-  }
-
-  /// Generates a random string for the nonce.
-  String _generateRandomString([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
   }
 
   // ── Email/Password Sign-In ──────────────────────────────────
@@ -105,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await supabase.auth.signInWithPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -116,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Login failed. Please check your email and password.',
+          context.l10n.authLoginFailed,
           isError: true,
         );
       }
@@ -138,12 +120,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Header
               Text(
-                'Welcome back',
+                context.l10n.authWelcomeBack,
                 style: context.textTheme.displayLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                'Sign in to your household',
+                context.l10n.authSignInToHousehold,
                 style: context.textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondaryLight,
                 ),
@@ -164,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'or sign in with email',
+                      context.l10n.authOrSignInWithEmail,
                       style: context.textTheme.bodyMedium,
                     ),
                   ),
@@ -184,16 +166,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.authEmail,
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return context.l10n.authEnterEmail;
                         }
                         if (!value.trim().isValidEmail) {
-                          return 'Please enter a valid email';
+                          return context.l10n.authEnterValidEmail;
                         }
                         return null;
                       },
@@ -205,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: context.l10n.authPassword,
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -221,10 +203,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return context.l10n.authEnterPassword;
                         }
                         if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return context.l10n.authPasswordMinLength;
                         }
                         return null;
                       },
@@ -237,23 +219,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextButton(
                         onPressed: () async {
                           if (_emailController.text.trim().isEmpty) {
-                            context.showSnackBar('Enter your email first', isError: true);
+                            context.showSnackBar(context.l10n.authEnterEmailFirst, isError: true);
                             return;
                           }
                           try {
-                            await supabase.auth.resetPasswordForEmail(
-                              _emailController.text.trim(),
+                            await FirebaseAuth.instance.sendPasswordResetEmail(
+                              email: _emailController.text.trim(),
                             );
                             if (mounted) {
-                              context.showSnackBar('Password reset email sent! Check your inbox.');
+                              context.showSnackBar(context.l10n.authPasswordResetSent);
                             }
                           } catch (e) {
                             if (mounted) {
-                              context.showSnackBar('Error: $e', isError: true);
+                              context.showSnackBar(context.l10n.commonError(e.toString()), isError: true);
                             }
                           }
                         },
-                        child: const Text('Forgot password?'),
+                        child: Text(context.l10n.authForgotPassword),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -271,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Sign In'),
+                          : Text(context.l10n.authSignIn),
                     ),
                   ],
                 ),
@@ -283,13 +265,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
+                    context.l10n.authNoAccount,
                     style: context.textTheme.bodyMedium,
                   ),
                   GestureDetector(
                     onTap: () => context.go(AppRoutes.signup),
                     child: Text(
-                      'Sign Up',
+                      context.l10n.authSignUp,
                       style: context.textTheme.bodyMedium?.copyWith(
                         color: context.colorScheme.primary,
                         fontWeight: FontWeight.w600,
@@ -358,9 +340,9 @@ class _GoogleSignInButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Continue with Google',
-                  style: TextStyle(
+                Text(
+                  context.l10n.authContinueWithGoogle,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),

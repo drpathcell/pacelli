@@ -1,13 +1,22 @@
+import 'dart:math';
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
-import '../../../../core/services/supabase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
+
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/loading_view.dart';
+import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../household/data/household_providers.dart';
 import '../../data/task_providers.dart';
+import '../../../../core/data/data_repository_provider.dart';
+import '../../utils/task_helpers.dart';
 
 /// Home screen — the main hub of the Pacelli app.
 ///
@@ -18,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userName = currentUser?.userMetadata?['full_name'] ?? 'Friend';
+    final userName = FirebaseAuth.instance.currentUser?.displayName ?? 'Friend';
     final householdAsync = ref.watch(currentHouseholdProvider);
 
     return Scaffold(
@@ -27,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, $userName',
+              context.l10n.homeHelloGreeting(userName),
               style: context.textTheme.titleLarge,
             ),
             Text(
@@ -38,18 +47,18 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       body: householdAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => LoadingView(message: context.l10n.homeLoadingHousehold),
         error: (e, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Something went wrong', style: context.textTheme.titleMedium),
+              Text(context.l10n.homeSomethingWentWrong, style: context.textTheme.titleMedium),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(currentHouseholdProvider),
-                child: const Text('Try again'),
+                child: Text(context.l10n.homeTryAgain),
               ),
             ],
           ),
@@ -62,7 +71,7 @@ class HomeScreen extends ConsumerWidget {
           final household = data['household'] as Map<String, dynamic>;
           return _HouseholdDashboard(
             householdId: household['id'] as String,
-            householdName: household['name'] ?? 'My Household',
+            householdName: household['name'] ?? context.l10n.homeMyHousehold,
           );
         },
       ),
@@ -87,13 +96,13 @@ class _NoHouseholdView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Welcome to Pacelli!',
+              context.l10n.homeWelcomeToPacelli,
               style: context.textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'Your household tasks will appear here.\nLet\'s start by creating your household.',
+              context.l10n.homeWelcomeSubtitle,
               style: context.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
@@ -101,7 +110,7 @@ class _NoHouseholdView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => context.push(AppRoutes.createHousehold),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Create Household'),
+              label: Text(context.l10n.homeCreateHousehold),
             ),
           ],
         ),
@@ -111,7 +120,7 @@ class _NoHouseholdView extends StatelessWidget {
 }
 
 /// Dashboard view shown when the user has a household.
-class _HouseholdDashboard extends ConsumerWidget {
+class _HouseholdDashboard extends ConsumerStatefulWidget {
   final String householdId;
   final String householdName;
 
@@ -121,17 +130,40 @@ class _HouseholdDashboard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(taskStatsProvider(householdId));
-    final tasksAsync = ref.watch(householdTasksProvider(householdId));
+  ConsumerState<_HouseholdDashboard> createState() =>
+      _HouseholdDashboardState();
+}
+
+class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
+  late final ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(milliseconds: 1200));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statsAsync = ref.watch(taskStatsProvider(widget.householdId));
+    final tasksAsync = ref.watch(householdTasksProvider(widget.householdId));
 
     final stats = statsAsync.valueOrNull ??
         {'completed': 0, 'pending': 0, 'overdue': 0};
 
-    return RefreshIndicator(
+    return Stack(
+      children: [
+        RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(taskStatsProvider(householdId));
-        ref.invalidate(householdTasksProvider(householdId));
+        ref.invalidate(taskStatsProvider(widget.householdId));
+        ref.invalidate(householdTasksProvider(widget.householdId));
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -152,11 +184,11 @@ class _HouseholdDashboard extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(householdName,
+                        Text(widget.householdName,
                             style: context.textTheme.titleLarge),
                         const SizedBox(height: 4),
                         Text(
-                          'Your household is set up!',
+                          context.l10n.homeHouseholdSetUp,
                           style: context.textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondaryLight,
                           ),
@@ -171,7 +203,7 @@ class _HouseholdDashboard extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Stats
-          Text("Today's Overview",
+          Text(context.l10n.homeTodaysOverview,
               style: context.textTheme.titleLarge),
           const SizedBox(height: 12),
 
@@ -180,7 +212,7 @@ class _HouseholdDashboard extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.check_circle_outline,
-                  label: 'Completed',
+                  label: context.l10n.homeCompleted,
                   value: '${stats['completed']}',
                   color: AppColors.success,
                 ),
@@ -189,7 +221,7 @@ class _HouseholdDashboard extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.pending_outlined,
-                  label: 'Pending',
+                  label: context.l10n.homePending,
                   value: '${stats['pending']}',
                   color: AppColors.warning,
                 ),
@@ -198,7 +230,7 @@ class _HouseholdDashboard extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.warning_amber_outlined,
-                  label: 'Overdue',
+                  label: context.l10n.homeOverdue,
                   value: '${stats['overdue']}',
                   color: AppColors.error,
                 ),
@@ -211,18 +243,20 @@ class _HouseholdDashboard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Recent Tasks', style: context.textTheme.titleLarge),
+              Text(context.l10n.homeRecentTasks, style: context.textTheme.titleLarge),
               TextButton(
                 onPressed: () => context.go(AppRoutes.tasks),
-                child: const Text('View all'),
+                child: Text(context.l10n.homeViewAll),
               ),
             ],
           ),
           const SizedBox(height: 8),
 
           tasksAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Text('Failed to load tasks'),
+            skipLoadingOnRefresh: true,
+            skipLoadingOnReload: true,
+            loading: () => const RecentTaskListSkeleton(),
+            error: (_, __) => Text(context.l10n.homeFailedToLoadTasks),
             data: (tasks) {
               final recentTasks = tasks
                   .where((t) => t['status'] != 'completed')
@@ -237,7 +271,7 @@ class _HouseholdDashboard extends ConsumerWidget {
                       child: Column(
                         children: [
                           Text(
-                            "No tasks yet — they'll show up here once you create some!",
+                            context.l10n.homeNoTasksYet,
                             style: context.textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondaryLight,
                             ),
@@ -247,9 +281,9 @@ class _HouseholdDashboard extends ConsumerWidget {
                           ElevatedButton.icon(
                             onPressed: () => context.push(
                                 '${AppRoutes.tasks}/create',
-                                extra: householdId),
+                                extra: widget.householdId),
                             icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Create Task'),
+                            label: Text(context.l10n.homeCreateTask),
                           ),
                         ],
                       ),
@@ -260,9 +294,11 @@ class _HouseholdDashboard extends ConsumerWidget {
 
               return Column(
                 children: recentTasks
-                    .map((task) => _RecentTaskTile(
+                    .map<Widget>((task) => _RecentTaskTile(
+                          key: ValueKey(task['id']),
                           task: task,
-                          householdId: householdId,
+                          householdId: widget.householdId,
+                          onCompleted: () => _confettiController.play(),
                         ))
                     .toList(),
               );
@@ -270,49 +306,167 @@ class _HouseholdDashboard extends ConsumerWidget {
           ),
         ],
       ),
+    ),
+        // ── Confetti overlay ────────────────────────
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi / 2,
+            blastDirectionality: BlastDirectionality.explosive,
+            maxBlastForce: 20,
+            minBlastForce: 8,
+            emissionFrequency: 0.05,
+            numberOfParticles: 20,
+            gravity: 0.2,
+            shouldLoop: false,
+            colors: const [
+              AppColors.primaryLight,
+              AppColors.accentLight,
+              AppColors.success,
+              AppColors.warning,
+              AppColors.info,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _RecentTaskTile extends ConsumerWidget {
+class _RecentTaskTile extends ConsumerStatefulWidget {
   final Map<String, dynamic> task;
   final String householdId;
+  final VoidCallback? onCompleted;
 
-  const _RecentTaskTile({
+  _RecentTaskTile({
+    super.key,
     required this.task,
     required this.householdId,
+    this.onCompleted,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dueDateStr = task['due_date'] as String?;
+  ConsumerState<_RecentTaskTile> createState() => _RecentTaskTileState();
+}
+
+class _RecentTaskTileState extends ConsumerState<_RecentTaskTile> {
+  bool _isCompleting = false;
+
+  @override
+  void didUpdateWidget(covariant _RecentTaskTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset optimistic state when real data catches up
+    if (oldWidget.task['id'] != widget.task['id'] ||
+        oldWidget.task['status'] != widget.task['status']) {
+      _isCompleting = false;
+    }
+  }
+
+  Future<void> _completeTask() async {
+    setState(() => _isCompleting = true);
+    HapticFeedback.lightImpact();
+
+    try {
+      await ref.read(dataRepositoryProvider).completeTask(widget.task['id'] as String);
+      widget.onCompleted?.call();
+      ref.invalidate(householdTasksProvider(widget.householdId));
+      ref.invalidate(taskStatsProvider(widget.householdId));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCompleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.homeCouldNotCompleteTask)),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dueDateStr = widget.task['due_date'] as String?;
+    final priority = widget.task['priority'] as String?;
     DateTime? dueDate;
     if (dueDateStr != null) dueDate = DateTime.tryParse(dueDateStr);
     final isOverdue = dueDate != null && dueDate.isOverdue;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: () => context.push('${AppRoutes.tasks}/${task['id']}'),
-        leading: Icon(
-          Icons.circle_outlined,
-          color: isOverdue ? AppColors.error : AppColors.textSecondaryLight,
-        ),
-        title: Text(task['title'] as String),
-        subtitle: dueDate != null
-            ? Text(
-                dueDate.isToday
-                    ? 'Due today'
-                    : dueDate.isTomorrow
-                        ? 'Due tomorrow'
-                        : 'Due ${dueDate.formatted}',
-                style: TextStyle(
-                  color: isOverdue ? AppColors.error : null,
-                  fontWeight: isOverdue ? FontWeight.w600 : null,
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: _isCompleting ? 0.4 : 1.0,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () =>
+              context.push('${AppRoutes.tasks}/${widget.task['id']}'),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                // Tappable completion circle — optimistic
+                GestureDetector(
+                  onTap: _isCompleting ? null : _completeTask,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isCompleting
+                          ? AppColors.success
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: _isCompleting
+                            ? AppColors.success
+                            : isOverdue
+                                ? AppColors.error
+                                : priorityColor(priority),
+                        width: 2,
+                      ),
+                    ),
+                    child: _isCompleting
+                        ? const Icon(Icons.check,
+                            size: 16, color: Colors.white)
+                        : null,
+                  ),
                 ),
-              )
-            : null,
-        trailing: const Icon(Icons.chevron_right),
+                const SizedBox(width: 12),
+                // Task content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.task['title'] as String,
+                          style: context.textTheme.titleSmall?.copyWith(
+                            decoration: _isCompleting
+                                ? TextDecoration.lineThrough
+                                : null,
+                          )),
+                      if (dueDate != null)
+                        Text(
+                          dueDate.isToday
+                              ? context.l10n.homeDueToday
+                              : dueDate.isTomorrow
+                                  ? context.l10n.homeDueTomorrow
+                                  : context.l10n.homeDueDate(dueDate.formatted),
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: isOverdue
+                                ? AppColors.error
+                                : AppColors.textSecondaryLight,
+                            fontWeight:
+                                isOverdue ? FontWeight.w600 : null,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right,
+                    color: AppColors.textSecondaryLight),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -335,7 +489,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Column(
           children: [
             Icon(icon, color: color, size: 28),
@@ -348,10 +502,14 @@ class _StatCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: context.textTheme.bodySmall,
-              textAlign: TextAlign.center,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: context.textTheme.bodySmall,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+              ),
             ),
           ],
         ),
