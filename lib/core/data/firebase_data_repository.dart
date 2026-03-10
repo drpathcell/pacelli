@@ -1287,6 +1287,12 @@ class FirebaseDataRepository implements DataRepository {
         .get();
     final planIds = planSnap.docs.map((d) => d.id).toList();
 
+    debugPrint(
+      '[BURN] Found ${taskSnap.docs.length} tasks, '
+      '${checklistSnap.docs.length} checklists, '
+      '${planSnap.docs.length} plans for household $householdId',
+    );
+
     // ── Step 2: Collect all documents to delete ──
 
     final allDocs = <DocumentReference>[
@@ -1295,12 +1301,18 @@ class FirebaseDataRepository implements DataRepository {
       ...planSnap.docs.map((d) => d.reference),
     ];
 
-    // Categories and attachments (household-scoped).
-    for (final col in ['task_categories', 'task_attachments', 'plan_attachments']) {
+    // Categories, attachments, and invites (household-scoped).
+    for (final col in [
+      'task_categories',
+      'task_attachments',
+      'plan_attachments',
+      'household_invites',
+    ]) {
       final snap = await _db
           .collection(col)
           .where('household_id', isEqualTo: householdId)
           .get();
+      debugPrint('[BURN] Found ${snap.docs.length} docs in $col');
       allDocs.addAll(snap.docs.map((d) => d.reference));
     }
 
@@ -1310,6 +1322,7 @@ class FirebaseDataRepository implements DataRepository {
           .collection('subtasks')
           .where('task_id', whereIn: chunk)
           .get();
+      debugPrint('[BURN] Found ${snap.docs.length} subtasks (chunk of ${chunk.length} tasks)');
       allDocs.addAll(snap.docs.map((d) => d.reference));
     }
 
@@ -1319,6 +1332,7 @@ class FirebaseDataRepository implements DataRepository {
           .collection('checklist_items')
           .where('checklist_id', whereIn: chunk)
           .get();
+      debugPrint('[BURN] Found ${snap.docs.length} checklist_items (chunk of ${chunk.length} checklists)');
       allDocs.addAll(snap.docs.map((d) => d.reference));
     }
 
@@ -1328,12 +1342,14 @@ class FirebaseDataRepository implements DataRepository {
           .collection('plan_entries')
           .where('plan_id', whereIn: chunk)
           .get();
+      debugPrint('[BURN] Found ${entrySnap.docs.length} plan_entries (chunk of ${chunk.length} plans)');
       allDocs.addAll(entrySnap.docs.map((d) => d.reference));
 
       final pciSnap = await _db
           .collection('plan_checklist_items')
           .where('plan_id', whereIn: chunk)
           .get();
+      debugPrint('[BURN] Found ${pciSnap.docs.length} plan_checklist_items (chunk of ${chunk.length} plans)');
       allDocs.addAll(pciSnap.docs.map((d) => d.reference));
     }
 
@@ -1342,6 +1358,7 @@ class FirebaseDataRepository implements DataRepository {
         .collection('household_members')
         .where('household_id', isEqualTo: householdId)
         .get();
+    debugPrint('[BURN] Found ${memberSnap.docs.length} household_members');
     allDocs.addAll(memberSnap.docs.map((d) => d.reference));
 
     // The household document itself.
@@ -1349,12 +1366,21 @@ class FirebaseDataRepository implements DataRepository {
 
     // ── Step 3: Batch-delete in chunks of 400 (under 500-op limit) ──
 
+    debugPrint('[BURN] Deleting ${allDocs.length} total docs in ${(_chunk(allDocs, 400)).length} batches');
+    var batchIndex = 0;
     for (final chunk in _chunk(allDocs, 400)) {
+      batchIndex++;
       final batch = _db.batch();
       for (final ref in chunk) {
         batch.delete(ref);
       }
-      await batch.commit();
+      try {
+        await batch.commit();
+        debugPrint('[BURN] ✓ Batch $batchIndex committed (${chunk.length} docs)');
+      } catch (e) {
+        debugPrint('[BURN] ✗ Batch $batchIndex failed (${chunk.length} docs): $e');
+        rethrow;
+      }
     }
 
     debugPrint(

@@ -29,6 +29,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
   String _statusText = '';
   bool _isComplete = false;
+  bool _hasFailed = false;
   bool _burnStarted = false;
 
   @override
@@ -80,16 +81,20 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
       // ── Step 1: Wipe user data via the active DataRepository ──
       // Must happen FIRST — we still have a valid auth token.
+      // If this fails, do NOT proceed to sign out — the data wasn't deleted.
       _updateStatus(l10n.burnStatusDestroying);
       await Future.delayed(const Duration(milliseconds: 600));
-      try {
-        final repo = ref.read(dataRepositoryProvider);
-        if (userId != null) {
+      final repo = ref.read(dataRepositoryProvider);
+      if (userId != null) {
+        try {
           await repo.wipeAllData(userId);
           debugPrint('[BURN] ✓ wipeAllData completed');
+        } catch (e) {
+          debugPrint('[BURN] ✗ wipeAllData failed: $e');
+          _updateStatus(l10n.burnStatusError);
+          if (mounted) setState(() => _hasFailed = true);
+          return; // Do NOT proceed — data was not deleted.
         }
-      } catch (e) {
-        debugPrint('[BURN] ✗ wipeAllData failed: $e');
       }
 
       // ── Step 2: Delete local SQLite database file ──
@@ -249,6 +254,36 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                     textAlign: TextAlign.center,
                   ),
                 ),
+
+                if (_hasFailed) ...[
+                  const SizedBox(height: 8),
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.red,
+                    size: 28,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() => _hasFailed = false);
+                      _burnEverything();
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(context.l10n.commonRetry),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange.shade300,
+                      side: BorderSide(color: Colors.orange.shade300),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => context.go(AppRoutes.settings),
+                    child: Text(
+                      context.l10n.commonCancel,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    ),
+                  ),
+                ],
 
                 if (_isComplete) ...[
                   const SizedBox(height: 8),
