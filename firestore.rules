@@ -128,6 +128,12 @@ service cloud.firestore {
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
+    // ── Plan Attachments ────────────────────────────────────────
+    match /plan_attachments/{attachmentId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
     // ── Household Drive Config ─────────────────────────────────
     match /household_drive_config/{householdId} {
       allow read: if isMember(householdId);

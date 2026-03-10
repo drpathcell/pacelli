@@ -1232,11 +1232,17 @@ class FirebaseDataRepository implements DataRepository {
         .collection('household_members')
         .where('user_id', isEqualTo: userId)
         .get();
+    debugPrint('[BURN] household_members query returned ${memberSnap.docs.length} docs for userId=$userId');
 
     final householdIds = memberSnap.docs
         .map((d) => d.data()['household_id'] as String? ?? '')
         .where((id) => id.isNotEmpty)
         .toSet();
+    debugPrint('[BURN] householdIds=$householdIds');
+
+    if (householdIds.isEmpty) {
+      throw Exception('[BURN] No households found for user — nothing to delete');
+    }
 
     for (final hid in householdIds) {
       // Delete Drive config FIRST — requires isMember() which needs the

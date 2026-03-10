@@ -120,9 +120,22 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
         debugPrint('[BURN] ✗ Secure storage clear: $e');
       }
 
-      // ── Step 4: Sign out BEFORE clearing prefs ──
+      // ── Step 4: Delete Firebase Auth account, then sign out ──
       _updateStatus(l10n.burnStatusSigningOut);
       await Future.delayed(const Duration(milliseconds: 600));
+
+      // Delete the Firebase Auth account (must happen while still authenticated).
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          await user.delete();
+          debugPrint('[BURN] ✓ Firebase Auth account deleted');
+        } catch (e) {
+          debugPrint('[BURN] ✗ Auth account delete failed (may need re-auth): $e');
+          // If requires-recent-login, we still continue with sign-out.
+          // The account stays but all data is gone.
+        }
+      }
 
       // Firebase sign out.
       try {
