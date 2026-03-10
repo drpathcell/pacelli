@@ -125,15 +125,34 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       await Future.delayed(const Duration(milliseconds: 600));
 
       // Delete the Firebase Auth account (must happen while still authenticated).
+      // Firebase requires a recent credential for account deletion.
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         try {
-          await user.delete();
-          debugPrint('[BURN] ✓ Firebase Auth account deleted');
+          final providerIds =
+              user.providerData.map((p) => p.providerId).toSet();
+          if (providerIds.contains('google.com')) {
+            // Re-authenticate with Google before deleting.
+            final googleUser = await GoogleSignIn().signIn();
+            if (googleUser != null) {
+              final googleAuth = await googleUser.authentication;
+              final credential = GoogleAuthProvider.credential(
+                accessToken: googleAuth.accessToken,
+                idToken: googleAuth.idToken,
+              );
+              await user.reauthenticateWithCredential(credential);
+              await user.delete();
+              debugPrint('[BURN] ✓ Firebase Auth account deleted');
+            }
+          } else {
+            debugPrint(
+              '[BURN] Skipping account deletion for email/password user '
+              '(requires password re-entry)',
+            );
+          }
         } catch (e) {
-          debugPrint('[BURN] ✗ Auth account delete failed (may need re-auth): $e');
-          // If requires-recent-login, we still continue with sign-out.
-          // The account stays but all data is gone.
+          debugPrint('[BURN] ✗ Auth account delete failed: $e');
+          // Account stays but all data is gone — continue with sign-out.
         }
       }
 
