@@ -2752,6 +2752,36 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get burnStatusError;
 
+  /// No description provided for @burnPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Account Deletion'**
+  String get burnPasswordTitle;
+
+  /// No description provided for @burnPasswordMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'To permanently delete your account and all data, please enter your password.'**
+  String get burnPasswordMessage;
+
+  /// No description provided for @burnPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get burnPasswordHint;
+
+  /// No description provided for @burnPasswordConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Everything'**
+  String get burnPasswordConfirm;
+
+  /// No description provided for @burnPasswordError.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect password. Please try again.'**
+  String get burnPasswordError;
+
   /// No description provided for @appearanceTitle.
   ///
   /// In en, this message translates to:

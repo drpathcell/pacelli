@@ -451,6 +451,11 @@
   "burnStatusRemovingSettings": "Eliminando ajustes guardados...",
   "burnStatusComplete": "Todos los datos han sido destruidos.",
   "burnStatusError": "Algo salió mal. Inténtalo de nuevo.",
+  "burnPasswordTitle": "Confirmar eliminación de cuenta",
+  "burnPasswordMessage": "Para eliminar permanentemente tu cuenta y todos los datos, ingresa tu contraseña.",
+  "burnPasswordHint": "Contraseña",
+  "burnPasswordConfirm": "Eliminar todo",
+  "burnPasswordError": "Contraseña incorrecta. Inténtalo de nuevo.",
 
   "appearanceTitle": "Apariencia",
   "appearanceThemeMode": "Modo del tema",

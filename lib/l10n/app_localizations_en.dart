@@ -1471,6 +1471,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get burnStatusError => 'Something went wrong. Please try again.';
 
   @override
+  String get burnPasswordTitle => 'Confirm Account Deletion';
+
+  @override
+  String get burnPasswordMessage =>
+      'To permanently delete your account and all data, please enter your password.';
+
+  @override
+  String get burnPasswordHint => 'Password';
+
+  @override
+  String get burnPasswordConfirm => 'Delete Everything';
+
+  @override
+  String get burnPasswordError => 'Incorrect password. Please try again.';
+
+  @override
   String get appearanceTitle => 'Appearance';
 
   @override

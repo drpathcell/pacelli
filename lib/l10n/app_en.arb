@@ -708,6 +708,11 @@
   "burnStatusRemovingSettings": "Removing saved settings...",
   "burnStatusComplete": "All data destroyed.",
   "burnStatusError": "Something went wrong. Please try again.",
+  "burnPasswordTitle": "Confirm Account Deletion",
+  "burnPasswordMessage": "To permanently delete your account and all data, please enter your password.",
+  "burnPasswordHint": "Password",
+  "burnPasswordConfirm": "Delete Everything",
+  "burnPasswordError": "Incorrect password. Please try again.",
 
   "appearanceTitle": "Appearance",
   "appearanceThemeMode": "Theme mode",

@@ -1483,6 +1483,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get burnStatusError => 'Qualcosa è andato storto. Riprova.';
 
   @override
+  String get burnPasswordTitle => 'Conferma eliminazione account';
+
+  @override
+  String get burnPasswordMessage =>
+      'Per eliminare definitivamente il tuo account e tutti i dati, inserisci la tua password.';
+
+  @override
+  String get burnPasswordHint => 'Password';
+
+  @override
+  String get burnPasswordConfirm => 'Elimina tutto';
+
+  @override
+  String get burnPasswordError => 'Password errata. Riprova.';
+
+  @override
   String get appearanceTitle => 'Aspetto';
 
   @override

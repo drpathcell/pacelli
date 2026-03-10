@@ -73,11 +73,74 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
     super.dispose();
   }
 
+  /// Shows a password prompt for email/password users. Returns the password,
+  /// or null if the user cancels.
+  Future<String?> _promptForPassword() async {
+    final l10n = context.l10n;
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.lock_outline_rounded,
+          size: 40,
+          color: Colors.red.shade600,
+        ),
+        title: Text(l10n.burnPasswordTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.burnPasswordMessage),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: l10n.burnPasswordHint,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+            ),
+            child: Text(l10n.burnPasswordConfirm),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
   Future<void> _burnEverything() async {
     final l10n = context.l10n;
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userId = currentUser?.uid;
       debugPrint('[BURN] Starting burn for userId=$userId');
+
+      // For email/password users, prompt for password upfront so we can
+      // re-authenticate later for account deletion.
+      String? emailPassword;
+      if (currentUser != null) {
+        final providerIds =
+            currentUser.providerData.map((p) => p.providerId).toSet();
+        if (!providerIds.contains('google.com')) {
+          emailPassword = await _promptForPassword();
+          if (emailPassword == null || !mounted) return; // User cancelled.
+        }
+      }
 
       // ── Step 1: Wipe user data via the active DataRepository ──
       // Must happen FIRST — we still have a valid auth token.
@@ -141,18 +204,26 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                 idToken: googleAuth.idToken,
               );
               await user.reauthenticateWithCredential(credential);
-              await user.delete();
-              debugPrint('[BURN] ✓ Firebase Auth account deleted');
             }
-          } else {
-            debugPrint(
-              '[BURN] Skipping account deletion for email/password user '
-              '(requires password re-entry)',
+          } else if (emailPassword != null && user.email != null) {
+            // Re-authenticate with email/password.
+            final credential = EmailAuthProvider.credential(
+              email: user.email!,
+              password: emailPassword,
             );
+            await user.reauthenticateWithCredential(credential);
           }
+          await user.delete();
+          debugPrint('[BURN] ✓ Firebase Auth account deleted');
         } catch (e) {
           debugPrint('[BURN] ✗ Auth account delete failed: $e');
-          // Account stays but all data is gone — continue with sign-out.
+          if (e.toString().contains('wrong-password') ||
+              e.toString().contains('invalid-credential')) {
+            _updateStatus(l10n.burnPasswordError);
+            if (mounted) setState(() => _hasFailed = true);
+            return;
+          }
+          // Other errors — account stays but all data is gone.
         }
       }
 
