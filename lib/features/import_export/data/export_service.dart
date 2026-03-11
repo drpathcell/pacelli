@@ -32,8 +32,20 @@ class ExportService {
     final checklists = await _repo.getChecklists(householdId);
     final plans = await _repo.getPlans(householdId);
 
+    // Inventory data.
+    final invItems = await _repo.getInventoryItems(householdId: householdId);
+    final invCategories = await _repo.getInventoryCategories(householdId);
+    final invLocations = await _repo.getInventoryLocations(householdId);
+
+    // Fetch logs per item.
+    final invLogs = <Map<String, dynamic>>[];
+    for (final item in invItems) {
+      final logs = await _repo.getInventoryLogs(itemId: item.id, limit: 500);
+      invLogs.addAll(logs.map((l) => l.toMap()));
+    }
+
     final export = {
-      'version': 1,
+      'version': 2,
       'exported_at': DateTime.now().toIso8601String(),
       'household_id': householdId,
       'tasks': tasks.map((t) => {
@@ -43,6 +55,10 @@ class ExportService {
       'categories': categories.map((c) => c.toMap()).toList(),
       'checklists': checklists.map((cl) => cl.toDisplayMap()).toList(),
       'plans': plans.map((p) => p.toDisplayMap()).toList(),
+      'inventory_items': invItems.map((i) => i.toMap()).toList(),
+      'inventory_categories': invCategories.map((c) => c.toMap()).toList(),
+      'inventory_locations': invLocations.map((l) => l.toMap()).toList(),
+      'inventory_logs': invLogs,
     };
 
     final json = const JsonEncoder.withIndent('  ').convert(export);

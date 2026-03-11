@@ -772,7 +772,7 @@
   "ieTitle": "Import / Export",
   "ieExportSection": "EXPORT",
   "ieExportJson": "Export as JSON",
-  "ieExportJsonDesc": "Full backup of all tasks, checklists, plans, and categories",
+  "ieExportJsonDesc": "Full backup of tasks, checklists, plans, and inventory",
   "ieExportCsv": "Export tasks as CSV",
   "ieExportCsvDesc": "Spreadsheet-friendly list of tasks only",
   "ieExportSuccess": "Export saved successfully!",
@@ -1023,6 +1023,9 @@
     }
   },
   "inventoryExpiryCalendarDot": "Item expiring",
+
+  "homeInventorySnapshot": "Inventory",
+  "homeInvTotal": "Total",
 
   "homeInventorySummary": "{count} items · {alert} alert",
   "@homeInventorySummary": {

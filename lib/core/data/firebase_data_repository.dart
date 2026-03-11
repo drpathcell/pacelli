@@ -1876,6 +1876,7 @@ class FirebaseDataRepository implements DataRepository {
     int total = 0;
     int lowStock = 0;
     int expiringSoon = 0;
+    int expired = 0;
     final now = DateTime.now();
 
     for (final doc in snap.docs) {
@@ -1888,8 +1889,9 @@ class FirebaseDataRepository implements DataRepository {
       }
       final expiry = _parseDate(d['expiry_date']);
       if (expiry != null) {
-        final diff = expiry.difference(now).inDays;
-        if (diff >= 0 && diff <= 7) {
+        if (expiry.isBefore(now)) {
+          expired++;
+        } else if (expiry.difference(now).inDays <= 7) {
           expiringSoon++;
         }
       }
@@ -1899,6 +1901,7 @@ class FirebaseDataRepository implements DataRepository {
       'total': total,
       'lowStock': lowStock,
       'expiringSoon': expiringSoon,
+      'expired': expired,
     };
   }
 

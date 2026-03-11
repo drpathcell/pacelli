@@ -1666,10 +1666,17 @@ class LocalDataRepository implements DataRepository {
     );
     final expiringSoon = Sqflite.firstIntValue(expiringResult) ?? 0;
 
+    final expiredResult = await _db.rawQuery(
+      "SELECT COUNT(*) AS cnt FROM inventory_items WHERE household_id = ? AND expiry_date IS NOT NULL AND expiry_date < date('now')",
+      [householdId],
+    );
+    final expired = Sqflite.firstIntValue(expiredResult) ?? 0;
+
     return {
       'total': total,
       'lowStock': lowStock,
       'expiringSoon': expiringSoon,
+      'expired': expired,
     };
   }
 

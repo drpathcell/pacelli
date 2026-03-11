@@ -3019,7 +3019,7 @@ abstract class AppLocalizations {
   /// No description provided for @ieExportJsonDesc.
   ///
   /// In en, this message translates to:
-  /// **'Full backup of all tasks, checklists, plans, and categories'**
+  /// **'Full backup of tasks, checklists, plans, and inventory'**
   String get ieExportJsonDesc;
 
   /// No description provided for @ieExportCsv.
@@ -3837,6 +3837,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Item expiring'**
   String get inventoryExpiryCalendarDot;
+
+  /// No description provided for @homeInventorySnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get homeInventorySnapshot;
+
+  /// No description provided for @homeInvTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get homeInvTotal;
 
   /// No description provided for @homeInventorySummary.
   ///

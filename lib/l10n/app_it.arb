@@ -515,7 +515,7 @@
   "ieTitle": "Importa / Esporta",
   "ieExportSection": "ESPORTA",
   "ieExportJson": "Esporta come JSON",
-  "ieExportJsonDesc": "Backup completo di attività, liste, piani e categorie",
+  "ieExportJsonDesc": "Backup completo di attività, liste, piani e inventario",
   "ieExportCsv": "Esporta attività come CSV",
   "ieExportCsvDesc": "Lista di attività in formato foglio di calcolo",
   "ieExportSuccess": "Esportazione salvata con successo!",
@@ -657,6 +657,8 @@
   "inventoryThresholdCrossed": "{name} è sceso sotto {threshold}",
   "inventoryExpiryCalendarDot": "Articolo in scadenza",
 
+  "homeInventorySnapshot": "Inventario",
+  "homeInvTotal": "Totale",
   "homeInventorySummary": "{count} articoli · {alert} avviso",
   "homeInventorySummaryPlural": "{count} articoli · {alert} avvisi"
 }

@@ -1620,7 +1620,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ieExportJsonDesc =>
-      'Full backup of all tasks, checklists, plans, and categories';
+      'Full backup of tasks, checklists, plans, and inventory';
 
   @override
   String get ieExportCsv => 'Export tasks as CSV';
@@ -2080,6 +2080,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inventoryExpiryCalendarDot => 'Item expiring';
+
+  @override
+  String get homeInventorySnapshot => 'Inventory';
+
+  @override
+  String get homeInvTotal => 'Total';
 
   @override
   String homeInventorySummary(int count, int alert) {

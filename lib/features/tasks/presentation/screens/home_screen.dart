@@ -284,6 +284,66 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
           ),
           const SizedBox(height: 24),
 
+          // Inventory snapshot
+          if (inventoryStats != null &&
+              (inventoryStats['total'] ?? 0) > 0) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(context.l10n.homeInventorySnapshot,
+                    style: context.textTheme.titleLarge),
+                TextButton(
+                  onPressed: () => context.push(
+                    AppRoutes.inventory,
+                    extra: widget.householdId,
+                  ),
+                  child: Text(context.l10n.homeViewAll),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.inventory_2,
+                    label: context.l10n.homeInvTotal,
+                    value: '${inventoryStats['total'] ?? 0}',
+                    color: context.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.warning_amber,
+                    label: context.l10n.inventoryLowStock,
+                    value: '${inventoryStats['lowStock'] ?? 0}',
+                    color: AppColors.warning,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.timer_off_outlined,
+                    label: context.l10n.inventoryExpired,
+                    value: '${inventoryStats['expired'] ?? 0}',
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.schedule,
+                    label: context.l10n.inventoryExpiringSoon,
+                    value: '${inventoryStats['expiringSoon'] ?? 0}',
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+
           // Recent tasks
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -515,7 +515,7 @@
   "ieTitle": "Importar / Exportar",
   "ieExportSection": "EXPORTAR",
   "ieExportJson": "Exportar como JSON",
-  "ieExportJsonDesc": "Respaldo completo de tareas, listas, planes y categorías",
+  "ieExportJsonDesc": "Respaldo completo de tareas, listas, planes e inventario",
   "ieExportCsv": "Exportar tareas como CSV",
   "ieExportCsvDesc": "Lista de tareas en formato de hoja de cálculo",
   "ieExportSuccess": "Exportación guardada correctamente.",
@@ -657,6 +657,8 @@
   "inventoryThresholdCrossed": "{name} bajó de {threshold}",
   "inventoryExpiryCalendarDot": "Artículo por caducar",
 
+  "homeInventorySnapshot": "Inventario",
+  "homeInvTotal": "Total",
   "homeInventorySummary": "{count} artículos · {alert} alerta",
   "homeInventorySummaryPlural": "{count} artículos · {alert} alertas"
 }

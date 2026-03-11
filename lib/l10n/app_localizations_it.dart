@@ -1635,7 +1635,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get ieExportJsonDesc =>
-      'Backup completo di attività, liste, piani e categorie';
+      'Backup completo di attività, liste, piani e inventario';
 
   @override
   String get ieExportCsv => 'Esporta attività come CSV';
@@ -2099,6 +2099,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get inventoryExpiryCalendarDot => 'Articolo in scadenza';
+
+  @override
+  String get homeInventorySnapshot => 'Inventario';
+
+  @override
+  String get homeInvTotal => 'Totale';
 
   @override
   String homeInventorySummary(int count, int alert) {

@@ -30,6 +30,7 @@ class ImportService {
     if (data['categories'] is! List) return 'Missing or invalid categories array';
     if (data['checklists'] is! List) return 'Missing or invalid checklists array';
     if (data['plans'] is! List) return 'Missing or invalid plans array';
+    // Inventory arrays are optional (v1 backups won't have them).
     return null;
   }
 
@@ -59,9 +60,17 @@ class ImportService {
     final tasks = data['tasks'] as List;
     final checklists = data['checklists'] as List;
     final plans = data['plans'] as List;
+    final invCategories = data['inventory_categories'] as List? ?? [];
+    final invLocations = data['inventory_locations'] as List? ?? [];
+    final invItems = data['inventory_items'] as List? ?? [];
 
-    final totalItems =
-        categories.length + tasks.length + checklists.length + plans.length;
+    final totalItems = categories.length +
+        tasks.length +
+        checklists.length +
+        plans.length +
+        invCategories.length +
+        invLocations.length +
+        invItems.length;
     int processed = 0;
 
     void report(String status) {
@@ -198,6 +207,78 @@ class ImportService {
         skipped++;
       }
       report('Plans');
+    }
+
+    // ── 5. Inventory Categories ──
+    final invCategoryIdMap = <String, String>{};
+    for (final cat in invCategories) {
+      final m = Map<String, dynamic>.from(cat as Map);
+      try {
+        final newCat = await _repo.createInventoryCategory(
+          householdId: householdId,
+          name: m['name'] as String? ?? 'Imported',
+          icon: m['icon'] as String? ?? 'inventory_2',
+          color: m['color'] as String? ?? '#A5B4A5',
+        );
+        invCategoryIdMap[m['id'] as String] = newCat.id;
+        created++;
+      } catch (e) {
+        debugPrint('[ImportService] Skip inv category: $e');
+        skipped++;
+      }
+      report('Inventory Categories');
+    }
+
+    // ── 6. Inventory Locations ──
+    final invLocationIdMap = <String, String>{};
+    for (final loc in invLocations) {
+      final m = Map<String, dynamic>.from(loc as Map);
+      try {
+        final newLoc = await _repo.createInventoryLocation(
+          householdId: householdId,
+          name: m['name'] as String? ?? 'Imported',
+          icon: m['icon'] as String? ?? 'place',
+        );
+        invLocationIdMap[m['id'] as String] = newLoc.id;
+        created++;
+      } catch (e) {
+        debugPrint('[ImportService] Skip inv location: $e');
+        skipped++;
+      }
+      report('Inventory Locations');
+    }
+
+    // ── 7. Inventory Items ──
+    for (final item in invItems) {
+      final m = Map<String, dynamic>.from(item as Map);
+      final oldCatId = m['category_id'] as String?;
+      final oldLocId = m['location_id'] as String?;
+      try {
+        await _repo.createInventoryItem(
+          householdId: householdId,
+          name: m['name'] as String? ?? 'Imported',
+          description: m['description'] as String?,
+          categoryId: oldCatId != null ? invCategoryIdMap[oldCatId] : null,
+          locationId: oldLocId != null ? invLocationIdMap[oldLocId] : null,
+          quantity: (m['quantity'] as num?)?.toInt() ?? 0,
+          unit: m['unit'] as String? ?? 'pieces',
+          lowStockThreshold: (m['low_stock_threshold'] as num?)?.toInt(),
+          barcode: m['barcode'] as String?,
+          barcodeType: m['barcode_type'] as String? ?? 'none',
+          expiryDate: m['expiry_date'] != null
+              ? DateTime.tryParse(m['expiry_date'] as String)
+              : null,
+          purchaseDate: m['purchase_date'] != null
+              ? DateTime.tryParse(m['purchase_date'] as String)
+              : null,
+          notes: m['notes'] as String?,
+        );
+        created++;
+      } catch (e) {
+        debugPrint('[ImportService] Skip inv item: $e');
+        skipped++;
+      }
+      report('Inventory Items');
     }
 
     return ImportResult(created: created, skipped: skipped);

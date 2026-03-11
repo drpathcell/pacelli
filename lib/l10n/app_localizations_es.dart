@@ -1636,7 +1636,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ieExportJsonDesc =>
-      'Respaldo completo de tareas, listas, planes y categorías';
+      'Respaldo completo de tareas, listas, planes e inventario';
 
   @override
   String get ieExportCsv => 'Exportar tareas como CSV';
@@ -2099,6 +2099,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get inventoryExpiryCalendarDot => 'Artículo por caducar';
+
+  @override
+  String get homeInventorySnapshot => 'Inventario';
+
+  @override
+  String get homeInvTotal => 'Total';
 
   @override
   String homeInventorySummary(int count, int alert) {

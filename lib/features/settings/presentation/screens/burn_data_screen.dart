@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
 import '../../../../core/data/local_database.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
 
 /// Full-screen fire animation shown while all user data is being deleted.
@@ -141,6 +142,14 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
           emailPassword = await _promptForPassword();
           if (emailPassword == null || !mounted) return; // User cancelled.
         }
+      }
+
+      // ── Step 0: Cancel all pending notifications ──
+      try {
+        await ref.read(notificationServiceProvider).cancelAll();
+        debugPrint('[BURN] ✓ All notifications cancelled');
+      } catch (e) {
+        debugPrint('[BURN] Notification cancel: $e');
       }
 
       // ── Step 1: Wipe user data via the active DataRepository ──
