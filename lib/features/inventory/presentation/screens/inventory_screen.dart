@@ -45,6 +45,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         title: Text(l10n.inventoryTitle),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: l10n.inventoryScanBarcode,
+            onPressed: () async {
+              final nav = GoRouter.of(context);
+              final code = await nav.push<String>(
+                  AppRoutes.barcodeScanner,
+                  extra: widget.householdId);
+              if (code != null && mounted) {
+                // Barcode returned from scanner — navigate to create with it
+                await nav.push(AppRoutes.createInventoryItem,
+                    extra: widget.householdId);
+                ref.invalidate(inventoryItemsProvider);
+                ref.invalidate(inventoryStatsProvider);
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () =>
                 context.push(AppRoutes.search, extra: widget.householdId),

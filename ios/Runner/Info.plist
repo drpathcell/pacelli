@@ -66,6 +66,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>NSCameraUsageDescription</key>
+<string>Pacelli needs camera access to scan barcodes and QR codes for your inventory items.</string>
 <!-- Google Sign-In URL Scheme -->
 <key>CFBundleURLTypes</key>
 <array>

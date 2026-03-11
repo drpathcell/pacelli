@@ -139,10 +139,26 @@ class InventoryItemDetailScreen extends ConsumerWidget {
                   _DetailRow(
                       label: l10n.inventoryLowStockThreshold,
                       value: '${item.lowStockThreshold}'),
-                if (item.barcode != null && item.barcode!.isNotEmpty)
+                if (item.barcode != null && item.barcode!.isNotEmpty) ...[
                   _DetailRow(
                       label: l10n.inventoryBarcode,
                       value: item.barcode!),
+                  if (item.barcodeType == 'virtual')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 4),
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          AppRoutes.virtualBarcodeView,
+                          extra: {
+                            'itemName': item.name,
+                            'barcode': item.barcode!,
+                          },
+                        ),
+                        icon: const Icon(Icons.qr_code, size: 18),
+                        label: Text(l10n.inventoryViewQrCode),
+                      ),
+                    ),
+                ],
                 if (item.expiryDate != null)
                   _DetailRow(
                       label: l10n.inventoryExpiryDate,

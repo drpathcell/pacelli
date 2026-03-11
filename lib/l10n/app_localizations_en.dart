@@ -1962,6 +1962,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inventoryCouldNotDelete => 'Could not delete';
 
   @override
+  String get inventoryScanBarcode => 'Scan Barcode';
+
+  @override
+  String get inventoryScanPrompt => 'Point the camera at a barcode or QR code';
+
+  @override
+  String get inventoryScanNotFound => 'No item found with this barcode';
+
+  @override
+  String inventoryScanFoundItem(String name) {
+    return 'Found: $name';
+  }
+
+  @override
+  String get inventoryBarcodeTypeLabel => 'Barcode type';
+
+  @override
+  String get inventoryBarcodeTypeNone => 'No barcode';
+
+  @override
+  String get inventoryBarcodeTypeReal => 'Scan product barcode';
+
+  @override
+  String get inventoryBarcodeTypeVirtual => 'Generate virtual QR';
+
+  @override
+  String get inventoryTapToScan => 'Tap to scan';
+
+  @override
+  String get inventoryVirtualBarcodeGenerated => 'Virtual QR generated';
+
+  @override
+  String get inventoryViewQrCode => 'View QR Code';
+
+  @override
+  String get inventoryQrCodeTitle => 'Virtual Barcode';
+
+  @override
+  String get inventoryQrCodeSubtitle => 'Scan this QR code to find this item';
+
+  @override
+  String get inventoryBatchCreate => 'Batch Create';
+
+  @override
+  String get inventoryBatchTitle => 'Batch Create Items';
+
+  @override
+  String get inventoryBatchPortions => 'Number of portions';
+
+  @override
+  String get inventoryBatchPortionsHint =>
+      'How many items to create from this one';
+
+  @override
+  String inventoryBatchNamePattern(String name, int index, int total) {
+    return '$name ($index/$total)';
+  }
+
+  @override
+  String inventoryBatchCreated(int count) {
+    return '$count items created!';
+  }
+
+  @override
+  String get inventoryCameraPermissionDenied =>
+      'Camera permission is required to scan barcodes';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count items · $alert alert';
   }

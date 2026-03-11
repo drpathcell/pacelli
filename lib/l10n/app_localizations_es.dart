@@ -1978,6 +1978,77 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inventoryCouldNotDelete => 'No se pudo eliminar';
 
   @override
+  String get inventoryScanBarcode => 'Escanear Código';
+
+  @override
+  String get inventoryScanPrompt =>
+      'Apunta la cámara a un código de barras o QR';
+
+  @override
+  String get inventoryScanNotFound =>
+      'No se encontró ningún artículo con este código';
+
+  @override
+  String inventoryScanFoundItem(String name) {
+    return 'Encontrado: $name';
+  }
+
+  @override
+  String get inventoryBarcodeTypeLabel => 'Tipo de código';
+
+  @override
+  String get inventoryBarcodeTypeNone => 'Sin código';
+
+  @override
+  String get inventoryBarcodeTypeReal => 'Escanear código del producto';
+
+  @override
+  String get inventoryBarcodeTypeVirtual => 'Generar QR virtual';
+
+  @override
+  String get inventoryTapToScan => 'Toca para escanear';
+
+  @override
+  String get inventoryVirtualBarcodeGenerated => 'QR virtual generado';
+
+  @override
+  String get inventoryViewQrCode => 'Ver Código QR';
+
+  @override
+  String get inventoryQrCodeTitle => 'Código Virtual';
+
+  @override
+  String get inventoryQrCodeSubtitle =>
+      'Escanea este código QR para encontrar este artículo';
+
+  @override
+  String get inventoryBatchCreate => 'Creación en Lote';
+
+  @override
+  String get inventoryBatchTitle => 'Crear Artículos en Lote';
+
+  @override
+  String get inventoryBatchPortions => 'Número de porciones';
+
+  @override
+  String get inventoryBatchPortionsHint =>
+      'Cuántos artículos crear a partir de este';
+
+  @override
+  String inventoryBatchNamePattern(String name, int index, int total) {
+    return '$name ($index/$total)';
+  }
+
+  @override
+  String inventoryBatchCreated(int count) {
+    return '¡$count artículos creados!';
+  }
+
+  @override
+  String get inventoryCameraPermissionDenied =>
+      'Se necesita permiso de cámara para escanear códigos';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count artículos · $alert alerta';
   }

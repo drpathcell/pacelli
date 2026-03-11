@@ -621,6 +621,27 @@
   "inventoryLocationDeleted": "Posizione eliminata",
   "inventoryCouldNotDelete": "Impossibile eliminare",
 
+  "inventoryScanBarcode": "Scansiona Codice",
+  "inventoryScanPrompt": "Punta la fotocamera su un codice a barre o QR",
+  "inventoryScanNotFound": "Nessun articolo trovato con questo codice",
+  "inventoryScanFoundItem": "Trovato: {name}",
+  "inventoryBarcodeTypeLabel": "Tipo di codice",
+  "inventoryBarcodeTypeNone": "Nessun codice",
+  "inventoryBarcodeTypeReal": "Scansiona codice prodotto",
+  "inventoryBarcodeTypeVirtual": "Genera QR virtuale",
+  "inventoryTapToScan": "Tocca per scansionare",
+  "inventoryVirtualBarcodeGenerated": "QR virtuale generato",
+  "inventoryViewQrCode": "Vedi Codice QR",
+  "inventoryQrCodeTitle": "Codice Virtuale",
+  "inventoryQrCodeSubtitle": "Scansiona questo codice QR per trovare questo articolo",
+  "inventoryBatchCreate": "Creazione in Batch",
+  "inventoryBatchTitle": "Crea Articoli in Batch",
+  "inventoryBatchPortions": "Numero di porzioni",
+  "inventoryBatchPortionsHint": "Quanti articoli creare da questo",
+  "inventoryBatchNamePattern": "{name} ({index}/{total})",
+  "inventoryBatchCreated": "{count} articoli creati!",
+  "inventoryCameraPermissionDenied": "È necessario il permesso della fotocamera per scansionare i codici",
+
   "homeInventorySummary": "{count} articoli · {alert} avviso",
   "homeInventorySummaryPlural": "{count} articoli · {alert} avvisi"
 }

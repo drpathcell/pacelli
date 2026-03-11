@@ -3634,6 +3634,126 @@ abstract class AppLocalizations {
   /// **'Could not delete'**
   String get inventoryCouldNotDelete;
 
+  /// No description provided for @inventoryScanBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Barcode'**
+  String get inventoryScanBarcode;
+
+  /// No description provided for @inventoryScanPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at a barcode or QR code'**
+  String get inventoryScanPrompt;
+
+  /// No description provided for @inventoryScanNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No item found with this barcode'**
+  String get inventoryScanNotFound;
+
+  /// No description provided for @inventoryScanFoundItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Found: {name}'**
+  String inventoryScanFoundItem(String name);
+
+  /// No description provided for @inventoryBarcodeTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode type'**
+  String get inventoryBarcodeTypeLabel;
+
+  /// No description provided for @inventoryBarcodeTypeNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No barcode'**
+  String get inventoryBarcodeTypeNone;
+
+  /// No description provided for @inventoryBarcodeTypeReal.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan product barcode'**
+  String get inventoryBarcodeTypeReal;
+
+  /// No description provided for @inventoryBarcodeTypeVirtual.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate virtual QR'**
+  String get inventoryBarcodeTypeVirtual;
+
+  /// No description provided for @inventoryTapToScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to scan'**
+  String get inventoryTapToScan;
+
+  /// No description provided for @inventoryVirtualBarcodeGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual QR generated'**
+  String get inventoryVirtualBarcodeGenerated;
+
+  /// No description provided for @inventoryViewQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'View QR Code'**
+  String get inventoryViewQrCode;
+
+  /// No description provided for @inventoryQrCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual Barcode'**
+  String get inventoryQrCodeTitle;
+
+  /// No description provided for @inventoryQrCodeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this QR code to find this item'**
+  String get inventoryQrCodeSubtitle;
+
+  /// No description provided for @inventoryBatchCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Create'**
+  String get inventoryBatchCreate;
+
+  /// No description provided for @inventoryBatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Create Items'**
+  String get inventoryBatchTitle;
+
+  /// No description provided for @inventoryBatchPortions.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of portions'**
+  String get inventoryBatchPortions;
+
+  /// No description provided for @inventoryBatchPortionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How many items to create from this one'**
+  String get inventoryBatchPortionsHint;
+
+  /// No description provided for @inventoryBatchNamePattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({index}/{total})'**
+  String inventoryBatchNamePattern(String name, int index, int total);
+
+  /// No description provided for @inventoryBatchCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items created!'**
+  String inventoryBatchCreated(int count);
+
+  /// No description provided for @inventoryCameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission is required to scan barcodes'**
+  String get inventoryCameraPermissionDenied;
+
   /// No description provided for @homeInventorySummary.
   ///
   /// In en, this message translates to:

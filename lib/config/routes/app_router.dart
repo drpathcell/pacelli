@@ -28,6 +28,9 @@ import '../../features/inventory/presentation/screens/create_inventory_item_scre
 import '../../features/inventory/presentation/screens/edit_inventory_item_screen.dart';
 import '../../features/inventory/presentation/screens/manage_inventory_categories_screen.dart';
 import '../../features/inventory/presentation/screens/manage_inventory_locations_screen.dart';
+import '../../features/inventory/presentation/screens/barcode_scanner_screen.dart';
+import '../../features/inventory/presentation/screens/batch_create_screen.dart';
+import '../../features/inventory/presentation/screens/virtual_barcode_view_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
 import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
@@ -61,6 +64,9 @@ class AppRoutes {
   static const String editInventoryItem = '/inventory/edit';
   static const String inventoryCategories = '/inventory/categories';
   static const String inventoryLocations = '/inventory/locations';
+  static const String barcodeScanner = '/inventory/scan';
+  static const String batchCreate = '/inventory/batch-create';
+  static const String virtualBarcodeView = '/inventory/qr-view';
 }
 
 /// Key for the shell navigator (bottom nav tabs).
@@ -230,6 +236,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final householdId = state.extra as String;
           return ManageInventoryLocationsScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.barcodeScanner,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return BarcodeScannerScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.batchCreate,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return BatchCreateScreen(
+            householdId: extra['householdId'] as String,
+            baseName: extra['baseName'] as String,
+            categoryId: extra['categoryId'] as String?,
+            locationId: extra['locationId'] as String?,
+            unit: extra['unit'] as String,
+            expiryDate: extra['expiryDate'] as DateTime?,
+            purchaseDate: extra['purchaseDate'] as DateTime?,
+            notes: extra['notes'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.virtualBarcodeView,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, String>;
+          return VirtualBarcodeViewScreen(
+            itemName: extra['itemName']!,
+            barcode: extra['barcode']!,
+          );
         },
       ),
 

@@ -944,6 +944,44 @@
   "inventoryLocationDeleted": "Location deleted",
   "inventoryCouldNotDelete": "Could not delete",
 
+  "inventoryScanBarcode": "Scan Barcode",
+  "inventoryScanPrompt": "Point the camera at a barcode or QR code",
+  "inventoryScanNotFound": "No item found with this barcode",
+  "inventoryScanFoundItem": "Found: {name}",
+  "@inventoryScanFoundItem": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "inventoryBarcodeTypeLabel": "Barcode type",
+  "inventoryBarcodeTypeNone": "No barcode",
+  "inventoryBarcodeTypeReal": "Scan product barcode",
+  "inventoryBarcodeTypeVirtual": "Generate virtual QR",
+  "inventoryTapToScan": "Tap to scan",
+  "inventoryVirtualBarcodeGenerated": "Virtual QR generated",
+  "inventoryViewQrCode": "View QR Code",
+  "inventoryQrCodeTitle": "Virtual Barcode",
+  "inventoryQrCodeSubtitle": "Scan this QR code to find this item",
+  "inventoryBatchCreate": "Batch Create",
+  "inventoryBatchTitle": "Batch Create Items",
+  "inventoryBatchPortions": "Number of portions",
+  "inventoryBatchPortionsHint": "How many items to create from this one",
+  "inventoryBatchNamePattern": "{name} ({index}/{total})",
+  "@inventoryBatchNamePattern": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "index": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "inventoryBatchCreated": "{count} items created!",
+  "@inventoryBatchCreated": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryCameraPermissionDenied": "Camera permission is required to scan barcodes",
+
   "homeInventorySummary": "{count} items · {alert} alert",
   "@homeInventorySummary": {
     "placeholders": {

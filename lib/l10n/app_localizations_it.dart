@@ -1978,6 +1978,76 @@ class AppLocalizationsIt extends AppLocalizations {
   String get inventoryCouldNotDelete => 'Impossibile eliminare';
 
   @override
+  String get inventoryScanBarcode => 'Scansiona Codice';
+
+  @override
+  String get inventoryScanPrompt =>
+      'Punta la fotocamera su un codice a barre o QR';
+
+  @override
+  String get inventoryScanNotFound =>
+      'Nessun articolo trovato con questo codice';
+
+  @override
+  String inventoryScanFoundItem(String name) {
+    return 'Trovato: $name';
+  }
+
+  @override
+  String get inventoryBarcodeTypeLabel => 'Tipo di codice';
+
+  @override
+  String get inventoryBarcodeTypeNone => 'Nessun codice';
+
+  @override
+  String get inventoryBarcodeTypeReal => 'Scansiona codice prodotto';
+
+  @override
+  String get inventoryBarcodeTypeVirtual => 'Genera QR virtuale';
+
+  @override
+  String get inventoryTapToScan => 'Tocca per scansionare';
+
+  @override
+  String get inventoryVirtualBarcodeGenerated => 'QR virtuale generato';
+
+  @override
+  String get inventoryViewQrCode => 'Vedi Codice QR';
+
+  @override
+  String get inventoryQrCodeTitle => 'Codice Virtuale';
+
+  @override
+  String get inventoryQrCodeSubtitle =>
+      'Scansiona questo codice QR per trovare questo articolo';
+
+  @override
+  String get inventoryBatchCreate => 'Creazione in Batch';
+
+  @override
+  String get inventoryBatchTitle => 'Crea Articoli in Batch';
+
+  @override
+  String get inventoryBatchPortions => 'Numero di porzioni';
+
+  @override
+  String get inventoryBatchPortionsHint => 'Quanti articoli creare da questo';
+
+  @override
+  String inventoryBatchNamePattern(String name, int index, int total) {
+    return '$name ($index/$total)';
+  }
+
+  @override
+  String inventoryBatchCreated(int count) {
+    return '$count articoli creati!';
+  }
+
+  @override
+  String get inventoryCameraPermissionDenied =>
+      'È necessario il permesso della fotocamera per scansionare i codici';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count articoli · $alert avviso';
   }

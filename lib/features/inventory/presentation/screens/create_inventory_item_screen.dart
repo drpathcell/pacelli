@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/inventory_providers.dart';
@@ -30,7 +32,7 @@ class _CreateInventoryItemScreenState
 
   String? _categoryId;
   String? _locationId;
-  final String _barcodeType = 'none';
+  String _barcodeType = 'none';
   DateTime? _expiryDate;
   DateTime? _purchaseDate;
   bool _saving = false;
@@ -179,13 +181,78 @@ class _CreateInventoryItemScreenState
                   _pickDate((d) => setState(() => _purchaseDate = d)),
             ),
 
-            // Barcode.
-            TextFormField(
-              controller: _barcodeCtrl,
-              decoration:
-                  InputDecoration(labelText: l10n.inventoryBarcode),
+            // Barcode type selector.
+            Text(l10n.inventoryBarcodeTypeLabel,
+                style: context.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                  value: 'none',
+                  label: Text(l10n.inventoryBarcodeTypeNone),
+                  icon: const Icon(Icons.block, size: 18),
+                ),
+                ButtonSegment(
+                  value: 'real',
+                  label: Text(l10n.inventoryBarcodeTypeReal),
+                  icon: const Icon(Icons.qr_code_scanner, size: 18),
+                ),
+                ButtonSegment(
+                  value: 'virtual',
+                  label: Text(l10n.inventoryBarcodeTypeVirtual),
+                  icon: const Icon(Icons.qr_code, size: 18),
+                ),
+              ],
+              selected: {_barcodeType},
+              onSelectionChanged: (s) {
+                setState(() {
+                  _barcodeType = s.first;
+                  if (_barcodeType == 'virtual') {
+                    _barcodeCtrl.text =
+                        'PACELLI-${const Uuid().v4().substring(0, 8).toUpperCase()}';
+                  } else if (_barcodeType == 'none') {
+                    _barcodeCtrl.clear();
+                  }
+                });
+              },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            if (_barcodeType == 'real') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _barcodeCtrl,
+                      decoration:
+                          InputDecoration(labelText: l10n.inventoryBarcode),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    icon: const Icon(Icons.qr_code_scanner),
+                    tooltip: l10n.inventoryTapToScan,
+                    onPressed: () async {
+                      final code = await context.push<String>(
+                          AppRoutes.barcodeScanner,
+                          extra: widget.householdId);
+                      if (code != null && mounted) {
+                        setState(() => _barcodeCtrl.text = code);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (_barcodeType == 'virtual') ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.qr_code, color: Colors.green),
+                title: Text(l10n.inventoryVirtualBarcodeGenerated),
+                subtitle: Text(_barcodeCtrl.text),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Notes.
             TextFormField(
@@ -205,6 +272,30 @@ class _CreateInventoryItemScreenState
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : Text(l10n.inventorySave),
+            ),
+            const SizedBox(height: 12),
+            // Batch create.
+            OutlinedButton.icon(
+              onPressed: _saving || _nameCtrl.text.trim().isEmpty
+                  ? null
+                  : () {
+                      context.push(AppRoutes.batchCreate, extra: {
+                        'householdId': widget.householdId,
+                        'baseName': _nameCtrl.text.trim(),
+                        'categoryId': _categoryId,
+                        'locationId': _locationId,
+                        'unit': _unitCtrl.text.trim().isEmpty
+                            ? 'pieces'
+                            : _unitCtrl.text.trim(),
+                        'expiryDate': _expiryDate,
+                        'purchaseDate': _purchaseDate,
+                        'notes': _notesCtrl.text.trim().isEmpty
+                            ? null
+                            : _notesCtrl.text.trim(),
+                      });
+                    },
+              icon: const Icon(Icons.copy_all),
+              label: Text(l10n.inventoryBatchCreate),
             ),
           ],
         ),
