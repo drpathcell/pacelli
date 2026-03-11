@@ -87,6 +87,13 @@ Follow the existing patterns:
 | Burn/wipe | `burn` | `burnConfirmTitle`, `burnStatusDeletingCloud`, `burnPasswordTitle` |
 | Notifications | `notification` | `notificationSettingsTitle`, `notificationTaskReminders` |
 | Import/Export | `importExport` | `importExportTitle`, `importExportExportData` |
+| Inventory (general) | `inventory` | `inventoryTitle`, `inventoryEmpty`, `inventoryItemCount`, `inventoryAddItem`, `inventoryEditItem`, `inventoryDelete`, `inventoryDeleteConfirm`, `inventoryCategories`, `inventoryLocations`, `inventoryManageCategories`, `inventoryManageLocations`, `inventoryViewByCategory`, `inventoryViewByLocation`, `inventoryViewAll`, `inventoryDetails`, `inventoryActivityLog`, `inventoryCreated`, `inventoryUpdated`, `inventoryDeleted`, `inventoryCouldNotLoad` |
+| Inventory (barcode) | `inventory` | `inventoryScanBarcode`, `inventoryScanPrompt`, `inventoryBarcodeTypeLabel`, `inventoryBarcodeTypeNone`, `inventoryBarcodeTypeReal`, `inventoryBarcodeTypeVirtual`, `inventoryViewQrCode`, `inventoryQrCodeTitle` |
+| Inventory (batch) | `inventory` | `inventoryBatchCreate`, `inventoryBatchTitle`, `inventoryBatchPortions`, `inventoryBatchCreated` |
+| Inventory (notifications) | `inventory` | `inventoryExpiringNotification`, `inventoryLowStockNotification`, `inventoryLowStockAlert`, `inventoryThresholdCrossed` |
+| Inventory (auto-tasks) | `inventory` | `inventoryCreateRestockTask`, `inventoryRestockTaskTitle`, `inventoryExpiryTaskTitle`, `inventoryRestockTaskCreated`, `inventoryExpiryTaskCreated` |
+| Inventory (calendar) | `inventory` | `inventoryCalendarExpiring`, `inventoryExpiryCalendarDot` |
+| Home (inventory) | `home` | `homeInventorySnapshot`, `homeInvTotal` |
 
 ### 7. Using the new keys in Dart code
 In any widget that needs the new string:
@@ -114,4 +121,4 @@ flutter clean && flutter pub get && flutter run
 - **Missing `@key` metadata**: If a key uses placeholders but has no `@key` entry in `app_en.arb`, the generated code won't have typed parameters
 
 ## Quick Reference: Current Key Count
-As of March 2026: ~634 keys in EN, ~510 in ES/IT across 3 locales. Note: EN has more keys due to `@key` metadata entries for parameterised strings (these are not counted as translation keys in ES/IT).
+As of March 2026: ~800 keys in EN, ~665 in ES/IT across 3 locales (~107 inventory keys). Note: EN has more keys due to `@key` metadata entries for parameterised strings (these are not counted as translation keys in ES/IT).

@@ -14,9 +14,10 @@ The Pacelli project is at the user's local path (typically `~/Developer/pacelli`
 - **Encryption**: Applied at the repository level before write, decrypted after read
 - **File storage**: Google Drive via household owner's account
 - **Auth**: Firebase Auth + Google Sign-In
-- **Notifications**: Local push notifications via `flutter_local_notifications` (`lib/core/services/notification_service.dart`)
-- **Import/Export**: JSON export/import of household data (`lib/features/import_export/data/`)
-- **Burn All Data**: Full wipe sequence including Firestore, local DB, secure storage, SharedPreferences, and Firebase Auth account deletion with re-authentication (`lib/features/settings/presentation/screens/burn_data_screen.dart`)
+- **Notifications**: Local push notifications via `flutter_local_notifications` (`lib/core/services/notification_service.dart`) — separate channels for `task_reminders` and `inventory_reminders`
+- **Import/Export**: JSON export/import of household data (`lib/features/import_export/data/`) — version 2 format includes inventory
+- **Inventory**: Full CRUD with barcode scanning (`mobile_scanner`), virtual QR codes (`qr_flutter`), batch creation, expiry/low-stock notifications, calendar integration, and auto-task creation (`lib/features/inventory/`)
+- **Burn All Data**: Full wipe sequence including Firestore, local DB, secure storage, SharedPreferences, notification cancellation, and Firebase Auth account deletion with re-authentication (`lib/features/settings/presentation/screens/burn_data_screen.dart`)
 
 ## Audit Checklist
 
@@ -28,10 +29,12 @@ The Pacelli project is at the user's local path (typically `~/Developer/pacelli`
 - [ ] Repository methods return typed data (or `Map<String, dynamic>` consistently)
 - [ ] No business logic leaks into the repository — it's a pure data layer
 - [ ] `local_data_repository.dart` mirrors all read/write methods from the Firebase implementation
-- [ ] `local_database.dart` schema includes tables for: tasks, subtasks, plans, plan_entries, plan_checklist_items, categories, checklists, checklist_items, task_attachments, plan_attachments, household_members, households
+- [ ] `local_database.dart` schema includes tables for: tasks, subtasks, plans, plan_entries, plan_checklist_items, categories, checklists, checklist_items, task_attachments, plan_attachments, household_members, households, inventory_items, inventory_categories, inventory_locations, inventory_logs, inventory_attachments (+ 7 indexes on inventory tables)
+- [ ] DataRepository interface includes inventory methods: `createInventoryItem`, `getInventoryItems`, `getInventoryItem`, `updateInventoryItem`, `deleteInventoryItem`, inventory categories CRUD, inventory locations CRUD, `logInventoryAction`, `getInventoryLogs`, inventory attachments CRUD, `getInventoryStats`
+- [ ] `searchHousehold` includes `'inventory'` in default `entityTypes`
 
 #### 1.2 Feature Providers
-For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth`, `attachments`, `import_export`, `onboarding`):
+For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth`, `attachments`, `import_export`, `onboarding`, `inventory`):
 - [ ] Providers use `ref.watch(dataRepositoryProvider)` to get the repo
 - [ ] `FutureProvider.family` is used for household-scoped queries (takes `householdId`)
 - [ ] Providers are properly scoped — no global state that should be per-household
@@ -57,6 +60,7 @@ For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth
 - [ ] User display name
 - [ ] Task attachment file names, descriptions, mime types, web view links, thumbnail URLs
 - [ ] Plan attachment file names, mime types, web view links, thumbnail URLs
+- [ ] Inventory item names (`_enc`), descriptions (`_encN`), unit (`_enc`), barcode (`_encN`), notes (`_encN`)
 
 #### 2.2 What must NOT be encrypted (structural fields)
 - [ ] Task status (pending, completed)
@@ -67,6 +71,7 @@ For each feature (`tasks`, `plans`, `checklists`, `household`, `settings`, `auth
 - [ ] Category icons and colours
 - [ ] Recurrence values
 - [ ] Attachment file IDs (Google Drive IDs) and file sizes
+- [ ] Inventory: quantity, low_stock_threshold, expiry_date, purchase_date, barcode_type, category_id, location_id, household_id, created_by, timestamps
 
 #### 2.3 Encryption implementation
 - [ ] Encryption key is generated on-device
@@ -105,6 +110,11 @@ For each screen, check:
 - [ ] Family providers use appropriate keys (not entire objects)
 - [ ] No redundant providers (two providers fetching the same data)
 
+#### 4.1b Inventory providers
+- [ ] 7 providers in `inventory_providers.dart`: `inventoryItemsProvider`, `inventoryItemProvider`, `inventoryCategoriesProvider`, `inventoryLocationsProvider`, `inventoryStatsProvider`, `inventoryLogsProvider`, `inventoryViewModeProvider`
+- [ ] `inventoryViewModeProvider` is a `StateProvider<String>` (not FutureProvider)
+- [ ] `inventoryTaskServiceProvider` in `inventory_task_service.dart` is `Provider.family<InventoryTaskService, String>`
+
 #### 4.2 State mutations
 - [ ] Mutations (create/update/delete) call `ref.invalidate()` on affected list providers
 - [ ] Snackbar/toast feedback after successful mutations
@@ -127,7 +137,9 @@ For each screen, check:
 - [ ] All Firestore collections referenced in code have corresponding security rules in `firestore.rules`
 - [ ] Verify `plan_attachments` rule exists (was missing historically — caused burn failures with permission-denied)
 - [ ] Verify `household_invites` rule exists
-- [ ] Burn flow: `wipeAllData()` deletes from ALL collections including `household_invites` and `plan_attachments`
+- [ ] Inventory parent collections (inventory_items, inventory_categories, inventory_locations) use `isMember()` Firestore rules
+- [ ] Inventory child collections (inventory_logs, inventory_attachments) use `isAuth()` because queries filter by item_id without household_id
+- [ ] Burn flow: `wipeAllData()` deletes from ALL collections including `household_invites`, `plan_attachments`, and all 5 inventory collections
 
 #### 5.2 Google Drive
 - [ ] Drive access scope is minimal (only Pacelli folder)
@@ -174,13 +186,19 @@ For each screen, check:
 - [ ] Notification permissions requested gracefully (no crash on denial)
 - [ ] Task reminders schedule correctly based on due date/time
 - [ ] Notification settings screen toggles persist via SharedPreferences
-- [ ] Notifications cleared on burn/sign-out
+- [ ] Notifications cleared on burn/sign-out (burn screen calls `notificationServiceProvider.cancelAll()` as Step 0)
+- [ ] Inventory notification methods: `scheduleExpiryReminder()`, `cancelExpiryReminder()`, `sendLowStockNotification()`
+- [ ] Android notification channel: `inventory_reminders` / `Inventory Reminders` (separate from `task_reminders`)
+- [ ] Stable notification IDs: `_stableId('expiry_$itemId')` and `_stableId('lowstock_$itemId')`
 
 #### 7.2 Import/Export
-- [ ] Export service serialises all household data (tasks, plans, checklists, categories, attachments)
+- [ ] Export service serialises all household data (tasks, plans, checklists, categories, attachments, inventory)
+- [ ] Export version is 2 (includes `inventory_items`, `inventory_categories`, `inventory_locations`, `inventory_logs`)
 - [ ] Encrypted fields are decrypted before export (export is plaintext JSON)
 - [ ] Import service validates JSON structure before writing
 - [ ] Import handles both Firebase and SQLite backends
+- [ ] Import handles v1 backups (without inventory) gracefully — inventory arrays default to empty
+- [ ] Import order for inventory: categories → locations → items (with ID remapping for foreign keys)
 - [ ] Import does not create duplicate entries (check for existing IDs)
 - [ ] Error handling for corrupt/malformed import files
 - [ ] All import/export status messages use l10n keys

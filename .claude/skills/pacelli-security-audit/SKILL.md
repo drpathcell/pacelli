@@ -21,6 +21,11 @@ Pacelli lives at the user's local path (typically `~/Developer/pacelli`). In Cow
 | Local data repository (SQLite layer) | `lib/core/data/local_data_repository.dart` |
 | Local database (SQLite schema + helpers) | `lib/core/data/local_database.dart` |
 | Attachment models (Task + Plan) | `lib/core/models/attachment.dart` |
+| Inventory models (5 classes) | `lib/core/models/inventory_item.dart` |
+| Inventory providers | `lib/features/inventory/data/inventory_providers.dart` |
+| Inventory auto-task service | `lib/features/inventory/data/inventory_task_service.dart` |
+| Inventory screens (9) | `lib/features/inventory/presentation/screens/` |
+| Inventory widgets (5) | `lib/features/inventory/presentation/widgets/` |
 
 ## Audit Checklist
 
@@ -79,6 +84,11 @@ grep -n '_enc\b\|_encN\b' lib/core/data/firebase_data_repository.dart
 - [ ] Plan attachment web view links (`_enc`)
 - [ ] Plan attachment thumbnail URLs (`_encN`)
 - [ ] Plan attachment descriptions (`_encN`)
+- [ ] Inventory item names (`_enc`)
+- [ ] Inventory item descriptions (`_encN`)
+- [ ] Inventory item unit (`_enc`)
+- [ ] Inventory item barcode (`_encN`)
+- [ ] Inventory item notes (`_encN`)
 
 #### 2.2 Fields that must NOT be encrypted (structural/query fields)
 - [ ] Task status, priority, due dates, recurrence
@@ -89,6 +99,7 @@ grep -n '_enc\b\|_encN\b' lib/core/data/firebase_data_repository.dart
 - [ ] IDs (document IDs, household IDs, user IDs)
 - [ ] Attachment file IDs (Google Drive IDs)
 - [ ] Attachment file sizes
+- [ ] Inventory: quantity, low_stock_threshold, expiry_date, purchase_date, barcode_type, category_id, location_id, household_id, created_by, created_at, updated_at
 
 #### 2.3 New fields check
 Whenever a new data field is added to any model:
@@ -139,9 +150,11 @@ The privacy screen makes user-facing claims. Every claim must match the code.
 
 #### 4.3 Burn sequence (`burn_data_screen.dart`)
 Verify each step actually runs and succeeds:
+- [ ] **Step 0**: `notificationServiceProvider.cancelAll()` — cancels all pending notifications (including inventory expiry reminders with stable IDs `'expiry_$itemId'` and `'lowstock_$itemId'`)
 - [ ] **Step 1**: `repo.wipeAllData(userId)` — deletes all Firestore user data:
   - tasks, subtasks, checklists, checklist_items, scratch_plans, plan_entries, plan_checklist_items
   - task_categories, task_attachments, plan_attachments, household_invites
+  - inventory_items, inventory_categories, inventory_locations, inventory_logs, inventory_attachments
   - household_members, households, household_drive_config
   - profiles, household_keys (encryption keys)
   - Granular `debugPrint` logging for each collection's doc count

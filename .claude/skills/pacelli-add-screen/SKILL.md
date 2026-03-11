@@ -30,6 +30,7 @@ lib/
 │   │   ├── attachment.dart             # TaskAttachment + PlanAttachment models
 │   │   ├── checklist.dart              # Checklist + ChecklistItem
 │   │   ├── household.dart              # Household model
+│   │   ├── inventory_item.dart          # InventoryItem, InventoryCategory, InventoryLocation, InventoryLog, InventoryAttachment
 │   │   ├── models.dart                 # Barrel export
 │   │   ├── plan.dart                   # Plan + PlanEntry models
 │   │   └── task.dart                   # Task + Subtask models
@@ -53,6 +54,11 @@ lib/
 │   ├── import_export/
 │   │   ├── data/                      # export_service.dart, import_service.dart
 │   │   └── presentation/screens/      # import_export_screen
+│   ├── inventory/
+│   │   ├── data/                      # inventory_providers.dart, inventory_task_service.dart
+│   │   └── presentation/
+│   │       ├── screens/               # 9 screens: inventory, detail, create, edit, batch_create, barcode_scanner, virtual_barcode_view, manage_categories, manage_locations
+│   │       └── widgets/               # 5 widgets: inventory_item_card, inventory_category_chip, inventory_log_tile, quantity_adjuster, calendar_inventory_section
 │   ├── onboarding/
 │   │   └── presentation/screens/      # storage_setup_screen
 │   ├── plans/
@@ -68,7 +74,7 @@ lib/
 │           ├── screens/               # tasks, create_task, edit_task, task_detail, calendar
 │           └── widgets/               # attachment_list, attachment_picker, calendar_*
 ├── l10n/
-│   ├── app_en.arb                      # English (template, ~634 keys)
+│   ├── app_en.arb                      # English (template, ~800 lines / ~665 keys)
 │   ├── app_es.arb                      # Spanish
 │   └── app_it.arb                      # Italian
 └── shared/
@@ -144,6 +150,17 @@ final {feature}ListProvider = FutureProvider.family<List<Map<String, dynamic>>, 
 );
 ```
 
+**Reference — Inventory providers** (`lib/features/inventory/data/inventory_providers.dart`):
+```dart
+// FutureProvider.family for household-scoped queries:
+final inventoryItemsProvider = FutureProvider.family<List<InventoryItem>, String>(...);
+final inventoryStatsProvider = FutureProvider.family<Map<String, int>, String>(...);
+// StateProvider for UI state:
+final inventoryViewModeProvider = StateProvider<String>((ref) => 'category');
+// Provider.family for services:
+final inventoryTaskServiceProvider = Provider.family<InventoryTaskService, String>(...);
+```
+
 ### 5. Add the route to GoRouter
 File: `lib/config/routes/app_router.dart`
 
@@ -162,7 +179,7 @@ import '../../features/{feature_name}/presentation/screens/{screen_name}_screen.
 
 **c) Add the GoRoute:**
 - If it's a **top-level screen** (under the shell/bottom nav): add inside the `ShellRoute`'s `routes` list
-- If it's a **detail/push screen** (no bottom nav): add as a standalone `GoRoute` outside the shell
+- If it's a **detail/push screen** (no bottom nav): add as a standalone `GoRoute` outside the shell (e.g., all 9 inventory routes are outside the shell: `/inventory`, `/inventory/item`, `/inventory/create`, `/inventory/edit`, `/inventory/categories`, `/inventory/locations`, `/inventory/scan`, `/inventory/batch-create`, `/inventory/qr-view`)
 
 ```dart
 GoRoute(
@@ -205,8 +222,11 @@ flutter clean && flutter pub get && flutter run
 - [ ] If the screen handles user content, encrypt sensitive fields via `_enc()`/`_encN()` in the repository
 - [ ] If the screen supports attachments, use `AttachmentPicker` and `AttachmentList` widgets
 - [ ] If the screen has a create flow, consider deferred uploads (pick files first, upload after save)
-- [ ] If the screen needs notifications, use `NotificationService` from `lib/core/services/notification_service.dart`
-- [ ] If the screen supports import/export, follow patterns in `lib/features/import_export/`
+- [ ] If the screen needs notifications, use `NotificationService` from `lib/core/services/notification_service.dart` (see inventory pattern: `scheduleExpiryReminder`, `cancelExpiryReminder`, `sendLowStockNotification`)
+- [ ] If the screen supports import/export, follow patterns in `lib/features/import_export/` (inventory data included in v2 JSON export)
+- [ ] If the screen needs calendar integration, follow the `CalendarInventorySection` pattern (add to `calendar_screen.dart` stacked sections)
+- [ ] If the screen needs auto-task creation, follow `InventoryTaskService` pattern (duplicate detection, priority, due date)
+- [ ] If the screen needs barcode scanning, use `mobile_scanner` (v7+, Apple Vision framework) and `qr_flutter` for QR generation
 
 ## Common Pitfalls
 - **Forgetting the extensions import**: Without it, `context.l10n` won't resolve — causes build failure

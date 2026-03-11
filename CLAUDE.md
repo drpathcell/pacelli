@@ -71,7 +71,21 @@ lib/features/<feature>/
   utils/          # Feature-specific helpers
 ```
 
-Domain entities: Tasks, Subtasks, Categories, Checklists, Plans (scratch plans with entries), Attachments (Google Drive). Models live in `lib/core/models/` with a barrel export in `models.dart`.
+Domain entities: Tasks, Subtasks, Categories, Checklists, Plans (scratch plans with entries), Attachments (Google Drive), Inventory. Models live in `lib/core/models/` with a barrel export in `models.dart`.
+
+### Inventory Feature
+
+Full household inventory management in `lib/features/inventory/`:
+- **5 models** (`lib/core/models/inventory_item.dart`): `InventoryItem`, `InventoryCategory`, `InventoryLocation`, `InventoryLog`, `InventoryAttachment`
+- **9 screens**: inventory list, item detail, create/edit item, batch create, barcode scanner, virtual barcode view, manage categories, manage locations
+- **5 widgets**: inventory_item_card, inventory_category_chip, inventory_log_tile, quantity_adjuster, calendar_inventory_section
+- **7 providers** in `inventory_providers.dart` + `inventoryTaskServiceProvider` in `inventory_task_service.dart`
+- **5 Firestore collections**: inventory_items, inventory_categories, inventory_locations, inventory_logs, inventory_attachments
+- **Barcode scanning**: `mobile_scanner` (v7+, Apple Vision framework) for real barcodes, `qr_flutter` for virtual QR code generation
+- **Notifications**: expiry reminders (`scheduleExpiryReminder`), low stock alerts (`sendLowStockNotification`) via `inventory_reminders` Android channel
+- **Calendar integration**: `CalendarInventorySection` shows expiring items on selected day with orange dot markers
+- **Auto-task creation**: `InventoryTaskService` creates restock/expiry tasks with duplicate detection
+- **Export/Import**: inventory data included in v2 JSON backup format with category/location ID remapping on import
 
 ### Localisation
 

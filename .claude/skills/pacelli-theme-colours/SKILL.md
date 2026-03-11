@@ -150,6 +150,16 @@ grep -rn 'AppColors\.' lib/ --include='*.dart' | grep -v 'app_colors.dart' | gre
 ```
 Over time these should be migrated. As of March 2026, there are approximately 10-15 remaining `AppColors` references outside the theme files, mostly in `privacy_encryption_screen.dart` and `attachment_picker.dart`.
 
+## Inventory Screen Colour Usage
+
+Inventory screens follow `SharedColors` and `AppColors` patterns consistently:
+- **AppColors.warning** (`amber`) — Low stock badges on item cards and detail screen
+- **AppColors.error** (`red`) — Expired badges on item cards and detail screen
+- **Colors.orange** — Expiring-soon badges, calendar expiry dot markers, and calendar inventory section icon
+- **Theme primary colour** (`context.colorScheme.primary`) — Inventory icon, total stat card on home dashboard
+- **AppColors.accentLight** — Calendar task dot markers (alongside orange expiry dots)
+- Status badges use `color.withValues(alpha: 0.12)` background with solid text for consistency
+
 ## When to Use This Skill
 
 | Trigger | What to do |
