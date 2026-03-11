@@ -48,6 +48,46 @@
         { "fieldPath": "task_id", "order": "ASCENDING" },
         { "fieldPath": "uploaded_at", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "sort_order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_locations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "sort_order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "item_id", "order": "ASCENDING" },
+        { "fieldPath": "performed_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_attachments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "item_id", "order": "ASCENDING" },
+        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
