@@ -3754,6 +3754,90 @@ abstract class AppLocalizations {
   /// **'Camera permission is required to scan barcodes'**
   String get inventoryCameraPermissionDenied;
 
+  /// No description provided for @inventoryExpiringNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is expiring soon'**
+  String inventoryExpiringNotification(String name);
+
+  /// No description provided for @inventoryLowStockNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is running low ({count} remaining)'**
+  String inventoryLowStockNotification(String name, int count);
+
+  /// No description provided for @inventoryCreateRestockTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create restock task?'**
+  String get inventoryCreateRestockTask;
+
+  /// No description provided for @inventoryRestockTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock: {name}'**
+  String inventoryRestockTaskTitle(String name);
+
+  /// No description provided for @inventoryExpiryTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use before expiry: {name}'**
+  String inventoryExpiryTaskTitle(String name);
+
+  /// No description provided for @inventoryRestockTaskCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock task created'**
+  String get inventoryRestockTaskCreated;
+
+  /// No description provided for @inventoryExpiryTaskCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry task created'**
+  String get inventoryExpiryTaskCreated;
+
+  /// No description provided for @inventoryAutoCreateTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create task'**
+  String get inventoryAutoCreateTask;
+
+  /// No description provided for @inventoryNotificationSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification sent'**
+  String get inventoryNotificationSent;
+
+  /// No description provided for @inventoryItemExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Item expired'**
+  String get inventoryItemExpired;
+
+  /// No description provided for @inventoryCalendarExpiring.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring Items'**
+  String get inventoryCalendarExpiring;
+
+  /// No description provided for @inventoryLowStockAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock! Create a shopping task?'**
+  String get inventoryLowStockAlert;
+
+  /// No description provided for @inventoryThresholdCrossed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} dropped below {threshold}'**
+  String inventoryThresholdCrossed(String name, int threshold);
+
+  /// No description provided for @inventoryExpiryCalendarDot.
+  ///
+  /// In en, this message translates to:
+  /// **'Item expiring'**
+  String get inventoryExpiryCalendarDot;
+
   /// No description provided for @homeInventorySummary.
   ///
   /// In en, this message translates to:

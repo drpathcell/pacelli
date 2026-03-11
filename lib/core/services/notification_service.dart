@@ -165,6 +165,108 @@ class NotificationService {
     debugPrint('[NotificationService] Cancelled reminder for task $taskId');
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  //  INVENTORY NOTIFICATIONS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Schedules an expiry reminder for an inventory item.
+  ///
+  /// Uses the user's reminder timing preference (same as task reminders).
+  Future<void> scheduleExpiryReminder({
+    required String itemId,
+    required String itemName,
+    required DateTime expiryDate,
+  }) async {
+    if (!_enabled || expiryDate.isBefore(DateTime.now())) return;
+
+    final scheduledDate = _applyTiming(expiryDate);
+    if (scheduledDate.isBefore(DateTime.now())) return;
+
+    final notificationId = _stableId('expiry_$itemId');
+
+    const androidDetails = AndroidNotificationDetails(
+      'inventory_reminders',
+      'Inventory Reminders',
+      channelDescription: 'Reminders for inventory expiry dates and low stock',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+      macOS: iosDetails,
+    );
+
+    final tzScheduled = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    await _plugin.zonedSchedule(
+      id: notificationId,
+      title: 'Pacelli',
+      body: '$itemName is expiring soon',
+      scheduledDate: tzScheduled,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+
+    debugPrint('[NotificationService] Scheduled expiry reminder for "$itemName" at $scheduledDate');
+  }
+
+  /// Cancels an expiry reminder for an inventory item.
+  Future<void> cancelExpiryReminder(String itemId) async {
+    await _plugin.cancel(id: _stableId('expiry_$itemId'));
+    debugPrint('[NotificationService] Cancelled expiry reminder for item $itemId');
+  }
+
+  /// Sends an immediate low stock notification.
+  ///
+  /// Called when quantity drops below the threshold.
+  Future<void> sendLowStockNotification({
+    required String itemId,
+    required String itemName,
+    required int currentQuantity,
+    required int threshold,
+  }) async {
+    if (!_enabled) return;
+
+    final notificationId = _stableId('lowstock_$itemId');
+
+    const androidDetails = AndroidNotificationDetails(
+      'inventory_reminders',
+      'Inventory Reminders',
+      channelDescription: 'Reminders for inventory expiry dates and low stock',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+      macOS: iosDetails,
+    );
+
+    await _plugin.show(
+      id: notificationId,
+      title: 'Pacelli — Low Stock',
+      body: '$itemName is running low ($currentQuantity remaining)',
+      notificationDetails: details,
+    );
+
+    debugPrint('[NotificationService] Sent low stock notification for "$itemName"');
+  }
+
   /// Cancels all pending notifications.
   Future<void> cancelAll() async {
     await _plugin.cancelAll();

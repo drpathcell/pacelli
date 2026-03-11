@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/inventory_providers.dart';
 
@@ -319,7 +320,7 @@ class _CreateInventoryItemScreenState
 
     try {
       final repo = ref.read(dataRepositoryProvider);
-      await repo.createInventoryItem(
+      final createdItem = await repo.createInventoryItem(
         householdId: widget.householdId,
         name: _nameCtrl.text.trim(),
         description:
@@ -338,6 +339,15 @@ class _CreateInventoryItemScreenState
         notes:
             _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       );
+
+      // Schedule expiry notification if the item has an expiry date.
+      if (_expiryDate != null) {
+        ref.read(notificationServiceProvider).scheduleExpiryReminder(
+              itemId: createdItem.id,
+              itemName: createdItem.name,
+              expiryDate: _expiryDate!,
+            );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

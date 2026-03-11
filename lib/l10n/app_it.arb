@@ -642,6 +642,21 @@
   "inventoryBatchCreated": "{count} articoli creati!",
   "inventoryCameraPermissionDenied": "È necessario il permesso della fotocamera per scansionare i codici",
 
+  "inventoryExpiringNotification": "{name} sta per scadere",
+  "inventoryLowStockNotification": "{name} sta finendo ({count} rimanenti)",
+  "inventoryCreateRestockTask": "Creare attività di rifornimento?",
+  "inventoryRestockTaskTitle": "Rifornire: {name}",
+  "inventoryExpiryTaskTitle": "Usare prima della scadenza: {name}",
+  "inventoryRestockTaskCreated": "Attività di rifornimento creata",
+  "inventoryExpiryTaskCreated": "Attività di scadenza creata",
+  "inventoryAutoCreateTask": "Crea attività",
+  "inventoryNotificationSent": "Notifica inviata",
+  "inventoryItemExpired": "Articolo scaduto",
+  "inventoryCalendarExpiring": "Articoli in scadenza",
+  "inventoryLowStockAlert": "Scorte basse! Creare un'attività di acquisto?",
+  "inventoryThresholdCrossed": "{name} è sceso sotto {threshold}",
+  "inventoryExpiryCalendarDot": "Articolo in scadenza",
+
   "homeInventorySummary": "{count} articoli · {alert} avviso",
   "homeInventorySummaryPlural": "{count} articoli · {alert} avvisi"
 }

@@ -2048,6 +2048,59 @@ class AppLocalizationsIt extends AppLocalizations {
       'È necessario il permesso della fotocamera per scansionare i codici';
 
   @override
+  String inventoryExpiringNotification(String name) {
+    return '$name sta per scadere';
+  }
+
+  @override
+  String inventoryLowStockNotification(String name, int count) {
+    return '$name sta finendo ($count rimanenti)';
+  }
+
+  @override
+  String get inventoryCreateRestockTask => 'Creare attività di rifornimento?';
+
+  @override
+  String inventoryRestockTaskTitle(String name) {
+    return 'Rifornire: $name';
+  }
+
+  @override
+  String inventoryExpiryTaskTitle(String name) {
+    return 'Usare prima della scadenza: $name';
+  }
+
+  @override
+  String get inventoryRestockTaskCreated => 'Attività di rifornimento creata';
+
+  @override
+  String get inventoryExpiryTaskCreated => 'Attività di scadenza creata';
+
+  @override
+  String get inventoryAutoCreateTask => 'Crea attività';
+
+  @override
+  String get inventoryNotificationSent => 'Notifica inviata';
+
+  @override
+  String get inventoryItemExpired => 'Articolo scaduto';
+
+  @override
+  String get inventoryCalendarExpiring => 'Articoli in scadenza';
+
+  @override
+  String get inventoryLowStockAlert =>
+      'Scorte basse! Creare un\'attività di acquisto?';
+
+  @override
+  String inventoryThresholdCrossed(String name, int threshold) {
+    return '$name è sceso sotto $threshold';
+  }
+
+  @override
+  String get inventoryExpiryCalendarDot => 'Articolo in scadenza';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count articoli · $alert avviso';
   }

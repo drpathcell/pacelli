@@ -982,6 +982,48 @@
   },
   "inventoryCameraPermissionDenied": "Camera permission is required to scan barcodes",
 
+  "inventoryExpiringNotification": "{name} is expiring soon",
+  "@inventoryExpiringNotification": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "inventoryLowStockNotification": "{name} is running low ({count} remaining)",
+  "@inventoryLowStockNotification": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryCreateRestockTask": "Create restock task?",
+  "inventoryRestockTaskTitle": "Restock: {name}",
+  "@inventoryRestockTaskTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "inventoryExpiryTaskTitle": "Use before expiry: {name}",
+  "@inventoryExpiryTaskTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "inventoryRestockTaskCreated": "Restock task created",
+  "inventoryExpiryTaskCreated": "Expiry task created",
+  "inventoryAutoCreateTask": "Create task",
+  "inventoryNotificationSent": "Notification sent",
+  "inventoryItemExpired": "Item expired",
+  "inventoryCalendarExpiring": "Expiring Items",
+  "inventoryLowStockAlert": "Low stock! Create a shopping task?",
+  "inventoryThresholdCrossed": "{name} dropped below {threshold}",
+  "@inventoryThresholdCrossed": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "threshold": {"type": "int"}
+    }
+  },
+  "inventoryExpiryCalendarDot": "Item expiring",
+
   "homeInventorySummary": "{count} items · {alert} alert",
   "@homeInventorySummary": {
     "placeholders": {

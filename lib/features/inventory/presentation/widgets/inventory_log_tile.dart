@@ -46,6 +46,8 @@ class InventoryLogTile extends StatelessWidget {
         'removed' => (Icons.remove_circle_outline, Colors.red),
         'adjusted' => (Icons.tune, Colors.blue),
         'expired' => (Icons.warning_amber, Colors.orange),
+        'notification_sent' => (Icons.notifications_active, Colors.deepPurple),
+        'task_created' => (Icons.add_task, Colors.teal),
         _ => (Icons.history, Colors.grey),
       };
 }

@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../config/theme/app_colors.dart';
+import '../../../../core/models/models.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../household/data/household_providers.dart';
 import '../../../plans/data/plan_providers.dart';
 import '../../data/task_providers.dart';
+import '../../../inventory/data/inventory_providers.dart';
+import '../../../inventory/presentation/widgets/calendar_inventory_section.dart';
 import '../widgets/calendar_checklists_section.dart';
 import '../widgets/calendar_plans_section.dart';
 import '../widgets/calendar_tasks_section.dart';
@@ -136,6 +139,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           final householdId = household['id'] as String;
           final tasksAsync = ref.watch(householdTasksProvider(householdId));
           final plansAsync = ref.watch(householdPlansProvider(householdId));
+          final inventoryAsync =
+              ref.watch(inventoryItemsProvider(householdId));
 
           return tasksAsync.when(
             loading: () => LoadingView(message: context.l10n.calendarLoadingTasks),
@@ -146,6 +151,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             data: (tasks) {
               final eventMap = _buildEventMap(tasks);
               final selectedTasks = _getTasksForDay(_selectedDay, eventMap);
+
+              // Build a map of date → expiring inventory items.
+              final allItems = inventoryAsync.valueOrNull ?? [];
+              final expiryMap = <DateTime, List<InventoryItem>>{};
+              for (final item in allItems) {
+                if (item.expiryDate != null) {
+                  final key = _dateOnly(item.expiryDate!);
+                  expiryMap.putIfAbsent(key, () => []).add(item);
+                }
+              }
+              final selectedExpiring =
+                  expiryMap[_dateOnly(_selectedDay)] ?? [];
 
               return Column(
                 children: [
@@ -159,7 +176,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     calendarFormat: _calendarFormat,
                     selectedDayPredicate: (day) =>
                         isSameDay(_selectedDay, day),
-                    eventLoader: (day) => _getTasksForDay(day, eventMap),
+                    eventLoader: (day) {
+                      final dayTasks = _getTasksForDay(day, eventMap);
+                      final dayExpiring = expiryMap[_dateOnly(day)] ?? [];
+                      // Combine so markers show for both types.
+                      return [
+                        ...dayTasks,
+                        ...List.generate(
+                            dayExpiring.length, (_) => <String, dynamic>{}),
+                      ];
+                    },
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
                         _selectedDay = selectedDay;
@@ -189,13 +215,44 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
-                      markerDecoration: const BoxDecoration(
-                        color: AppColors.accentLight,
-                        shape: BoxShape.circle,
-                      ),
-                      markerSize: 6,
-                      markersMaxCount: 3,
+                      markersMaxCount: 0, // We use custom markers below
                       outsideDaysVisible: false,
+                    ),
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (ctx, day, events) {
+                        final taskCount =
+                            _getTasksForDay(day, eventMap).length;
+                        final expiryCount =
+                            (expiryMap[_dateOnly(day)] ?? []).length;
+                        if (taskCount == 0 && expiryCount == 0) return null;
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (taskCount > 0)
+                              Container(
+                                width: 6,
+                                height: 6,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 1),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.accentLight,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            if (expiryCount > 0)
+                              Container(
+                                width: 6,
+                                height: 6,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 1),
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     headerStyle: HeaderStyle(
                       formatButtonVisible: true,
@@ -226,6 +283,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
                         const Divider(
                             height: 1, indent: 16, endIndent: 16),
+
+                        // Expiring inventory items section
+                        if (selectedExpiring.isNotEmpty ||
+                            allItems.any((i) => i.expiryDate != null))
+                          CalendarInventorySection(
+                            items: selectedExpiring,
+                            householdId: householdId,
+                          ),
+
+                        if (selectedExpiring.isNotEmpty ||
+                            allItems.any((i) => i.expiryDate != null))
+                          const Divider(
+                              height: 1, indent: 16, endIndent: 16),
 
                         // Plans section
                         plansAsync.when(

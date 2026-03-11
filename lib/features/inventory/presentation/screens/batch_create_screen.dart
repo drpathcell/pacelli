@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/inventory_providers.dart';
 
@@ -114,10 +115,12 @@ class _BatchCreateScreenState extends ConsumerState<BatchCreateScreen> {
     try {
       final repo = ref.read(dataRepositoryProvider);
 
+      final notifService = ref.read(notificationServiceProvider);
+
       for (int i = 1; i <= portions; i++) {
         final name =
             l10n.inventoryBatchNamePattern(widget.baseName, i, portions);
-        await repo.createInventoryItem(
+        final createdItem = await repo.createInventoryItem(
           householdId: widget.householdId,
           name: name,
           categoryId: widget.categoryId,
@@ -129,6 +132,15 @@ class _BatchCreateScreenState extends ConsumerState<BatchCreateScreen> {
           purchaseDate: widget.purchaseDate,
           notes: widget.notes,
         );
+
+        // Schedule expiry notification for each batch item.
+        if (widget.expiryDate != null) {
+          notifService.scheduleExpiryReminder(
+            itemId: createdItem.id,
+            itemName: name,
+            expiryDate: widget.expiryDate!,
+          );
+        }
       }
 
       if (mounted) {

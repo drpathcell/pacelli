@@ -2030,6 +2030,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'Camera permission is required to scan barcodes';
 
   @override
+  String inventoryExpiringNotification(String name) {
+    return '$name is expiring soon';
+  }
+
+  @override
+  String inventoryLowStockNotification(String name, int count) {
+    return '$name is running low ($count remaining)';
+  }
+
+  @override
+  String get inventoryCreateRestockTask => 'Create restock task?';
+
+  @override
+  String inventoryRestockTaskTitle(String name) {
+    return 'Restock: $name';
+  }
+
+  @override
+  String inventoryExpiryTaskTitle(String name) {
+    return 'Use before expiry: $name';
+  }
+
+  @override
+  String get inventoryRestockTaskCreated => 'Restock task created';
+
+  @override
+  String get inventoryExpiryTaskCreated => 'Expiry task created';
+
+  @override
+  String get inventoryAutoCreateTask => 'Create task';
+
+  @override
+  String get inventoryNotificationSent => 'Notification sent';
+
+  @override
+  String get inventoryItemExpired => 'Item expired';
+
+  @override
+  String get inventoryCalendarExpiring => 'Expiring Items';
+
+  @override
+  String get inventoryLowStockAlert => 'Low stock! Create a shopping task?';
+
+  @override
+  String inventoryThresholdCrossed(String name, int threshold) {
+    return '$name dropped below $threshold';
+  }
+
+  @override
+  String get inventoryExpiryCalendarDot => 'Item expiring';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count items · $alert alert';
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/inventory_providers.dart';
 
@@ -262,6 +263,17 @@ class _EditInventoryItemScreenState
         purchaseDate: _purchaseDate,
         notes: _notesCtrl.text.trim(),
       );
+
+      // Reschedule expiry notification.
+      final notifService = ref.read(notificationServiceProvider);
+      await notifService.cancelExpiryReminder(widget.itemId);
+      if (_expiryDate != null) {
+        notifService.scheduleExpiryReminder(
+          itemId: widget.itemId,
+          itemName: _nameCtrl.text.trim(),
+          expiryDate: _expiryDate!,
+        );
+      }
 
       if (mounted) {
         ref.invalidate(inventoryItemProvider);

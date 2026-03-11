@@ -2049,6 +2049,58 @@ class AppLocalizationsEs extends AppLocalizations {
       'Se necesita permiso de cámara para escanear códigos';
 
   @override
+  String inventoryExpiringNotification(String name) {
+    return '$name caduca pronto';
+  }
+
+  @override
+  String inventoryLowStockNotification(String name, int count) {
+    return '$name se está agotando ($count restantes)';
+  }
+
+  @override
+  String get inventoryCreateRestockTask => '¿Crear tarea de reposición?';
+
+  @override
+  String inventoryRestockTaskTitle(String name) {
+    return 'Reponer: $name';
+  }
+
+  @override
+  String inventoryExpiryTaskTitle(String name) {
+    return 'Usar antes de que caduque: $name';
+  }
+
+  @override
+  String get inventoryRestockTaskCreated => 'Tarea de reposición creada';
+
+  @override
+  String get inventoryExpiryTaskCreated => 'Tarea de caducidad creada';
+
+  @override
+  String get inventoryAutoCreateTask => 'Crear tarea';
+
+  @override
+  String get inventoryNotificationSent => 'Notificación enviada';
+
+  @override
+  String get inventoryItemExpired => 'Artículo caducado';
+
+  @override
+  String get inventoryCalendarExpiring => 'Artículos por caducar';
+
+  @override
+  String get inventoryLowStockAlert => '¡Stock bajo! ¿Crear tarea de compra?';
+
+  @override
+  String inventoryThresholdCrossed(String name, int threshold) {
+    return '$name bajó de $threshold';
+  }
+
+  @override
+  String get inventoryExpiryCalendarDot => 'Artículo por caducar';
+
+  @override
   String homeInventorySummary(int count, int alert) {
     return '$count artículos · $alert alerta';
   }
