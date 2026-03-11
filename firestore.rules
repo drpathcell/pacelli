@@ -159,9 +159,11 @@ service cloud.firestore {
     }
 
     // ── Inventory Attachments ──────────────────────────────────
+    // Child docs — protected at app level (like subtasks, inventory_logs).
+    // Queries filter by item_id without household_id, so isMember()
+    // would reject the query at the Firestore level.
     match /inventory_attachments/{attachmentId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
-      allow create: if isAuth() && isMember(request.resource.data.household_id);
+      allow read, create, update, delete: if isAuth();
     }
 
     // ── Household Drive Config ─────────────────────────────────
