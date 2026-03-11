@@ -1733,4 +1733,257 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get searchResultAttachment => 'Adjunto';
+
+  @override
+  String get searchResultInventory => 'Inventario';
+
+  @override
+  String get inventoryTitle => 'Inventario';
+
+  @override
+  String get inventoryEmpty =>
+      'Tu inventario está vacío — toca + para añadir tu primer artículo';
+
+  @override
+  String inventoryItemCount(int count) {
+    return '$count artículos';
+  }
+
+  @override
+  String get inventoryLowStock => 'Stock bajo';
+
+  @override
+  String get inventoryExpiringSoon => 'Por vencer';
+
+  @override
+  String get inventoryAddItem => 'Añadir Artículo';
+
+  @override
+  String get inventoryEditItem => 'Editar Artículo';
+
+  @override
+  String get inventoryItemName => 'Nombre del artículo';
+
+  @override
+  String get inventoryItemNameHint => 'ej. Aceite de oliva, Papel de cocina';
+
+  @override
+  String get inventoryDescription => 'Descripción';
+
+  @override
+  String get inventoryCategory => 'Categoría';
+
+  @override
+  String get inventoryLocation => 'Ubicación';
+
+  @override
+  String get inventoryQuantity => 'Cantidad';
+
+  @override
+  String get inventoryUnit => 'Unidad';
+
+  @override
+  String get inventoryUnitPieces => 'unidades';
+
+  @override
+  String get inventoryUnitKg => 'kg';
+
+  @override
+  String get inventoryUnitLitres => 'litros';
+
+  @override
+  String get inventoryUnitBags => 'bolsas';
+
+  @override
+  String get inventoryUnitBoxes => 'cajas';
+
+  @override
+  String get inventoryLowStockThreshold => 'Umbral de stock bajo';
+
+  @override
+  String get inventoryExpiryDate => 'Fecha de vencimiento';
+
+  @override
+  String get inventoryPurchaseDate => 'Fecha de compra';
+
+  @override
+  String get inventoryNotes => 'Notas';
+
+  @override
+  String get inventoryBarcode => 'Código de barras';
+
+  @override
+  String get inventoryBarcodeNone => 'Sin código de barras';
+
+  @override
+  String get inventoryBarcodeReal => 'Código de barras del producto';
+
+  @override
+  String get inventoryBarcodeVirtual => 'Código de barras virtual';
+
+  @override
+  String get inventorySave => 'Guardar artículo';
+
+  @override
+  String get inventoryDelete => 'Eliminar artículo';
+
+  @override
+  String get inventoryDeleteConfirm =>
+      '¿Estás seguro de que quieres eliminar este artículo? Esta acción no se puede deshacer.';
+
+  @override
+  String get inventoryCategories => 'Categorías';
+
+  @override
+  String get inventoryLocations => 'Ubicaciones';
+
+  @override
+  String get inventoryManageCategories => 'Gestionar Categorías';
+
+  @override
+  String get inventoryManageLocations => 'Gestionar Ubicaciones';
+
+  @override
+  String get inventoryAddCategory => 'Añadir Categoría';
+
+  @override
+  String get inventoryAddLocation => 'Añadir Ubicación';
+
+  @override
+  String get inventoryCategoryName => 'Nombre de categoría';
+
+  @override
+  String get inventoryLocationName => 'Nombre de ubicación';
+
+  @override
+  String get inventoryCannotDeleteCategory =>
+      'No se puede eliminar — hay artículos usando esta categoría';
+
+  @override
+  String get inventoryCannotDeleteLocation =>
+      'No se puede eliminar — hay artículos usando esta ubicación';
+
+  @override
+  String inventoryLogAdded(int count) {
+    return 'Añadido $count';
+  }
+
+  @override
+  String inventoryLogRemoved(int count) {
+    return 'Usado $count';
+  }
+
+  @override
+  String inventoryLogAdjusted(int count) {
+    return 'Ajustado a $count';
+  }
+
+  @override
+  String get inventoryActivityLog => 'Registro de Actividad';
+
+  @override
+  String get inventoryViewByCategory => 'Por Categoría';
+
+  @override
+  String get inventoryViewByLocation => 'Por Ubicación';
+
+  @override
+  String get inventoryViewAll => 'Todos los Artículos';
+
+  @override
+  String get inventoryDetails => 'Detalles';
+
+  @override
+  String get inventoryAttachments => 'Adjuntos';
+
+  @override
+  String inventoryCreatedBy(String name) {
+    return 'Añadido por $name';
+  }
+
+  @override
+  String inventoryItemsExpiring(int count) {
+    return '$count por vencer';
+  }
+
+  @override
+  String inventoryItemsLowStock(int count) {
+    return '$count stock bajo';
+  }
+
+  @override
+  String get inventoryNoExpiry => 'Sin fecha de vencimiento';
+
+  @override
+  String inventoryExpiresIn(int days) {
+    return 'Vence en $days días';
+  }
+
+  @override
+  String get inventoryExpired => 'Vencido';
+
+  @override
+  String get inventoryExpiresToday => 'Vence hoy';
+
+  @override
+  String get inventoryDiscardTitle => '¿Descartar cambios?';
+
+  @override
+  String get inventoryDiscardMessage =>
+      'Tienes cambios sin guardar. ¿Estás seguro de que quieres volver?';
+
+  @override
+  String get inventoryKeepEditing => 'Seguir editando';
+
+  @override
+  String get inventoryDiscard => 'Descartar';
+
+  @override
+  String get inventoryCreated => '¡Artículo añadido!';
+
+  @override
+  String get inventoryUpdated => '¡Artículo actualizado!';
+
+  @override
+  String get inventoryDeleted => 'Artículo eliminado';
+
+  @override
+  String get inventoryCouldNotLoad => 'No se pudo cargar el inventario';
+
+  @override
+  String get inventoryUncategorised => 'Sin categoría';
+
+  @override
+  String get inventoryNoLocation => 'Sin ubicación';
+
+  @override
+  String get inventoryIconLabel => 'Icono';
+
+  @override
+  String get inventoryColorLabel => 'Color';
+
+  @override
+  String get inventoryCategoryCreated => 'Categoría creada';
+
+  @override
+  String get inventoryLocationCreated => 'Ubicación creada';
+
+  @override
+  String get inventoryCategoryDeleted => 'Categoría eliminada';
+
+  @override
+  String get inventoryLocationDeleted => 'Ubicación eliminada';
+
+  @override
+  String get inventoryCouldNotDelete => 'No se pudo eliminar';
+
+  @override
+  String homeInventorySummary(int count, int alert) {
+    return '$count artículos · $alert alerta';
+  }
+
+  @override
+  String homeInventorySummaryPlural(int count, int alert) {
+    return '$count artículos · $alert alertas';
+  }
 }

@@ -50,6 +50,7 @@ class SearchResultTile extends StatelessWidget {
         'checklist' => Icons.checklist,
         'plan' => Icons.calendar_today,
         'attachment' => Icons.attach_file,
+        'inventory' => Icons.inventory_2,
         _ => Icons.search,
       };
 
@@ -59,6 +60,7 @@ class SearchResultTile extends StatelessWidget {
         'checklist' => Colors.teal,
         'plan' => Colors.deepPurple,
         'attachment' => Colors.orange,
+        'inventory' => Colors.green,
         _ => context.colorScheme.onSurface,
       };
 }
@@ -78,6 +80,7 @@ class _TypeBadge extends StatelessWidget {
       'checklist' => l10n.searchResultChecklist,
       'plan' => l10n.searchResultPlan,
       'attachment' => l10n.searchResultAttachment,
+      'inventory' => l10n.searchResultInventory,
       _ => entityType,
     };
     return Container(

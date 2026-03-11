@@ -22,6 +22,12 @@ import '../../features/plans/presentation/screens/plan_view_screen.dart';
 import '../../features/settings/presentation/screens/appearance_screen.dart';
 import '../../features/settings/presentation/screens/burn_data_screen.dart';
 import '../../features/import_export/presentation/screens/import_export_screen.dart';
+import '../../features/inventory/presentation/screens/inventory_screen.dart';
+import '../../features/inventory/presentation/screens/inventory_item_detail_screen.dart';
+import '../../features/inventory/presentation/screens/create_inventory_item_screen.dart';
+import '../../features/inventory/presentation/screens/edit_inventory_item_screen.dart';
+import '../../features/inventory/presentation/screens/manage_inventory_categories_screen.dart';
+import '../../features/inventory/presentation/screens/manage_inventory_locations_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
 import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
@@ -49,6 +55,12 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String importExport = '/import-export';
   static const String search = '/search';
+  static const String inventory = '/inventory';
+  static const String inventoryItem = '/inventory/item';
+  static const String createInventoryItem = '/inventory/create';
+  static const String editInventoryItem = '/inventory/edit';
+  static const String inventoryCategories = '/inventory/categories';
+  static const String inventoryLocations = '/inventory/locations';
 }
 
 /// Key for the shell navigator (bottom nav tabs).
@@ -168,6 +180,56 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final taskId = state.pathParameters['taskId']!;
           return EditTaskScreen(taskId: taskId);
+        },
+      ),
+
+      // ── Inventory (full-screen, no bottom nav) ────────────
+      GoRoute(
+        path: AppRoutes.inventory,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return InventoryScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.inventoryItem,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, String>;
+          return InventoryItemDetailScreen(
+            householdId: extra['householdId']!,
+            itemId: extra['itemId']!,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.createInventoryItem,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return CreateInventoryItemScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.editInventoryItem,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, String>;
+          return EditInventoryItemScreen(
+            householdId: extra['householdId']!,
+            itemId: extra['itemId']!,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.inventoryCategories,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return ManageInventoryCategoriesScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.inventoryLocations,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return ManageInventoryLocationsScreen(householdId: householdId);
         },
       ),
 

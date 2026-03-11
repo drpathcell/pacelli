@@ -1733,4 +1733,257 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get searchResultAttachment => 'Allegato';
+
+  @override
+  String get searchResultInventory => 'Inventario';
+
+  @override
+  String get inventoryTitle => 'Inventario';
+
+  @override
+  String get inventoryEmpty =>
+      'Il tuo inventario è vuoto — tocca + per aggiungere il primo articolo';
+
+  @override
+  String inventoryItemCount(int count) {
+    return '$count articoli';
+  }
+
+  @override
+  String get inventoryLowStock => 'Scorta bassa';
+
+  @override
+  String get inventoryExpiringSoon => 'In scadenza';
+
+  @override
+  String get inventoryAddItem => 'Aggiungi Articolo';
+
+  @override
+  String get inventoryEditItem => 'Modifica Articolo';
+
+  @override
+  String get inventoryItemName => 'Nome articolo';
+
+  @override
+  String get inventoryItemNameHint => 'es. Olio d\'oliva, Carta da cucina';
+
+  @override
+  String get inventoryDescription => 'Descrizione';
+
+  @override
+  String get inventoryCategory => 'Categoria';
+
+  @override
+  String get inventoryLocation => 'Posizione';
+
+  @override
+  String get inventoryQuantity => 'Quantità';
+
+  @override
+  String get inventoryUnit => 'Unità';
+
+  @override
+  String get inventoryUnitPieces => 'pezzi';
+
+  @override
+  String get inventoryUnitKg => 'kg';
+
+  @override
+  String get inventoryUnitLitres => 'litri';
+
+  @override
+  String get inventoryUnitBags => 'sacchetti';
+
+  @override
+  String get inventoryUnitBoxes => 'scatole';
+
+  @override
+  String get inventoryLowStockThreshold => 'Soglia scorta bassa';
+
+  @override
+  String get inventoryExpiryDate => 'Data di scadenza';
+
+  @override
+  String get inventoryPurchaseDate => 'Data di acquisto';
+
+  @override
+  String get inventoryNotes => 'Note';
+
+  @override
+  String get inventoryBarcode => 'Codice a barre';
+
+  @override
+  String get inventoryBarcodeNone => 'Nessun codice a barre';
+
+  @override
+  String get inventoryBarcodeReal => 'Codice a barre prodotto';
+
+  @override
+  String get inventoryBarcodeVirtual => 'Codice a barre virtuale';
+
+  @override
+  String get inventorySave => 'Salva articolo';
+
+  @override
+  String get inventoryDelete => 'Elimina articolo';
+
+  @override
+  String get inventoryDeleteConfirm =>
+      'Sei sicuro di voler eliminare questo articolo? Questa azione non può essere annullata.';
+
+  @override
+  String get inventoryCategories => 'Categorie';
+
+  @override
+  String get inventoryLocations => 'Posizioni';
+
+  @override
+  String get inventoryManageCategories => 'Gestisci Categorie';
+
+  @override
+  String get inventoryManageLocations => 'Gestisci Posizioni';
+
+  @override
+  String get inventoryAddCategory => 'Aggiungi Categoria';
+
+  @override
+  String get inventoryAddLocation => 'Aggiungi Posizione';
+
+  @override
+  String get inventoryCategoryName => 'Nome categoria';
+
+  @override
+  String get inventoryLocationName => 'Nome posizione';
+
+  @override
+  String get inventoryCannotDeleteCategory =>
+      'Impossibile eliminare — ci sono articoli che usano questa categoria';
+
+  @override
+  String get inventoryCannotDeleteLocation =>
+      'Impossibile eliminare — ci sono articoli che usano questa posizione';
+
+  @override
+  String inventoryLogAdded(int count) {
+    return 'Aggiunto $count';
+  }
+
+  @override
+  String inventoryLogRemoved(int count) {
+    return 'Usato $count';
+  }
+
+  @override
+  String inventoryLogAdjusted(int count) {
+    return 'Regolato a $count';
+  }
+
+  @override
+  String get inventoryActivityLog => 'Registro Attività';
+
+  @override
+  String get inventoryViewByCategory => 'Per Categoria';
+
+  @override
+  String get inventoryViewByLocation => 'Per Posizione';
+
+  @override
+  String get inventoryViewAll => 'Tutti gli Articoli';
+
+  @override
+  String get inventoryDetails => 'Dettagli';
+
+  @override
+  String get inventoryAttachments => 'Allegati';
+
+  @override
+  String inventoryCreatedBy(String name) {
+    return 'Aggiunto da $name';
+  }
+
+  @override
+  String inventoryItemsExpiring(int count) {
+    return '$count in scadenza';
+  }
+
+  @override
+  String inventoryItemsLowStock(int count) {
+    return '$count scorta bassa';
+  }
+
+  @override
+  String get inventoryNoExpiry => 'Nessuna data di scadenza';
+
+  @override
+  String inventoryExpiresIn(int days) {
+    return 'Scade tra $days giorni';
+  }
+
+  @override
+  String get inventoryExpired => 'Scaduto';
+
+  @override
+  String get inventoryExpiresToday => 'Scade oggi';
+
+  @override
+  String get inventoryDiscardTitle => 'Annullare le modifiche?';
+
+  @override
+  String get inventoryDiscardMessage =>
+      'Hai modifiche non salvate. Sei sicuro di voler tornare indietro?';
+
+  @override
+  String get inventoryKeepEditing => 'Continua a modificare';
+
+  @override
+  String get inventoryDiscard => 'Annulla';
+
+  @override
+  String get inventoryCreated => 'Articolo aggiunto!';
+
+  @override
+  String get inventoryUpdated => 'Articolo aggiornato!';
+
+  @override
+  String get inventoryDeleted => 'Articolo eliminato';
+
+  @override
+  String get inventoryCouldNotLoad => 'Impossibile caricare l\'inventario';
+
+  @override
+  String get inventoryUncategorised => 'Senza categoria';
+
+  @override
+  String get inventoryNoLocation => 'Nessuna posizione';
+
+  @override
+  String get inventoryIconLabel => 'Icona';
+
+  @override
+  String get inventoryColorLabel => 'Colore';
+
+  @override
+  String get inventoryCategoryCreated => 'Categoria creata';
+
+  @override
+  String get inventoryLocationCreated => 'Posizione creata';
+
+  @override
+  String get inventoryCategoryDeleted => 'Categoria eliminata';
+
+  @override
+  String get inventoryLocationDeleted => 'Posizione eliminata';
+
+  @override
+  String get inventoryCouldNotDelete => 'Impossibile eliminare';
+
+  @override
+  String homeInventorySummary(int count, int alert) {
+    return '$count articoli · $alert avviso';
+  }
+
+  @override
+  String homeInventorySummaryPlural(int count, int alert) {
+    return '$count articoli · $alert avvisi';
+  }
 }

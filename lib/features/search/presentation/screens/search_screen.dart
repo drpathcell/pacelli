@@ -85,6 +85,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   type: 'attachment',
                   selected: filters.contains('attachment'),
                 ),
+                const SizedBox(width: 8),
+                _FilterChip(
+                  label: l10n.searchResultInventory,
+                  type: 'inventory',
+                  selected: filters.contains('inventory'),
+                ),
               ],
             ),
           ),
@@ -183,6 +189,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         } else if (source == 'plan' && result.parentId != null) {
           context.push('/plans/${result.parentId}');
         }
+      case 'inventory':
+        context.push(
+          AppRoutes.inventoryItem,
+          extra: {
+            'householdId': result.householdId,
+            'itemId': result.id,
+          },
+        );
     }
   }
 }

@@ -14,6 +14,7 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../household/data/household_providers.dart';
+import '../../../inventory/data/inventory_providers.dart';
 import '../../data/task_providers.dart';
 import '../../../../core/data/data_repository_provider.dart';
 import '../../utils/task_helpers.dart';
@@ -153,6 +154,21 @@ class _HouseholdDashboard extends ConsumerStatefulWidget {
 class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
   late final ConfettiController _confettiController;
 
+  String _householdSubtitle(
+      BuildContext context, Map<String, int>? inventoryStats) {
+    if (inventoryStats == null) return context.l10n.homeHouseholdSetUp;
+    final total = inventoryStats['total'] ?? 0;
+    if (total == 0) return context.l10n.homeHouseholdSetUp;
+    final alerts =
+        (inventoryStats['lowStock'] ?? 0) + (inventoryStats['expiringSoon'] ?? 0);
+    if (alerts > 0) {
+      return alerts == 1
+          ? context.l10n.homeInventorySummary(total, alerts)
+          : context.l10n.homeInventorySummaryPlural(total, alerts);
+    }
+    return context.l10n.inventoryItemCount(total);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -170,9 +186,12 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(taskStatsProvider(widget.householdId));
     final tasksAsync = ref.watch(householdTasksProvider(widget.householdId));
+    final inventoryStatsAsync =
+        ref.watch(inventoryStatsProvider(widget.householdId));
 
     final stats = statsAsync.valueOrNull ??
         {'completed': 0, 'pending': 0, 'overdue': 0};
+    final inventoryStats = inventoryStatsAsync.valueOrNull;
 
     return Stack(
       children: [
@@ -180,39 +199,49 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
       onRefresh: () async {
         ref.invalidate(taskStatsProvider(widget.householdId));
         ref.invalidate(householdTasksProvider(widget.householdId));
+        ref.invalidate(inventoryStatsProvider(widget.householdId));
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Household card
+          // Household card — taps into Inventory
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.home_rounded,
-                    size: 32,
-                    color: context.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.householdName,
-                            style: context.textTheme.titleLarge),
-                        const SizedBox(height: 4),
-                        Text(
-                          context.l10n.homeHouseholdSetUp,
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ],
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.push(
+                AppRoutes.inventory,
+                extra: widget.householdId,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.home_rounded,
+                      size: 32,
+                      color: context.colorScheme.primary,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.householdName,
+                              style: context.textTheme.titleLarge),
+                          const SizedBox(height: 4),
+                          Text(
+                            _householdSubtitle(context, inventoryStats),
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.textSecondaryLight),
+                  ],
+                ),
               ),
             ),
           ),

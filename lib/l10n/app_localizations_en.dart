@@ -1717,4 +1717,257 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchResultAttachment => 'Attachment';
+
+  @override
+  String get searchResultInventory => 'Inventory';
+
+  @override
+  String get inventoryTitle => 'Inventory';
+
+  @override
+  String get inventoryEmpty =>
+      'Your inventory is empty — tap + to add your first item';
+
+  @override
+  String inventoryItemCount(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get inventoryLowStock => 'Low stock';
+
+  @override
+  String get inventoryExpiringSoon => 'Expiring soon';
+
+  @override
+  String get inventoryAddItem => 'Add Item';
+
+  @override
+  String get inventoryEditItem => 'Edit Item';
+
+  @override
+  String get inventoryItemName => 'Item name';
+
+  @override
+  String get inventoryItemNameHint => 'e.g. Olive oil, Paper towels';
+
+  @override
+  String get inventoryDescription => 'Description';
+
+  @override
+  String get inventoryCategory => 'Category';
+
+  @override
+  String get inventoryLocation => 'Location';
+
+  @override
+  String get inventoryQuantity => 'Quantity';
+
+  @override
+  String get inventoryUnit => 'Unit';
+
+  @override
+  String get inventoryUnitPieces => 'pieces';
+
+  @override
+  String get inventoryUnitKg => 'kg';
+
+  @override
+  String get inventoryUnitLitres => 'litres';
+
+  @override
+  String get inventoryUnitBags => 'bags';
+
+  @override
+  String get inventoryUnitBoxes => 'boxes';
+
+  @override
+  String get inventoryLowStockThreshold => 'Low stock threshold';
+
+  @override
+  String get inventoryExpiryDate => 'Expiry date';
+
+  @override
+  String get inventoryPurchaseDate => 'Purchase date';
+
+  @override
+  String get inventoryNotes => 'Notes';
+
+  @override
+  String get inventoryBarcode => 'Barcode';
+
+  @override
+  String get inventoryBarcodeNone => 'No barcode';
+
+  @override
+  String get inventoryBarcodeReal => 'Product barcode';
+
+  @override
+  String get inventoryBarcodeVirtual => 'Virtual barcode';
+
+  @override
+  String get inventorySave => 'Save item';
+
+  @override
+  String get inventoryDelete => 'Delete item';
+
+  @override
+  String get inventoryDeleteConfirm =>
+      'Are you sure you want to delete this item? This cannot be undone.';
+
+  @override
+  String get inventoryCategories => 'Categories';
+
+  @override
+  String get inventoryLocations => 'Locations';
+
+  @override
+  String get inventoryManageCategories => 'Manage Categories';
+
+  @override
+  String get inventoryManageLocations => 'Manage Locations';
+
+  @override
+  String get inventoryAddCategory => 'Add Category';
+
+  @override
+  String get inventoryAddLocation => 'Add Location';
+
+  @override
+  String get inventoryCategoryName => 'Category name';
+
+  @override
+  String get inventoryLocationName => 'Location name';
+
+  @override
+  String get inventoryCannotDeleteCategory =>
+      'Cannot delete — items are using this category';
+
+  @override
+  String get inventoryCannotDeleteLocation =>
+      'Cannot delete — items are using this location';
+
+  @override
+  String inventoryLogAdded(int count) {
+    return 'Added $count';
+  }
+
+  @override
+  String inventoryLogRemoved(int count) {
+    return 'Used $count';
+  }
+
+  @override
+  String inventoryLogAdjusted(int count) {
+    return 'Adjusted to $count';
+  }
+
+  @override
+  String get inventoryActivityLog => 'Activity Log';
+
+  @override
+  String get inventoryViewByCategory => 'By Category';
+
+  @override
+  String get inventoryViewByLocation => 'By Location';
+
+  @override
+  String get inventoryViewAll => 'All Items';
+
+  @override
+  String get inventoryDetails => 'Details';
+
+  @override
+  String get inventoryAttachments => 'Attachments';
+
+  @override
+  String inventoryCreatedBy(String name) {
+    return 'Added by $name';
+  }
+
+  @override
+  String inventoryItemsExpiring(int count) {
+    return '$count expiring soon';
+  }
+
+  @override
+  String inventoryItemsLowStock(int count) {
+    return '$count low stock';
+  }
+
+  @override
+  String get inventoryNoExpiry => 'No expiry date';
+
+  @override
+  String inventoryExpiresIn(int days) {
+    return 'Expires in $days days';
+  }
+
+  @override
+  String get inventoryExpired => 'Expired';
+
+  @override
+  String get inventoryExpiresToday => 'Expires today';
+
+  @override
+  String get inventoryDiscardTitle => 'Discard changes?';
+
+  @override
+  String get inventoryDiscardMessage =>
+      'You have unsaved changes. Are you sure you want to go back?';
+
+  @override
+  String get inventoryKeepEditing => 'Keep editing';
+
+  @override
+  String get inventoryDiscard => 'Discard';
+
+  @override
+  String get inventoryCreated => 'Item added!';
+
+  @override
+  String get inventoryUpdated => 'Item updated!';
+
+  @override
+  String get inventoryDeleted => 'Item deleted';
+
+  @override
+  String get inventoryCouldNotLoad => 'Could not load inventory';
+
+  @override
+  String get inventoryUncategorised => 'Uncategorised';
+
+  @override
+  String get inventoryNoLocation => 'No location';
+
+  @override
+  String get inventoryIconLabel => 'Icon';
+
+  @override
+  String get inventoryColorLabel => 'Colour';
+
+  @override
+  String get inventoryCategoryCreated => 'Category created';
+
+  @override
+  String get inventoryLocationCreated => 'Location created';
+
+  @override
+  String get inventoryCategoryDeleted => 'Category deleted';
+
+  @override
+  String get inventoryLocationDeleted => 'Location deleted';
+
+  @override
+  String get inventoryCouldNotDelete => 'Could not delete';
+
+  @override
+  String homeInventorySummary(int count, int alert) {
+    return '$count items · $alert alert';
+  }
+
+  @override
+  String homeInventorySummaryPlural(int count, int alert) {
+    return '$count items · $alert alerts';
+  }
 }

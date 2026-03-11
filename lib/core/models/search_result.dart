@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 class SearchResult extends Equatable {
   final String id;
 
-  /// One of: 'task', 'checklist', 'plan', 'attachment'.
+  /// One of: 'task', 'checklist', 'plan', 'attachment', 'inventory'.
   final String entityType;
 
   final String householdId;

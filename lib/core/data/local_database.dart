@@ -17,8 +17,9 @@ class LocalDatabase {
 
     _instance = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
 
     return _instance!;
@@ -196,6 +197,89 @@ class LocalDatabase {
       )
     ''');
 
+    // ── Inventory Categories ──
+    await db.execute('''
+      CREATE TABLE inventory_categories (
+        id           TEXT PRIMARY KEY,
+        household_id TEXT NOT NULL,
+        name         TEXT NOT NULL,
+        icon         TEXT NOT NULL DEFAULT 'inventory_2',
+        color        TEXT NOT NULL DEFAULT '#A5B4A5',
+        is_default   INTEGER NOT NULL DEFAULT 0,
+        sort_order   INTEGER NOT NULL DEFAULT 0,
+        created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    ''');
+
+    // ── Inventory Locations ──
+    await db.execute('''
+      CREATE TABLE inventory_locations (
+        id           TEXT PRIMARY KEY,
+        household_id TEXT NOT NULL,
+        name         TEXT NOT NULL,
+        icon         TEXT NOT NULL DEFAULT 'place',
+        is_default   INTEGER NOT NULL DEFAULT 0,
+        sort_order   INTEGER NOT NULL DEFAULT 0,
+        created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    ''');
+
+    // ── Inventory Items ──
+    await db.execute('''
+      CREATE TABLE inventory_items (
+        id                  TEXT PRIMARY KEY,
+        household_id        TEXT NOT NULL,
+        name                TEXT NOT NULL,
+        description         TEXT,
+        category_id         TEXT REFERENCES inventory_categories(id) ON DELETE SET NULL,
+        location_id         TEXT REFERENCES inventory_locations(id) ON DELETE SET NULL,
+        quantity            INTEGER NOT NULL DEFAULT 0,
+        unit                TEXT NOT NULL DEFAULT 'pieces',
+        low_stock_threshold INTEGER,
+        barcode             TEXT,
+        barcode_type        TEXT NOT NULL DEFAULT 'none',
+        expiry_date         TEXT,
+        purchase_date       TEXT,
+        notes               TEXT,
+        created_by          TEXT,
+        created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at          TEXT
+      )
+    ''');
+
+    // ── Inventory Logs ──
+    await db.execute('''
+      CREATE TABLE inventory_logs (
+        id              TEXT PRIMARY KEY,
+        item_id         TEXT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+        household_id    TEXT NOT NULL,
+        action          TEXT NOT NULL,
+        quantity_change  INTEGER NOT NULL DEFAULT 0,
+        quantity_after   INTEGER NOT NULL DEFAULT 0,
+        note            TEXT,
+        performed_by    TEXT,
+        performed_at    TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    ''');
+
+    // ── Inventory Attachments ──
+    await db.execute('''
+      CREATE TABLE inventory_attachments (
+        id              TEXT PRIMARY KEY,
+        item_id         TEXT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+        household_id    TEXT NOT NULL,
+        drive_file_id   TEXT NOT NULL,
+        file_name       TEXT NOT NULL,
+        mime_type       TEXT NOT NULL DEFAULT 'application/octet-stream',
+        file_size_bytes INTEGER NOT NULL DEFAULT 0,
+        thumbnail_url   TEXT,
+        web_view_link   TEXT NOT NULL,
+        uploaded_by     TEXT NOT NULL,
+        uploaded_at     TEXT NOT NULL DEFAULT (datetime('now')),
+        description     TEXT
+      )
+    ''');
+
     // ── Indices for common queries ──
     await db.execute(
         'CREATE INDEX idx_tasks_household ON tasks(household_id)');
@@ -217,5 +301,113 @@ class LocalDatabase {
         'CREATE INDEX idx_task_attachments_task ON task_attachments(task_id)');
     await db.execute(
         'CREATE INDEX idx_task_attachments_household ON task_attachments(household_id)');
+
+    // Inventory indices
+    await db.execute(
+        'CREATE INDEX idx_inventory_items_household ON inventory_items(household_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_items_category ON inventory_items(category_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_items_location ON inventory_items(location_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_categories_household ON inventory_categories(household_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_locations_household ON inventory_locations(household_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_id)');
+    await db.execute(
+        'CREATE INDEX idx_inventory_attachments_item ON inventory_attachments(item_id)');
+  }
+
+  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE inventory_categories (
+          id           TEXT PRIMARY KEY,
+          household_id TEXT NOT NULL,
+          name         TEXT NOT NULL,
+          icon         TEXT NOT NULL DEFAULT 'inventory_2',
+          color        TEXT NOT NULL DEFAULT '#A5B4A5',
+          is_default   INTEGER NOT NULL DEFAULT 0,
+          sort_order   INTEGER NOT NULL DEFAULT 0,
+          created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE inventory_locations (
+          id           TEXT PRIMARY KEY,
+          household_id TEXT NOT NULL,
+          name         TEXT NOT NULL,
+          icon         TEXT NOT NULL DEFAULT 'place',
+          is_default   INTEGER NOT NULL DEFAULT 0,
+          sort_order   INTEGER NOT NULL DEFAULT 0,
+          created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE inventory_items (
+          id                  TEXT PRIMARY KEY,
+          household_id        TEXT NOT NULL,
+          name                TEXT NOT NULL,
+          description         TEXT,
+          category_id         TEXT REFERENCES inventory_categories(id) ON DELETE SET NULL,
+          location_id         TEXT REFERENCES inventory_locations(id) ON DELETE SET NULL,
+          quantity            INTEGER NOT NULL DEFAULT 0,
+          unit                TEXT NOT NULL DEFAULT 'pieces',
+          low_stock_threshold INTEGER,
+          barcode             TEXT,
+          barcode_type        TEXT NOT NULL DEFAULT 'none',
+          expiry_date         TEXT,
+          purchase_date       TEXT,
+          notes               TEXT,
+          created_by          TEXT,
+          created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at          TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE inventory_logs (
+          id              TEXT PRIMARY KEY,
+          item_id         TEXT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+          household_id    TEXT NOT NULL,
+          action          TEXT NOT NULL,
+          quantity_change  INTEGER NOT NULL DEFAULT 0,
+          quantity_after   INTEGER NOT NULL DEFAULT 0,
+          note            TEXT,
+          performed_by    TEXT,
+          performed_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE inventory_attachments (
+          id              TEXT PRIMARY KEY,
+          item_id         TEXT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+          household_id    TEXT NOT NULL,
+          drive_file_id   TEXT NOT NULL,
+          file_name       TEXT NOT NULL,
+          mime_type       TEXT NOT NULL DEFAULT 'application/octet-stream',
+          file_size_bytes INTEGER NOT NULL DEFAULT 0,
+          thumbnail_url   TEXT,
+          web_view_link   TEXT NOT NULL,
+          uploaded_by     TEXT NOT NULL,
+          uploaded_at     TEXT NOT NULL DEFAULT (datetime('now')),
+          description     TEXT
+        )
+      ''');
+      await db.execute(
+          'CREATE INDEX idx_inventory_items_household ON inventory_items(household_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_items_category ON inventory_items(category_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_items_location ON inventory_items(location_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_categories_household ON inventory_categories(household_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_locations_household ON inventory_locations(household_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_id)');
+      await db.execute(
+          'CREATE INDEX idx_inventory_attachments_item ON inventory_attachments(item_id)');
+    }
   }
 }

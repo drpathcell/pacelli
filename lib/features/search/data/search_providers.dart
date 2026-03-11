@@ -15,7 +15,7 @@ class SearchParams extends Equatable {
   const SearchParams({
     required this.householdId,
     required this.query,
-    this.entityTypes = const {'task', 'checklist', 'plan', 'attachment'},
+    this.entityTypes = const {'task', 'checklist', 'plan', 'attachment', 'inventory'},
   });
 
   @override
@@ -24,7 +24,7 @@ class SearchParams extends Equatable {
 
 /// Active entity-type filter chips. Defaults to all types enabled.
 final searchFilterProvider = StateProvider<Set<String>>(
-  (_) => const {'task', 'checklist', 'plan', 'attachment'},
+  (_) => const {'task', 'checklist', 'plan', 'attachment', 'inventory'},
 );
 
 /// Debounced search provider. Returns results for the given [SearchParams].

@@ -1220,6 +1220,689 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  INVENTORY
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<InventoryItem> createInventoryItem({
+    required String householdId,
+    required String name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int quantity = 0,
+    String unit = 'pieces',
+    int? lowStockThreshold,
+    String? barcode,
+    String barcodeType = 'none',
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final doc = {
+      'id': id,
+      'household_id': householdId,
+      'name': _enc(name),
+      'description': _encN(description),
+      'category_id': categoryId,
+      'location_id': locationId,
+      'quantity': quantity,
+      'unit': _enc(unit),
+      'low_stock_threshold': lowStockThreshold,
+      'barcode': _encN(barcode),
+      'barcode_type': barcodeType,
+      'expiry_date': expiryDate != null ? Timestamp.fromDate(expiryDate) : null,
+      'purchase_date': purchaseDate != null ? Timestamp.fromDate(purchaseDate) : null,
+      'notes': _encN(notes),
+      'created_by': _uid,
+      'created_at': Timestamp.fromDate(now),
+      'updated_at': Timestamp.fromDate(now),
+    };
+
+    await _db.collection('inventory_items').doc(id).set(doc);
+
+    // Log the initial quantity if > 0.
+    if (quantity > 0) {
+      await logInventoryAction(
+        itemId: id,
+        householdId: householdId,
+        action: 'added',
+        quantityChange: quantity,
+        quantityAfter: quantity,
+      );
+    }
+
+    return getInventoryItem(id);
+  }
+
+  @override
+  Future<List<InventoryItem>> getInventoryItems({
+    required String householdId,
+    String? categoryId,
+    String? locationId,
+    bool? lowStockOnly,
+    bool? expiringOnly,
+  }) async {
+    Query<Map<String, dynamic>> query = _db
+        .collection('inventory_items')
+        .where('household_id', isEqualTo: householdId);
+
+    if (categoryId != null) {
+      query = query.where('category_id', isEqualTo: categoryId);
+    }
+    if (locationId != null) {
+      query = query.where('location_id', isEqualTo: locationId);
+    }
+
+    final snapshot = await query
+        .orderBy('created_at', descending: true)
+        .limit(500)
+        .get();
+
+    if (snapshot.docs.isEmpty) return [];
+
+    // Collect category and location IDs for bulk lookup.
+    final categoryIds = <String>{};
+    final locationIds = <String>{};
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['category_id'] != null) {
+        categoryIds.add(data['category_id'] as String);
+      }
+      if (data['location_id'] != null) {
+        locationIds.add(data['location_id'] as String);
+      }
+    }
+
+    // Bulk-fetch categories.
+    final categories = <String, InventoryCategory>{};
+    for (final catId in categoryIds) {
+      final catDoc =
+          await _db.collection('inventory_categories').doc(catId).get();
+      if (catDoc.exists) {
+        final cd = catDoc.data()!;
+        categories[catId] = InventoryCategory(
+          id: cd['id'] as String? ?? catId,
+          householdId: cd['household_id'] as String? ?? '',
+          name: _dec(cd['name'] as String? ?? ''),
+          icon: cd['icon'] as String? ?? 'inventory_2',
+          color: cd['color'] as String? ?? '#A5B4A5',
+          isDefault: cd['is_default'] as bool? ?? false,
+          sortOrder: (cd['sort_order'] as num?)?.toInt() ?? 0,
+          createdAt: _parseDate(cd['created_at']) ?? DateTime.now(),
+        );
+      }
+    }
+
+    // Bulk-fetch locations.
+    final locations = <String, InventoryLocation>{};
+    for (final locId in locationIds) {
+      final locDoc =
+          await _db.collection('inventory_locations').doc(locId).get();
+      if (locDoc.exists) {
+        final ld = locDoc.data()!;
+        locations[locId] = InventoryLocation(
+          id: ld['id'] as String? ?? locId,
+          householdId: ld['household_id'] as String? ?? '',
+          name: _dec(ld['name'] as String? ?? ''),
+          icon: ld['icon'] as String? ?? 'place',
+          isDefault: ld['is_default'] as bool? ?? false,
+          sortOrder: (ld['sort_order'] as num?)?.toInt() ?? 0,
+          createdAt: _parseDate(ld['created_at']) ?? DateTime.now(),
+        );
+      }
+    }
+
+    // Build items list.
+    var items = snapshot.docs.map((doc) {
+      final d = doc.data();
+      return InventoryItem(
+        id: d['id'] as String? ?? doc.id,
+        householdId: d['household_id'] as String? ?? '',
+        name: _dec(d['name'] as String? ?? ''),
+        description: _decN(d['description'] as String?),
+        categoryId: d['category_id'] as String?,
+        locationId: d['location_id'] as String?,
+        quantity: (d['quantity'] as num?)?.toInt() ?? 0,
+        unit: _dec(d['unit'] as String? ?? 'pieces'),
+        lowStockThreshold: (d['low_stock_threshold'] as num?)?.toInt(),
+        barcode: _decN(d['barcode'] as String?),
+        barcodeType: d['barcode_type'] as String? ?? 'none',
+        expiryDate: _parseDate(d['expiry_date']),
+        purchaseDate: _parseDate(d['purchase_date']),
+        notes: _decN(d['notes'] as String?),
+        createdBy: d['created_by'] as String? ?? '',
+        createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+        updatedAt: _parseDate(d['updated_at']) ?? DateTime.now(),
+        category: d['category_id'] != null
+            ? categories[d['category_id'] as String]
+            : null,
+        location: d['location_id'] != null
+            ? locations[d['location_id'] as String]
+            : null,
+      );
+    }).toList();
+
+    // Client-side filters for lowStockOnly / expiringOnly.
+    if (lowStockOnly == true) {
+      items = items.where((i) => i.isLowStock).toList();
+    }
+    if (expiringOnly == true) {
+      items = items.where((i) => i.isExpiringSoon).toList();
+    }
+
+    return items;
+  }
+
+  @override
+  Future<InventoryItem> getInventoryItem(String itemId) async {
+    final doc = await _db.collection('inventory_items').doc(itemId).get();
+    if (!doc.exists) throw StateError('Inventory item $itemId not found');
+    final d = doc.data()!;
+
+    // Join category.
+    InventoryCategory? category;
+    if (d['category_id'] != null) {
+      final catDoc = await _db
+          .collection('inventory_categories')
+          .doc(d['category_id'] as String)
+          .get();
+      if (catDoc.exists) {
+        final cd = catDoc.data()!;
+        category = InventoryCategory(
+          id: cd['id'] as String? ?? catDoc.id,
+          householdId: cd['household_id'] as String? ?? '',
+          name: _dec(cd['name'] as String? ?? ''),
+          icon: cd['icon'] as String? ?? 'inventory_2',
+          color: cd['color'] as String? ?? '#A5B4A5',
+          isDefault: cd['is_default'] as bool? ?? false,
+          sortOrder: (cd['sort_order'] as num?)?.toInt() ?? 0,
+          createdAt: _parseDate(cd['created_at']) ?? DateTime.now(),
+        );
+      }
+    }
+
+    // Join location.
+    InventoryLocation? location;
+    if (d['location_id'] != null) {
+      final locDoc = await _db
+          .collection('inventory_locations')
+          .doc(d['location_id'] as String)
+          .get();
+      if (locDoc.exists) {
+        final ld = locDoc.data()!;
+        location = InventoryLocation(
+          id: ld['id'] as String? ?? locDoc.id,
+          householdId: ld['household_id'] as String? ?? '',
+          name: _dec(ld['name'] as String? ?? ''),
+          icon: ld['icon'] as String? ?? 'place',
+          isDefault: ld['is_default'] as bool? ?? false,
+          sortOrder: (ld['sort_order'] as num?)?.toInt() ?? 0,
+          createdAt: _parseDate(ld['created_at']) ?? DateTime.now(),
+        );
+      }
+    }
+
+    // Join creator profile.
+    ProfileRef? creatorProfile;
+    if (d['created_by'] != null) {
+      creatorProfile = await _getProfile(d['created_by'] as String);
+    }
+
+    // Join attachments.
+    final attSnap = await _db
+        .collection('inventory_attachments')
+        .where('item_id', isEqualTo: itemId)
+        .orderBy('uploaded_at')
+        .get();
+    final attachments = attSnap.docs.map((a) {
+      final ad = a.data();
+      return InventoryAttachment(
+        id: ad['id'] as String? ?? a.id,
+        itemId: ad['item_id'] as String? ?? '',
+        householdId: ad['household_id'] as String? ?? '',
+        driveFileId: ad['drive_file_id'] as String? ?? '',
+        fileName: _dec(ad['file_name'] as String? ?? ''),
+        mimeType: _dec(ad['mime_type'] as String? ?? 'application/octet-stream'),
+        fileSizeBytes: (ad['file_size_bytes'] as num?)?.toInt() ?? 0,
+        thumbnailUrl: _decN(ad['thumbnail_url'] as String?),
+        webViewLink: _dec(ad['web_view_link'] as String? ?? ''),
+        uploadedBy: ad['uploaded_by'] as String? ?? '',
+        uploadedAt: _parseDate(ad['uploaded_at']) ?? DateTime.now(),
+        description: _decN(ad['description'] as String?),
+      );
+    }).toList();
+
+    return InventoryItem(
+      id: d['id'] as String? ?? itemId,
+      householdId: d['household_id'] as String? ?? '',
+      name: _dec(d['name'] as String? ?? ''),
+      description: _decN(d['description'] as String?),
+      categoryId: d['category_id'] as String?,
+      locationId: d['location_id'] as String?,
+      quantity: (d['quantity'] as num?)?.toInt() ?? 0,
+      unit: _dec(d['unit'] as String? ?? 'pieces'),
+      lowStockThreshold: (d['low_stock_threshold'] as num?)?.toInt(),
+      barcode: _decN(d['barcode'] as String?),
+      barcodeType: d['barcode_type'] as String? ?? 'none',
+      expiryDate: _parseDate(d['expiry_date']),
+      purchaseDate: _parseDate(d['purchase_date']),
+      notes: _decN(d['notes'] as String?),
+      createdBy: d['created_by'] as String? ?? '',
+      createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+      updatedAt: _parseDate(d['updated_at']) ?? DateTime.now(),
+      category: category,
+      location: location,
+      creatorProfile: creatorProfile,
+      attachments: attachments,
+    );
+  }
+
+  @override
+  Future<void> updateInventoryItem({
+    required String itemId,
+    String? name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int? quantity,
+    String? unit,
+    int? lowStockThreshold,
+    String? barcode,
+    String? barcodeType,
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (name != null) updates['name'] = _enc(name);
+    if (description != null) updates['description'] = _enc(description);
+    if (categoryId != null) updates['category_id'] = categoryId;
+    if (locationId != null) updates['location_id'] = locationId;
+    if (quantity != null) updates['quantity'] = quantity;
+    if (unit != null) updates['unit'] = _enc(unit);
+    if (lowStockThreshold != null) {
+      updates['low_stock_threshold'] = lowStockThreshold;
+    }
+    if (barcode != null) updates['barcode'] = _enc(barcode);
+    if (barcodeType != null) updates['barcode_type'] = barcodeType;
+    if (expiryDate != null) {
+      updates['expiry_date'] = Timestamp.fromDate(expiryDate);
+    }
+    if (purchaseDate != null) {
+      updates['purchase_date'] = Timestamp.fromDate(purchaseDate);
+    }
+    if (notes != null) updates['notes'] = _enc(notes);
+    updates['updated_at'] = Timestamp.fromDate(DateTime.now());
+
+    await _db.collection('inventory_items').doc(itemId).update(updates);
+  }
+
+  @override
+  Future<void> deleteInventoryItem(String itemId) async {
+    // Collect related logs and attachments, then batch-delete everything.
+    final logSnap = await _db
+        .collection('inventory_logs')
+        .where('item_id', isEqualTo: itemId)
+        .get();
+    final attSnap = await _db
+        .collection('inventory_attachments')
+        .where('item_id', isEqualTo: itemId)
+        .get();
+
+    final allRefs = <DocumentReference>[
+      _db.collection('inventory_items').doc(itemId),
+      ...logSnap.docs.map((d) => d.reference),
+      ...attSnap.docs.map((d) => d.reference),
+    ];
+
+    for (final chunk in _chunk(allRefs, 400)) {
+      final batch = _db.batch();
+      for (final ref in chunk) {
+        batch.delete(ref);
+      }
+      await batch.commit();
+    }
+  }
+
+  @override
+  Future<List<InventoryCategory>> getInventoryCategories(
+      String householdId) async {
+    final snap = await _db
+        .collection('inventory_categories')
+        .where('household_id', isEqualTo: householdId)
+        .orderBy('sort_order')
+        .get();
+
+    return snap.docs.map((doc) {
+      final d = doc.data();
+      return InventoryCategory(
+        id: d['id'] as String? ?? doc.id,
+        householdId: d['household_id'] as String? ?? '',
+        name: _dec(d['name'] as String? ?? ''),
+        icon: d['icon'] as String? ?? 'inventory_2',
+        color: d['color'] as String? ?? '#A5B4A5',
+        isDefault: d['is_default'] as bool? ?? false,
+        sortOrder: (d['sort_order'] as num?)?.toInt() ?? 0,
+        createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<InventoryCategory> createInventoryCategory({
+    required String householdId,
+    required String name,
+    String icon = 'inventory_2',
+    String color = '#A5B4A5',
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    // Determine next sort_order.
+    final existing = await _db
+        .collection('inventory_categories')
+        .where('household_id', isEqualTo: householdId)
+        .orderBy('sort_order', descending: true)
+        .limit(1)
+        .get();
+    final nextOrder = existing.docs.isNotEmpty
+        ? ((existing.docs.first.data()['sort_order'] as num?)?.toInt() ?? 0) + 1
+        : 0;
+
+    final doc = {
+      'id': id,
+      'household_id': householdId,
+      'name': _enc(name),
+      'icon': icon,
+      'color': color,
+      'is_default': false,
+      'sort_order': nextOrder,
+      'created_at': Timestamp.fromDate(now),
+    };
+
+    await _db.collection('inventory_categories').doc(id).set(doc);
+
+    return InventoryCategory(
+      id: id,
+      householdId: householdId,
+      name: name,
+      icon: icon,
+      color: color,
+      isDefault: false,
+      sortOrder: nextOrder,
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<void> deleteInventoryCategory(String categoryId) async {
+    await _db.collection('inventory_categories').doc(categoryId).delete();
+  }
+
+  @override
+  Future<List<InventoryLocation>> getInventoryLocations(
+      String householdId) async {
+    final snap = await _db
+        .collection('inventory_locations')
+        .where('household_id', isEqualTo: householdId)
+        .orderBy('sort_order')
+        .get();
+
+    return snap.docs.map((doc) {
+      final d = doc.data();
+      return InventoryLocation(
+        id: d['id'] as String? ?? doc.id,
+        householdId: d['household_id'] as String? ?? '',
+        name: _dec(d['name'] as String? ?? ''),
+        icon: d['icon'] as String? ?? 'place',
+        isDefault: d['is_default'] as bool? ?? false,
+        sortOrder: (d['sort_order'] as num?)?.toInt() ?? 0,
+        createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<InventoryLocation> createInventoryLocation({
+    required String householdId,
+    required String name,
+    String icon = 'place',
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    // Determine next sort_order.
+    final existing = await _db
+        .collection('inventory_locations')
+        .where('household_id', isEqualTo: householdId)
+        .orderBy('sort_order', descending: true)
+        .limit(1)
+        .get();
+    final nextOrder = existing.docs.isNotEmpty
+        ? ((existing.docs.first.data()['sort_order'] as num?)?.toInt() ?? 0) + 1
+        : 0;
+
+    final doc = {
+      'id': id,
+      'household_id': householdId,
+      'name': _enc(name),
+      'icon': icon,
+      'is_default': false,
+      'sort_order': nextOrder,
+      'created_at': Timestamp.fromDate(now),
+    };
+
+    await _db.collection('inventory_locations').doc(id).set(doc);
+
+    return InventoryLocation(
+      id: id,
+      householdId: householdId,
+      name: name,
+      icon: icon,
+      isDefault: false,
+      sortOrder: nextOrder,
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<void> deleteInventoryLocation(String locationId) async {
+    await _db.collection('inventory_locations').doc(locationId).delete();
+  }
+
+  @override
+  Future<void> logInventoryAction({
+    required String itemId,
+    required String householdId,
+    required String action,
+    required int quantityChange,
+    required int quantityAfter,
+    String? note,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final doc = {
+      'id': id,
+      'item_id': itemId,
+      'household_id': householdId,
+      'action': action,
+      'quantity_change': quantityChange,
+      'quantity_after': quantityAfter,
+      'note': _encN(note),
+      'performed_by': _uid,
+      'performed_at': Timestamp.fromDate(now),
+    };
+
+    await _db.collection('inventory_logs').doc(id).set(doc);
+  }
+
+  @override
+  Future<List<InventoryLog>> getInventoryLogs({
+    required String itemId,
+    int limit = 50,
+  }) async {
+    final snap = await _db
+        .collection('inventory_logs')
+        .where('item_id', isEqualTo: itemId)
+        .orderBy('performed_at', descending: true)
+        .limit(limit)
+        .get();
+
+    // Collect performer IDs for bulk profile lookup.
+    final profileIds = <String>{};
+    for (final doc in snap.docs) {
+      final uid = doc.data()['performed_by'] as String?;
+      if (uid != null) profileIds.add(uid);
+    }
+
+    final profiles = <String, ProfileRef>{};
+    for (final uid in profileIds) {
+      final p = await _getProfile(uid);
+      if (p != null) profiles[uid] = p;
+    }
+
+    return snap.docs.map((doc) {
+      final d = doc.data();
+      final performedBy = d['performed_by'] as String? ?? '';
+      return InventoryLog(
+        id: d['id'] as String? ?? doc.id,
+        itemId: d['item_id'] as String? ?? '',
+        householdId: d['household_id'] as String? ?? '',
+        action: d['action'] as String? ?? '',
+        quantityChange: (d['quantity_change'] as num?)?.toInt() ?? 0,
+        quantityAfter: (d['quantity_after'] as num?)?.toInt() ?? 0,
+        note: _decN(d['note'] as String?),
+        performedBy: performedBy,
+        performedAt: _parseDate(d['performed_at']) ?? DateTime.now(),
+        performerProfile: profiles[performedBy],
+      );
+    }).toList();
+  }
+
+  @override
+  Future<InventoryAttachment> createInventoryAttachment({
+    required String itemId,
+    required String householdId,
+    required String driveFileId,
+    required String fileName,
+    required String mimeType,
+    required int fileSizeBytes,
+    String? thumbnailUrl,
+    required String webViewLink,
+    String? description,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final doc = {
+      'id': id,
+      'item_id': itemId,
+      'household_id': householdId,
+      'drive_file_id': driveFileId,
+      'file_name': _enc(fileName),
+      'mime_type': _enc(mimeType),
+      'file_size_bytes': fileSizeBytes,
+      'thumbnail_url': _encN(thumbnailUrl),
+      'web_view_link': _enc(webViewLink),
+      'uploaded_by': _uid,
+      'uploaded_at': Timestamp.fromDate(now),
+      'description': _encN(description),
+    };
+
+    await _db.collection('inventory_attachments').doc(id).set(doc);
+
+    return InventoryAttachment(
+      id: id,
+      itemId: itemId,
+      householdId: householdId,
+      driveFileId: driveFileId,
+      fileName: fileName,
+      mimeType: mimeType,
+      fileSizeBytes: fileSizeBytes,
+      thumbnailUrl: thumbnailUrl,
+      webViewLink: webViewLink,
+      uploadedBy: _uid!,
+      uploadedAt: now,
+      description: description,
+    );
+  }
+
+  @override
+  Future<List<InventoryAttachment>> getInventoryAttachments(
+      String itemId) async {
+    final snap = await _db
+        .collection('inventory_attachments')
+        .where('item_id', isEqualTo: itemId)
+        .orderBy('uploaded_at')
+        .get();
+
+    return snap.docs.map((d) {
+      final data = d.data();
+      return InventoryAttachment(
+        id: data['id'] as String? ?? d.id,
+        itemId: data['item_id'] as String? ?? '',
+        householdId: data['household_id'] as String? ?? '',
+        driveFileId: data['drive_file_id'] as String? ?? '',
+        fileName: _dec(data['file_name'] as String? ?? ''),
+        mimeType:
+            _dec(data['mime_type'] as String? ?? 'application/octet-stream'),
+        fileSizeBytes: (data['file_size_bytes'] as num?)?.toInt() ?? 0,
+        thumbnailUrl: _decN(data['thumbnail_url'] as String?),
+        webViewLink: _dec(data['web_view_link'] as String? ?? ''),
+        uploadedBy: data['uploaded_by'] as String? ?? '',
+        uploadedAt: _parseDate(data['uploaded_at']) ?? DateTime.now(),
+        description: _decN(data['description'] as String?),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> deleteInventoryAttachment(String attachmentId) async {
+    await _db.collection('inventory_attachments').doc(attachmentId).delete();
+  }
+
+  @override
+  Future<Map<String, int>> getInventoryStats(String householdId) async {
+    final snap = await _db
+        .collection('inventory_items')
+        .where('household_id', isEqualTo: householdId)
+        .get();
+
+    int total = 0;
+    int lowStock = 0;
+    int expiringSoon = 0;
+    final now = DateTime.now();
+
+    for (final doc in snap.docs) {
+      total++;
+      final d = doc.data();
+      final qty = (d['quantity'] as num?)?.toInt() ?? 0;
+      final threshold = (d['low_stock_threshold'] as num?)?.toInt();
+      if (threshold != null && qty <= threshold) {
+        lowStock++;
+      }
+      final expiry = _parseDate(d['expiry_date']);
+      if (expiry != null) {
+        final diff = expiry.difference(now).inDays;
+        if (diff >= 0 && diff <= 7) {
+          expiringSoon++;
+        }
+      }
+    }
+
+    return {
+      'total': total,
+      'lowStock': lowStock,
+      'expiringSoon': expiringSoon,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
   // ═══════════════════════════════════════════════════════════════════
 
@@ -1410,6 +2093,31 @@ class FirebaseDataRepository implements DataRepository {
       }
     }
 
+    // ── Inventory items ──
+    if (entityTypes.contains('inventory')) {
+      final invSnap = await _db
+          .collection('inventory_items')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+      for (final doc in invSnap.docs) {
+        final d = doc.data();
+        final itemName = _dec(d['name'] as String? ?? '');
+        final desc = _decN(d['description'] as String?);
+        final notes = _decN(d['notes'] as String?);
+        if (matches(itemName) || matches(desc) || matches(notes)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'inventory',
+            householdId: householdId,
+            title: itemName,
+            subtitle: desc,
+            relevanceDate: _parseDate(d['created_at']),
+          ));
+        }
+      }
+    }
+
     // Sort by relevance date (most recent first), nulls last.
     results.sort((a, b) {
       if (a.relevanceDate == null && b.relevanceDate == null) return 0;
@@ -1471,7 +2179,7 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   /// Deletes all data for a household (tasks, subtasks, categories,
-  /// checklists, plans, entries, plan checklist items).
+  /// checklists, plans, entries, plan checklist items, inventory).
   ///
   /// Collects child doc IDs BEFORE deleting parents (Firestore doesn't
   /// cascade deletes). Respects 500-operation batch limit by chunking.
@@ -1510,12 +2218,17 @@ class FirebaseDataRepository implements DataRepository {
       ...planSnap.docs.map((d) => d.reference),
     ];
 
-    // Categories, attachments, and invites (household-scoped).
+    // Categories, attachments, invites, and inventory (household-scoped).
     for (final col in [
       'task_categories',
       'task_attachments',
       'plan_attachments',
       'household_invites',
+      'inventory_items',
+      'inventory_categories',
+      'inventory_locations',
+      'inventory_logs',
+      'inventory_attachments',
     ]) {
       final snap = await _db
           .collection(col)

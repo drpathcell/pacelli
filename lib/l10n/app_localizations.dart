@@ -3189,6 +3189,462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attachment'**
   String get searchResultAttachment;
+
+  /// No description provided for @searchResultInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get searchResultInventory;
+
+  /// No description provided for @inventoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get inventoryTitle;
+
+  /// No description provided for @inventoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your inventory is empty — tap + to add your first item'**
+  String get inventoryEmpty;
+
+  /// No description provided for @inventoryItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String inventoryItemCount(int count);
+
+  /// No description provided for @inventoryLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get inventoryLowStock;
+
+  /// No description provided for @inventoryExpiringSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiring soon'**
+  String get inventoryExpiringSoon;
+
+  /// No description provided for @inventoryAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Item'**
+  String get inventoryAddItem;
+
+  /// No description provided for @inventoryEditItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Item'**
+  String get inventoryEditItem;
+
+  /// No description provided for @inventoryItemName.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get inventoryItemName;
+
+  /// No description provided for @inventoryItemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Olive oil, Paper towels'**
+  String get inventoryItemNameHint;
+
+  /// No description provided for @inventoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get inventoryDescription;
+
+  /// No description provided for @inventoryCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get inventoryCategory;
+
+  /// No description provided for @inventoryLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get inventoryLocation;
+
+  /// No description provided for @inventoryQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get inventoryQuantity;
+
+  /// No description provided for @inventoryUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get inventoryUnit;
+
+  /// No description provided for @inventoryUnitPieces.
+  ///
+  /// In en, this message translates to:
+  /// **'pieces'**
+  String get inventoryUnitPieces;
+
+  /// No description provided for @inventoryUnitKg.
+  ///
+  /// In en, this message translates to:
+  /// **'kg'**
+  String get inventoryUnitKg;
+
+  /// No description provided for @inventoryUnitLitres.
+  ///
+  /// In en, this message translates to:
+  /// **'litres'**
+  String get inventoryUnitLitres;
+
+  /// No description provided for @inventoryUnitBags.
+  ///
+  /// In en, this message translates to:
+  /// **'bags'**
+  String get inventoryUnitBags;
+
+  /// No description provided for @inventoryUnitBoxes.
+  ///
+  /// In en, this message translates to:
+  /// **'boxes'**
+  String get inventoryUnitBoxes;
+
+  /// No description provided for @inventoryLowStockThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock threshold'**
+  String get inventoryLowStockThreshold;
+
+  /// No description provided for @inventoryExpiryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date'**
+  String get inventoryExpiryDate;
+
+  /// No description provided for @inventoryPurchaseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase date'**
+  String get inventoryPurchaseDate;
+
+  /// No description provided for @inventoryNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get inventoryNotes;
+
+  /// No description provided for @inventoryBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get inventoryBarcode;
+
+  /// No description provided for @inventoryBarcodeNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No barcode'**
+  String get inventoryBarcodeNone;
+
+  /// No description provided for @inventoryBarcodeReal.
+  ///
+  /// In en, this message translates to:
+  /// **'Product barcode'**
+  String get inventoryBarcodeReal;
+
+  /// No description provided for @inventoryBarcodeVirtual.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual barcode'**
+  String get inventoryBarcodeVirtual;
+
+  /// No description provided for @inventorySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save item'**
+  String get inventorySave;
+
+  /// No description provided for @inventoryDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete item'**
+  String get inventoryDelete;
+
+  /// No description provided for @inventoryDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this item? This cannot be undone.'**
+  String get inventoryDeleteConfirm;
+
+  /// No description provided for @inventoryCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get inventoryCategories;
+
+  /// No description provided for @inventoryLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Locations'**
+  String get inventoryLocations;
+
+  /// No description provided for @inventoryManageCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Categories'**
+  String get inventoryManageCategories;
+
+  /// No description provided for @inventoryManageLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Locations'**
+  String get inventoryManageLocations;
+
+  /// No description provided for @inventoryAddCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get inventoryAddCategory;
+
+  /// No description provided for @inventoryAddLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Location'**
+  String get inventoryAddLocation;
+
+  /// No description provided for @inventoryCategoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get inventoryCategoryName;
+
+  /// No description provided for @inventoryLocationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Location name'**
+  String get inventoryLocationName;
+
+  /// No description provided for @inventoryCannotDeleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete — items are using this category'**
+  String get inventoryCannotDeleteCategory;
+
+  /// No description provided for @inventoryCannotDeleteLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete — items are using this location'**
+  String get inventoryCannotDeleteLocation;
+
+  /// No description provided for @inventoryLogAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count}'**
+  String inventoryLogAdded(int count);
+
+  /// No description provided for @inventoryLogRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {count}'**
+  String inventoryLogRemoved(int count);
+
+  /// No description provided for @inventoryLogAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusted to {count}'**
+  String inventoryLogAdjusted(int count);
+
+  /// No description provided for @inventoryActivityLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Log'**
+  String get inventoryActivityLog;
+
+  /// No description provided for @inventoryViewByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By Category'**
+  String get inventoryViewByCategory;
+
+  /// No description provided for @inventoryViewByLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'By Location'**
+  String get inventoryViewByLocation;
+
+  /// No description provided for @inventoryViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All Items'**
+  String get inventoryViewAll;
+
+  /// No description provided for @inventoryDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get inventoryDetails;
+
+  /// No description provided for @inventoryAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get inventoryAttachments;
+
+  /// No description provided for @inventoryCreatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by {name}'**
+  String inventoryCreatedBy(String name);
+
+  /// No description provided for @inventoryItemsExpiring.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} expiring soon'**
+  String inventoryItemsExpiring(int count);
+
+  /// No description provided for @inventoryItemsLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} low stock'**
+  String inventoryItemsLowStock(int count);
+
+  /// No description provided for @inventoryNoExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry date'**
+  String get inventoryNoExpiry;
+
+  /// No description provided for @inventoryExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {days} days'**
+  String inventoryExpiresIn(int days);
+
+  /// No description provided for @inventoryExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get inventoryExpired;
+
+  /// No description provided for @inventoryExpiresToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires today'**
+  String get inventoryExpiresToday;
+
+  /// No description provided for @inventoryDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get inventoryDiscardTitle;
+
+  /// No description provided for @inventoryDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Are you sure you want to go back?'**
+  String get inventoryDiscardMessage;
+
+  /// No description provided for @inventoryKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get inventoryKeepEditing;
+
+  /// No description provided for @inventoryDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get inventoryDiscard;
+
+  /// No description provided for @inventoryCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Item added!'**
+  String get inventoryCreated;
+
+  /// No description provided for @inventoryUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Item updated!'**
+  String get inventoryUpdated;
+
+  /// No description provided for @inventoryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Item deleted'**
+  String get inventoryDeleted;
+
+  /// No description provided for @inventoryCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load inventory'**
+  String get inventoryCouldNotLoad;
+
+  /// No description provided for @inventoryUncategorised.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorised'**
+  String get inventoryUncategorised;
+
+  /// No description provided for @inventoryNoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No location'**
+  String get inventoryNoLocation;
+
+  /// No description provided for @inventoryIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get inventoryIconLabel;
+
+  /// No description provided for @inventoryColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour'**
+  String get inventoryColorLabel;
+
+  /// No description provided for @inventoryCategoryCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Category created'**
+  String get inventoryCategoryCreated;
+
+  /// No description provided for @inventoryLocationCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Location created'**
+  String get inventoryLocationCreated;
+
+  /// No description provided for @inventoryCategoryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Category deleted'**
+  String get inventoryCategoryDeleted;
+
+  /// No description provided for @inventoryLocationDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Location deleted'**
+  String get inventoryLocationDeleted;
+
+  /// No description provided for @inventoryCouldNotDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete'**
+  String get inventoryCouldNotDelete;
+
+  /// No description provided for @homeInventorySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items · {alert} alert'**
+  String homeInventorySummary(int count, int alert);
+
+  /// No description provided for @homeInventorySummaryPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items · {alert} alerts'**
+  String homeInventorySummaryPlural(int count, int alert);
 }
 
 class _AppLocalizationsDelegate

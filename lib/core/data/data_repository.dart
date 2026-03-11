@@ -314,8 +314,132 @@ abstract class DataRepository {
   Future<void> deletePlanAttachment(String attachmentId);
 
   // ═══════════════════════════════════════════════════════════════════
-  //  DATA WIPE
+  //  INVENTORY
   // ═══════════════════════════════════════════════════════════════════
+
+  /// Creates a new inventory item. Returns the created item.
+  Future<InventoryItem> createInventoryItem({
+    required String householdId,
+    required String name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int quantity = 0,
+    String unit = 'pieces',
+    int? lowStockThreshold,
+    String? barcode,
+    String barcodeType = 'none',
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  });
+
+  /// Fetches all inventory items for a household with optional filters.
+  Future<List<InventoryItem>> getInventoryItems({
+    required String householdId,
+    String? categoryId,
+    String? locationId,
+    bool? lowStockOnly,
+    bool? expiringOnly,
+  });
+
+  /// Fetches a single inventory item by ID.
+  Future<InventoryItem> getInventoryItem(String itemId);
+
+  /// Updates inventory item fields. Only non-null fields are changed.
+  Future<void> updateInventoryItem({
+    required String itemId,
+    String? name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int? quantity,
+    String? unit,
+    int? lowStockThreshold,
+    String? barcode,
+    String? barcodeType,
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  });
+
+  /// Deletes an inventory item.
+  Future<void> deleteInventoryItem(String itemId);
+
+  // ── Inventory Categories ──
+
+  /// Gets all inventory categories for a household.
+  Future<List<InventoryCategory>> getInventoryCategories(String householdId);
+
+  /// Creates a new inventory category. Returns the created category.
+  Future<InventoryCategory> createInventoryCategory({
+    required String householdId,
+    required String name,
+    String icon = 'inventory_2',
+    String color = '#A5B4A5',
+  });
+
+  /// Deletes an inventory category.
+  Future<void> deleteInventoryCategory(String categoryId);
+
+  // ── Inventory Locations ──
+
+  /// Gets all inventory locations for a household.
+  Future<List<InventoryLocation>> getInventoryLocations(String householdId);
+
+  /// Creates a new inventory location. Returns the created location.
+  Future<InventoryLocation> createInventoryLocation({
+    required String householdId,
+    required String name,
+    String icon = 'place',
+  });
+
+  /// Deletes an inventory location.
+  Future<void> deleteInventoryLocation(String locationId);
+
+  // ── Inventory Log ──
+
+  /// Logs an inventory action (add, remove, adjust).
+  Future<void> logInventoryAction({
+    required String itemId,
+    required String householdId,
+    required String action,
+    required int quantityChange,
+    required int quantityAfter,
+    String? note,
+  });
+
+  /// Gets inventory logs for an item.
+  Future<List<InventoryLog>> getInventoryLogs({
+    required String itemId,
+    int limit = 50,
+  });
+
+  // ── Inventory Attachments ──
+
+  /// Creates a new attachment record for an inventory item.
+  Future<InventoryAttachment> createInventoryAttachment({
+    required String itemId,
+    required String householdId,
+    required String driveFileId,
+    required String fileName,
+    required String mimeType,
+    required int fileSizeBytes,
+    String? thumbnailUrl,
+    required String webViewLink,
+    String? description,
+  });
+
+  /// Fetches all attachments for an inventory item.
+  Future<List<InventoryAttachment>> getInventoryAttachments(String itemId);
+
+  /// Deletes an inventory attachment record.
+  Future<void> deleteInventoryAttachment(String attachmentId);
+
+  // ── Inventory Stats ──
+
+  /// Gets inventory stats for the home screen summary.
+  Future<Map<String, int>> getInventoryStats(String householdId);
 
   // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
@@ -329,7 +453,7 @@ abstract class DataRepository {
   Future<List<SearchResult>> searchHousehold({
     required String householdId,
     required String query,
-    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment'],
+    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment', 'inventory'],
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -340,6 +464,6 @@ abstract class DataRepository {
   ///
   /// This is a destructive, irreversible operation used by the "Burn All
   /// Data" feature. Deletes tasks, subtasks, categories, checklists,
-  /// plans, entries, and plan checklist items.
+  /// plans, entries, plan checklist items, and inventory data.
   Future<void> wipeAllData(String userId);
 }

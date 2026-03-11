@@ -827,5 +827,135 @@
   "searchResultTask": "Task",
   "searchResultChecklist": "Checklist",
   "searchResultPlan": "Plan",
-  "searchResultAttachment": "Attachment"
+  "searchResultAttachment": "Attachment",
+  "searchResultInventory": "Inventory",
+
+  "inventoryTitle": "Inventory",
+  "inventoryEmpty": "Your inventory is empty — tap + to add your first item",
+  "inventoryItemCount": "{count} items",
+  "@inventoryItemCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryLowStock": "Low stock",
+  "inventoryExpiringSoon": "Expiring soon",
+  "inventoryAddItem": "Add Item",
+  "inventoryEditItem": "Edit Item",
+  "inventoryItemName": "Item name",
+  "inventoryItemNameHint": "e.g. Olive oil, Paper towels",
+  "inventoryDescription": "Description",
+  "inventoryCategory": "Category",
+  "inventoryLocation": "Location",
+  "inventoryQuantity": "Quantity",
+  "inventoryUnit": "Unit",
+  "inventoryUnitPieces": "pieces",
+  "inventoryUnitKg": "kg",
+  "inventoryUnitLitres": "litres",
+  "inventoryUnitBags": "bags",
+  "inventoryUnitBoxes": "boxes",
+  "inventoryLowStockThreshold": "Low stock threshold",
+  "inventoryExpiryDate": "Expiry date",
+  "inventoryPurchaseDate": "Purchase date",
+  "inventoryNotes": "Notes",
+  "inventoryBarcode": "Barcode",
+  "inventoryBarcodeNone": "No barcode",
+  "inventoryBarcodeReal": "Product barcode",
+  "inventoryBarcodeVirtual": "Virtual barcode",
+  "inventorySave": "Save item",
+  "inventoryDelete": "Delete item",
+  "inventoryDeleteConfirm": "Are you sure you want to delete this item? This cannot be undone.",
+  "inventoryCategories": "Categories",
+  "inventoryLocations": "Locations",
+  "inventoryManageCategories": "Manage Categories",
+  "inventoryManageLocations": "Manage Locations",
+  "inventoryAddCategory": "Add Category",
+  "inventoryAddLocation": "Add Location",
+  "inventoryCategoryName": "Category name",
+  "inventoryLocationName": "Location name",
+  "inventoryCannotDeleteCategory": "Cannot delete — items are using this category",
+  "inventoryCannotDeleteLocation": "Cannot delete — items are using this location",
+  "inventoryLogAdded": "Added {count}",
+  "@inventoryLogAdded": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryLogRemoved": "Used {count}",
+  "@inventoryLogRemoved": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryLogAdjusted": "Adjusted to {count}",
+  "@inventoryLogAdjusted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryActivityLog": "Activity Log",
+  "inventoryViewByCategory": "By Category",
+  "inventoryViewByLocation": "By Location",
+  "inventoryViewAll": "All Items",
+  "inventoryDetails": "Details",
+  "inventoryAttachments": "Attachments",
+  "inventoryCreatedBy": "Added by {name}",
+  "@inventoryCreatedBy": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "inventoryItemsExpiring": "{count} expiring soon",
+  "@inventoryItemsExpiring": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryItemsLowStock": "{count} low stock",
+  "@inventoryItemsLowStock": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "inventoryNoExpiry": "No expiry date",
+  "inventoryExpiresIn": "Expires in {days} days",
+  "@inventoryExpiresIn": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "inventoryExpired": "Expired",
+  "inventoryExpiresToday": "Expires today",
+  "inventoryDiscardTitle": "Discard changes?",
+  "inventoryDiscardMessage": "You have unsaved changes. Are you sure you want to go back?",
+  "inventoryKeepEditing": "Keep editing",
+  "inventoryDiscard": "Discard",
+  "inventoryCreated": "Item added!",
+  "inventoryUpdated": "Item updated!",
+  "inventoryDeleted": "Item deleted",
+  "inventoryCouldNotLoad": "Could not load inventory",
+  "inventoryUncategorised": "Uncategorised",
+  "inventoryNoLocation": "No location",
+  "inventoryIconLabel": "Icon",
+  "inventoryColorLabel": "Colour",
+  "inventoryCategoryCreated": "Category created",
+  "inventoryLocationCreated": "Location created",
+  "inventoryCategoryDeleted": "Category deleted",
+  "inventoryLocationDeleted": "Location deleted",
+  "inventoryCouldNotDelete": "Could not delete",
+
+  "homeInventorySummary": "{count} items · {alert} alert",
+  "@homeInventorySummary": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "alert": {"type": "int"}
+    }
+  },
+  "homeInventorySummaryPlural": "{count} items · {alert} alerts",
+  "@homeInventorySummaryPlural": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "alert": {"type": "int"}
+    }
+  }
 }

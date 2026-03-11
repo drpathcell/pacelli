@@ -1148,6 +1148,532 @@ class LocalDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  INVENTORY
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<InventoryItem> createInventoryItem({
+    required String householdId,
+    required String name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int quantity = 0,
+    String unit = 'pieces',
+    int? lowStockThreshold,
+    String? barcode,
+    String barcodeType = 'none',
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
+
+    await _db.insert('inventory_items', {
+      'id': id,
+      'household_id': householdId,
+      'name': name,
+      'description': description,
+      'category_id': categoryId,
+      'location_id': locationId,
+      'quantity': quantity,
+      'unit': unit,
+      'low_stock_threshold': lowStockThreshold,
+      'barcode': barcode,
+      'barcode_type': barcodeType,
+      'expiry_date': expiryDate?.toIso8601String(),
+      'purchase_date': purchaseDate?.toIso8601String(),
+      'notes': notes,
+      'created_by': _userId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    // Log the initial add if quantity > 0
+    if (quantity > 0) {
+      await _db.insert('inventory_logs', {
+        'id': _uuid.v4(),
+        'item_id': id,
+        'household_id': householdId,
+        'action': 'added',
+        'quantity_change': quantity,
+        'quantity_after': quantity,
+        'note': 'Initial stock',
+        'performed_by': _userId,
+        'performed_at': now,
+      });
+    }
+
+    return getInventoryItem(id);
+  }
+
+  @override
+  Future<List<InventoryItem>> getInventoryItems({
+    required String householdId,
+    String? categoryId,
+    String? locationId,
+    bool? lowStockOnly,
+    bool? expiringOnly,
+  }) async {
+    final where = <String>['i.household_id = ?'];
+    final args = <dynamic>[householdId];
+
+    if (categoryId != null) {
+      where.add('i.category_id = ?');
+      args.add(categoryId);
+    }
+    if (locationId != null) {
+      where.add('i.location_id = ?');
+      args.add(locationId);
+    }
+    if (lowStockOnly == true) {
+      where.add(
+          'i.low_stock_threshold IS NOT NULL AND i.quantity <= i.low_stock_threshold');
+    }
+    if (expiringOnly == true) {
+      where.add(
+          "i.expiry_date IS NOT NULL AND i.expiry_date BETWEEN date('now') AND date('now', '+7 days')");
+    }
+
+    final rows = await _db.rawQuery('''
+      SELECT i.*,
+             c.id AS cat_id, c.household_id AS cat_household_id, c.name AS cat_name,
+             c.icon AS cat_icon, c.color AS cat_color,
+             c.is_default AS cat_is_default, c.sort_order AS cat_sort_order,
+             c.created_at AS cat_created_at,
+             l.id AS loc_id, l.household_id AS loc_household_id, l.name AS loc_name,
+             l.icon AS loc_icon, l.is_default AS loc_is_default,
+             l.sort_order AS loc_sort_order, l.created_at AS loc_created_at
+        FROM inventory_items i
+        LEFT JOIN inventory_categories c ON i.category_id = c.id
+        LEFT JOIN inventory_locations l ON i.location_id = l.id
+       WHERE ${where.join(' AND ')}
+       ORDER BY i.created_at DESC
+    ''', args);
+
+    return rows.map((row) {
+      final m = _sqliteToMap(Map<String, dynamic>.from(row));
+
+      // Extract and nest category
+      final catId = m.remove('cat_id');
+      m.remove('cat_household_id');
+      final catName = m.remove('cat_name');
+      final catIcon = m.remove('cat_icon');
+      final catColor = m.remove('cat_color');
+      final catIsDefault = m.remove('cat_is_default');
+      final catSortOrder = m.remove('cat_sort_order');
+      final catCreatedAt = m.remove('cat_created_at');
+      if (catId != null) {
+        m['inventory_categories'] = {
+          'id': catId,
+          'household_id': m['household_id'],
+          'name': catName,
+          'icon': catIcon,
+          'color': catColor,
+          'is_default': catIsDefault == 1 ? true : catIsDefault,
+          'sort_order': catSortOrder,
+          'created_at': catCreatedAt,
+        };
+      }
+
+      // Extract and nest location
+      final locId = m.remove('loc_id');
+      m.remove('loc_household_id');
+      final locName = m.remove('loc_name');
+      final locIcon = m.remove('loc_icon');
+      final locIsDefault = m.remove('loc_is_default');
+      final locSortOrder = m.remove('loc_sort_order');
+      final locCreatedAt = m.remove('loc_created_at');
+      if (locId != null) {
+        m['inventory_locations'] = {
+          'id': locId,
+          'household_id': m['household_id'],
+          'name': locName,
+          'icon': locIcon,
+          'is_default': locIsDefault == 1 ? true : locIsDefault,
+          'sort_order': locSortOrder,
+          'created_at': locCreatedAt,
+        };
+      }
+
+      return InventoryItem.fromMap(m);
+    }).toList();
+  }
+
+  @override
+  Future<InventoryItem> getInventoryItem(String itemId) async {
+    final rows = await _db.rawQuery('''
+      SELECT i.*,
+             c.id AS cat_id, c.household_id AS cat_household_id, c.name AS cat_name,
+             c.icon AS cat_icon, c.color AS cat_color,
+             c.is_default AS cat_is_default, c.sort_order AS cat_sort_order,
+             c.created_at AS cat_created_at,
+             l.id AS loc_id, l.household_id AS loc_household_id, l.name AS loc_name,
+             l.icon AS loc_icon, l.is_default AS loc_is_default,
+             l.sort_order AS loc_sort_order, l.created_at AS loc_created_at
+        FROM inventory_items i
+        LEFT JOIN inventory_categories c ON i.category_id = c.id
+        LEFT JOIN inventory_locations l ON i.location_id = l.id
+       WHERE i.id = ?
+    ''', [itemId]);
+
+    if (rows.isEmpty) throw Exception('InventoryItem $itemId not found');
+
+    final m = _sqliteToMap(Map<String, dynamic>.from(rows.first));
+
+    // Extract and nest category
+    final catId = m.remove('cat_id');
+    m.remove('cat_household_id');
+    final catName = m.remove('cat_name');
+    final catIcon = m.remove('cat_icon');
+    final catColor = m.remove('cat_color');
+    final catIsDefault = m.remove('cat_is_default');
+    final catSortOrder = m.remove('cat_sort_order');
+    final catCreatedAt = m.remove('cat_created_at');
+    if (catId != null) {
+      m['inventory_categories'] = {
+        'id': catId,
+        'household_id': m['household_id'],
+        'name': catName,
+        'icon': catIcon,
+        'color': catColor,
+        'is_default': catIsDefault == 1 ? true : catIsDefault,
+        'sort_order': catSortOrder,
+        'created_at': catCreatedAt,
+      };
+    }
+
+    // Extract and nest location
+    final locId = m.remove('loc_id');
+    m.remove('loc_household_id');
+    final locName = m.remove('loc_name');
+    final locIcon = m.remove('loc_icon');
+    final locIsDefault = m.remove('loc_is_default');
+    final locSortOrder = m.remove('loc_sort_order');
+    final locCreatedAt = m.remove('loc_created_at');
+    if (locId != null) {
+      m['inventory_locations'] = {
+        'id': locId,
+        'household_id': m['household_id'],
+        'name': locName,
+        'icon': locIcon,
+        'is_default': locIsDefault == 1 ? true : locIsDefault,
+        'sort_order': locSortOrder,
+        'created_at': locCreatedAt,
+      };
+    }
+
+    // Fetch attachments
+    final attachmentRows = await _db.query(
+      'inventory_attachments',
+      where: 'item_id = ?',
+      whereArgs: [itemId],
+      orderBy: 'uploaded_at ASC',
+    );
+    m['attachments'] =
+        attachmentRows.map((a) => Map<String, dynamic>.from(a)).toList();
+
+    return InventoryItem.fromMap(m);
+  }
+
+  @override
+  Future<void> updateInventoryItem({
+    required String itemId,
+    String? name,
+    String? description,
+    String? categoryId,
+    String? locationId,
+    int? quantity,
+    String? unit,
+    int? lowStockThreshold,
+    String? barcode,
+    String? barcodeType,
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? notes,
+  }) async {
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    if (name != null) updates['name'] = name;
+    if (description != null) updates['description'] = description;
+    if (categoryId != null) updates['category_id'] = categoryId;
+    if (locationId != null) updates['location_id'] = locationId;
+    if (quantity != null) updates['quantity'] = quantity;
+    if (unit != null) updates['unit'] = unit;
+    if (lowStockThreshold != null) {
+      updates['low_stock_threshold'] = lowStockThreshold;
+    }
+    if (barcode != null) updates['barcode'] = barcode;
+    if (barcodeType != null) updates['barcode_type'] = barcodeType;
+    if (expiryDate != null) {
+      updates['expiry_date'] = expiryDate.toIso8601String();
+    }
+    if (purchaseDate != null) {
+      updates['purchase_date'] = purchaseDate.toIso8601String();
+    }
+    if (notes != null) updates['notes'] = notes;
+
+    await _db.update('inventory_items', updates,
+        where: 'id = ?', whereArgs: [itemId]);
+  }
+
+  @override
+  Future<void> deleteInventoryItem(String itemId) async {
+    // Delete children first for safety, then the item itself
+    await _db
+        .delete('inventory_logs', where: 'item_id = ?', whereArgs: [itemId]);
+    await _db.delete('inventory_attachments',
+        where: 'item_id = ?', whereArgs: [itemId]);
+    await _db
+        .delete('inventory_items', where: 'id = ?', whereArgs: [itemId]);
+  }
+
+  // ── Inventory Categories ──
+
+  @override
+  Future<List<InventoryCategory>> getInventoryCategories(
+      String householdId) async {
+    final rows = await _db.query(
+      'inventory_categories',
+      where: 'household_id = ?',
+      whereArgs: [householdId],
+      orderBy: 'sort_order ASC',
+    );
+    return rows
+        .map((r) => InventoryCategory.fromMap(_sqliteToMap(r)))
+        .toList();
+  }
+
+  @override
+  Future<InventoryCategory> createInventoryCategory({
+    required String householdId,
+    required String name,
+    String icon = 'inventory_2',
+    String color = '#A5B4A5',
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
+
+    final map = {
+      'id': id,
+      'household_id': householdId,
+      'name': name,
+      'icon': icon,
+      'color': color,
+      'is_default': 0,
+      'sort_order': 0,
+      'created_at': now,
+    };
+
+    await _db.insert('inventory_categories', map);
+    return InventoryCategory.fromMap({...map, 'is_default': false});
+  }
+
+  @override
+  Future<void> deleteInventoryCategory(String categoryId) async {
+    await _db.delete(
+      'inventory_categories',
+      where: 'id = ?',
+      whereArgs: [categoryId],
+    );
+  }
+
+  // ── Inventory Locations ──
+
+  @override
+  Future<List<InventoryLocation>> getInventoryLocations(
+      String householdId) async {
+    final rows = await _db.query(
+      'inventory_locations',
+      where: 'household_id = ?',
+      whereArgs: [householdId],
+      orderBy: 'sort_order ASC',
+    );
+    return rows
+        .map((r) => InventoryLocation.fromMap(_sqliteToMap(r)))
+        .toList();
+  }
+
+  @override
+  Future<InventoryLocation> createInventoryLocation({
+    required String householdId,
+    required String name,
+    String icon = 'place',
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
+
+    final map = {
+      'id': id,
+      'household_id': householdId,
+      'name': name,
+      'icon': icon,
+      'is_default': 0,
+      'sort_order': 0,
+      'created_at': now,
+    };
+
+    await _db.insert('inventory_locations', map);
+    return InventoryLocation.fromMap({...map, 'is_default': false});
+  }
+
+  @override
+  Future<void> deleteInventoryLocation(String locationId) async {
+    await _db.delete(
+      'inventory_locations',
+      where: 'id = ?',
+      whereArgs: [locationId],
+    );
+  }
+
+  // ── Inventory Logs ──
+
+  @override
+  Future<void> logInventoryAction({
+    required String itemId,
+    required String householdId,
+    required String action,
+    required int quantityChange,
+    required int quantityAfter,
+    String? note,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
+
+    await _db.insert('inventory_logs', {
+      'id': id,
+      'item_id': itemId,
+      'household_id': householdId,
+      'action': action,
+      'quantity_change': quantityChange,
+      'quantity_after': quantityAfter,
+      'note': note,
+      'performed_by': _userId,
+      'performed_at': now,
+    });
+  }
+
+  @override
+  Future<List<InventoryLog>> getInventoryLogs({
+    required String itemId,
+    int limit = 50,
+  }) async {
+    final rows = await _db.query(
+      'inventory_logs',
+      where: 'item_id = ?',
+      whereArgs: [itemId],
+      orderBy: 'performed_at DESC',
+      limit: limit,
+    );
+    return rows
+        .map((r) => InventoryLog.fromMap(Map<String, dynamic>.from(r)))
+        .toList();
+  }
+
+  // ── Inventory Attachments ──
+
+  @override
+  Future<InventoryAttachment> createInventoryAttachment({
+    required String itemId,
+    required String householdId,
+    required String driveFileId,
+    required String fileName,
+    required String mimeType,
+    required int fileSizeBytes,
+    String? thumbnailUrl,
+    required String webViewLink,
+    String? description,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    await _db.insert('inventory_attachments', {
+      'id': id,
+      'item_id': itemId,
+      'household_id': householdId,
+      'drive_file_id': driveFileId,
+      'file_name': fileName,
+      'mime_type': mimeType,
+      'file_size_bytes': fileSizeBytes,
+      'thumbnail_url': thumbnailUrl,
+      'web_view_link': webViewLink,
+      'uploaded_by': _userId,
+      'uploaded_at': now.toIso8601String(),
+      'description': description,
+    });
+
+    return InventoryAttachment(
+      id: id,
+      itemId: itemId,
+      householdId: householdId,
+      driveFileId: driveFileId,
+      fileName: fileName,
+      mimeType: mimeType,
+      fileSizeBytes: fileSizeBytes,
+      thumbnailUrl: thumbnailUrl,
+      webViewLink: webViewLink,
+      uploadedBy: _userId,
+      uploadedAt: now,
+      description: description,
+    );
+  }
+
+  @override
+  Future<List<InventoryAttachment>> getInventoryAttachments(
+      String itemId) async {
+    final rows = await _db.query(
+      'inventory_attachments',
+      where: 'item_id = ?',
+      whereArgs: [itemId],
+      orderBy: 'uploaded_at ASC',
+    );
+    return rows
+        .map((r) =>
+            InventoryAttachment.fromMap(Map<String, dynamic>.from(r)))
+        .toList();
+  }
+
+  @override
+  Future<void> deleteInventoryAttachment(String attachmentId) async {
+    await _db.delete(
+      'inventory_attachments',
+      where: 'id = ?',
+      whereArgs: [attachmentId],
+    );
+  }
+
+  // ── Inventory Stats ──
+
+  @override
+  Future<Map<String, int>> getInventoryStats(String householdId) async {
+    final totalResult = await _db.rawQuery(
+      'SELECT COUNT(*) AS cnt FROM inventory_items WHERE household_id = ?',
+      [householdId],
+    );
+    final total = Sqflite.firstIntValue(totalResult) ?? 0;
+
+    final lowStockResult = await _db.rawQuery(
+      'SELECT COUNT(*) AS cnt FROM inventory_items WHERE household_id = ? AND low_stock_threshold IS NOT NULL AND quantity <= low_stock_threshold',
+      [householdId],
+    );
+    final lowStock = Sqflite.firstIntValue(lowStockResult) ?? 0;
+
+    final expiringResult = await _db.rawQuery(
+      "SELECT COUNT(*) AS cnt FROM inventory_items WHERE household_id = ? AND expiry_date IS NOT NULL AND expiry_date BETWEEN date('now') AND date('now', '+7 days')",
+      [householdId],
+    );
+    final expiringSoon = Sqflite.firstIntValue(expiringResult) ?? 0;
+
+    return {
+      'total': total,
+      'lowStock': lowStock,
+      'expiringSoon': expiringSoon,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
   // ═══════════════════════════════════════════════════════════════════
 
@@ -1155,7 +1681,13 @@ class LocalDataRepository implements DataRepository {
   Future<List<SearchResult>> searchHousehold({
     required String householdId,
     required String query,
-    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment'],
+    List<String> entityTypes = const [
+      'task',
+      'checklist',
+      'plan',
+      'attachment',
+      'inventory',
+    ],
   }) async {
     final results = <SearchResult>[];
     final like = '%$query%';
@@ -1315,6 +1847,27 @@ class LocalDataRepository implements DataRepository {
       }
     }
 
+    // ── Inventory items ──
+    if (entityTypes.contains('inventory')) {
+      final invRows = await _db.query(
+        'inventory_items',
+        where:
+            "household_id = ? AND (name LIKE ? COLLATE NOCASE OR description LIKE ? COLLATE NOCASE OR notes LIKE ? COLLATE NOCASE)",
+        whereArgs: [householdId, like, like, like],
+        limit: 200,
+      );
+      for (final r in invRows) {
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'inventory',
+          householdId: householdId,
+          title: r['name'] as String,
+          subtitle: r['description'] as String?,
+          relevanceDate: DateTime.tryParse(r['created_at'] as String? ?? ''),
+        ));
+      }
+    }
+
     return results;
   }
 
@@ -1326,6 +1879,11 @@ class LocalDataRepository implements DataRepository {
   Future<void> wipeAllData(String userId) async {
     // For local SQLite, just drop all rows from every table.
     // Order: children before parents to respect FK constraints.
+    await _db.delete('inventory_attachments');
+    await _db.delete('inventory_logs');
+    await _db.delete('inventory_items');
+    await _db.delete('inventory_locations');
+    await _db.delete('inventory_categories');
     await _db.delete('task_attachments');
     await _db.delete('plan_attachments');
     await _db.delete('subtasks');

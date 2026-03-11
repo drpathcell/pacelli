@@ -134,6 +134,36 @@ service cloud.firestore {
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
+    // ── Inventory Items ──────────────────────────────────────────
+    match /inventory_items/{itemId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Inventory Categories ───────────────────────────────────
+    match /inventory_categories/{categoryId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Inventory Locations ────────────────────────────────────
+    match /inventory_locations/{locationId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Inventory Logs ─────────────────────────────────────────
+    // Child docs — protected at app level like subtasks.
+    match /inventory_logs/{logId} {
+      allow read, create, update, delete: if isAuth();
+    }
+
+    // ── Inventory Attachments ──────────────────────────────────
+    match /inventory_attachments/{attachmentId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
     // ── Household Drive Config ─────────────────────────────────
     match /household_drive_config/{householdId} {
       allow read: if isMember(householdId);
