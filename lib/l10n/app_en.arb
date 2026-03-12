@@ -820,7 +820,11 @@
       "count": {"type": "int"}
     }
   },
-  "ieInfoNote": "Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.",
+  "ieExportPassphrase": "Encrypt backup?",
+  "ieExportPassphraseHint": "Leave blank for no encryption",
+  "ieImportPassphrase": "Enter passphrase",
+  "ieImportEncrypted": "This backup is encrypted",
+  "ieInfoNote": "If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.",
 
   "searchTitle": "Search",
   "searchHint": "Search tasks, checklists, plans...",

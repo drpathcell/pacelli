@@ -54,7 +54,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final text = _subtaskController.text.trim();
     if (text.isEmpty) return;
 
-    await ref.read(dataRepositoryProvider).addSubtask(taskId: widget.taskId, title: text);
+    final task = ref.read(taskDetailProvider(widget.taskId)).valueOrNull;
+    final householdId = task?['household_id'] as String? ?? '';
+    await ref.read(dataRepositoryProvider).addSubtask(taskId: widget.taskId, householdId: householdId, title: text);
     _subtaskController.clear();
     ref.invalidate(taskDetailProvider(widget.taskId));
   }

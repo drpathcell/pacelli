@@ -76,6 +76,7 @@ class Checklist extends Equatable {
 class ChecklistItem extends Equatable {
   final String id;
   final String checklistId;
+  final String householdId;
   final String title;
   final String? quantity;
   final bool isChecked;
@@ -87,6 +88,7 @@ class ChecklistItem extends Equatable {
   const ChecklistItem({
     required this.id,
     required this.checklistId,
+    this.householdId = '',
     required this.title,
     this.quantity,
     this.isChecked = false,
@@ -99,6 +101,7 @@ class ChecklistItem extends Equatable {
   factory ChecklistItem.fromMap(Map<String, dynamic> map) => ChecklistItem(
         id: map['id'] as String,
         checklistId: map['checklist_id'] as String? ?? '',
+        householdId: map['household_id'] as String? ?? '',
         title: map['title'] as String,
         quantity: map['quantity'] as String?,
         isChecked: map['is_checked'] as bool? ?? false,
@@ -115,6 +118,7 @@ class ChecklistItem extends Equatable {
   Map<String, dynamic> toMap() => {
         'id': id,
         'checklist_id': checklistId,
+        'household_id': householdId,
         'title': title,
         'quantity': quantity,
         'is_checked': isChecked,

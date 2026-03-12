@@ -123,6 +123,7 @@ class Plan extends Equatable {
 class PlanEntry extends Equatable {
   final String id;
   final String planId;
+  final String householdId;
   final DateTime entryDate;
   final String title;
   final String? label;
@@ -134,6 +135,7 @@ class PlanEntry extends Equatable {
   const PlanEntry({
     required this.id,
     required this.planId,
+    this.householdId = '',
     required this.entryDate,
     required this.title,
     this.label,
@@ -146,6 +148,7 @@ class PlanEntry extends Equatable {
   factory PlanEntry.fromMap(Map<String, dynamic> map) => PlanEntry(
         id: map['id'] as String,
         planId: map['plan_id'] as String? ?? '',
+        householdId: map['household_id'] as String? ?? '',
         entryDate: DateTime.parse(map['entry_date'] as String),
         title: map['title'] as String,
         label: map['label'] as String?,
@@ -160,6 +163,7 @@ class PlanEntry extends Equatable {
   Map<String, dynamic> toMap() => {
         'id': id,
         'plan_id': planId,
+        'household_id': householdId,
         'entry_date': Plan._dateOnly(entryDate),
         'title': title,
         'label': label,
@@ -177,6 +181,7 @@ class PlanEntry extends Equatable {
 class PlanChecklistItem extends Equatable {
   final String id;
   final String planId;
+  final String householdId;
   final String? entryId;
   final String title;
   final String? quantity;
@@ -189,6 +194,7 @@ class PlanChecklistItem extends Equatable {
   const PlanChecklistItem({
     required this.id,
     required this.planId,
+    this.householdId = '',
     this.entryId,
     required this.title,
     this.quantity,
@@ -203,6 +209,7 @@ class PlanChecklistItem extends Equatable {
       PlanChecklistItem(
         id: map['id'] as String,
         planId: map['plan_id'] as String? ?? '',
+        householdId: map['household_id'] as String? ?? '',
         entryId: map['entry_id'] as String?,
         title: map['title'] as String,
         quantity: map['quantity'] as String?,
@@ -220,6 +227,7 @@ class PlanChecklistItem extends Equatable {
   Map<String, dynamic> toMap() => {
         'id': id,
         'plan_id': planId,
+        'household_id': householdId,
         'entry_id': entryId,
         'title': title,
         'quantity': quantity,

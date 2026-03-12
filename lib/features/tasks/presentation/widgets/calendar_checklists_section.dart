@@ -100,7 +100,7 @@ class _CalendarChecklistsSectionState
     if (title == null || title.isEmpty) return;
 
     try {
-      await ref.read(dataRepositoryProvider).addChecklistItem(checklistId: checklistId, title: title);
+      await ref.read(dataRepositoryProvider).addChecklistItem(checklistId: checklistId, householdId: widget.householdId, title: title);
       ref.invalidate(householdChecklistsProvider(widget.householdId));
     } catch (e) {
       if (mounted) _showError(context.l10n.checklistCouldNotAdd);

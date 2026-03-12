@@ -144,6 +144,7 @@ class FirebaseDataRepository implements DataRepository {
         batch.set(_db.collection('subtasks').doc(sid), {
           'id': sid,
           'task_id': taskId,
+          'household_id': householdId,
           'title': _enc(subtaskTitles[i]),
           'is_completed': false,
           'sort_order': i,
@@ -361,6 +362,7 @@ class FirebaseDataRepository implements DataRepository {
   @override
   Future<Subtask> addSubtask({
     required String taskId,
+    required String householdId,
     required String title,
     int sortOrder = 0,
   }) async {
@@ -368,12 +370,13 @@ class FirebaseDataRepository implements DataRepository {
     final data = {
       'id': id,
       'task_id': taskId,
+      'household_id': householdId,
       'title': _enc(title),
       'is_completed': false,
       'sort_order': sortOrder,
     };
     await _db.collection('subtasks').doc(id).set(data);
-    return Subtask(id: id, taskId: taskId, title: title, sortOrder: sortOrder);
+    return Subtask(id: id, taskId: taskId, householdId: householdId, title: title, sortOrder: sortOrder);
   }
 
   @override
@@ -561,6 +564,7 @@ class FirebaseDataRepository implements DataRepository {
   @override
   Future<ChecklistItem> addChecklistItem({
     required String checklistId,
+    required String householdId,
     required String title,
     String? quantity,
   }) async {
@@ -569,6 +573,7 @@ class FirebaseDataRepository implements DataRepository {
     await _db.collection('checklist_items').doc(id).set({
       'id': id,
       'checklist_id': checklistId,
+      'household_id': householdId,
       'title': _enc(title),
       'quantity': quantity,
       'is_checked': false,
@@ -580,6 +585,7 @@ class FirebaseDataRepository implements DataRepository {
     return ChecklistItem(
       id: id,
       checklistId: checklistId,
+      householdId: householdId,
       title: title,
       quantity: quantity,
       createdBy: _uid,
@@ -767,6 +773,7 @@ class FirebaseDataRepository implements DataRepository {
   @override
   Future<PlanEntry> addEntry({
     required String planId,
+    required String householdId,
     required DateTime entryDate,
     required String title,
     String? label,
@@ -778,6 +785,7 @@ class FirebaseDataRepository implements DataRepository {
     await _db.collection('plan_entries').doc(id).set({
       'id': id,
       'plan_id': planId,
+      'household_id': householdId,
       'entry_date': _dateOnly(entryDate),
       'title': _enc(title),
       'label': _encN(label),
@@ -789,6 +797,7 @@ class FirebaseDataRepository implements DataRepository {
     return PlanEntry(
       id: id,
       planId: planId,
+      householdId: householdId,
       entryDate: entryDate,
       title: title,
       label: label,
@@ -826,6 +835,7 @@ class FirebaseDataRepository implements DataRepository {
   @override
   Future<PlanChecklistItem> addPlanChecklistItem({
     required String planId,
+    required String householdId,
     String? entryId,
     required String title,
     String? quantity,
@@ -835,6 +845,7 @@ class FirebaseDataRepository implements DataRepository {
     await _db.collection('plan_checklist_items').doc(id).set({
       'id': id,
       'plan_id': planId,
+      'household_id': householdId,
       'entry_id': entryId,
       'title': _enc(title),
       'quantity': quantity,
@@ -847,6 +858,7 @@ class FirebaseDataRepository implements DataRepository {
     return PlanChecklistItem(
       id: id,
       planId: planId,
+      householdId: householdId,
       entryId: entryId,
       title: title,
       quantity: quantity,
@@ -912,6 +924,7 @@ class FirebaseDataRepository implements DataRepository {
     for (final entry in source.entries) {
       await addEntry(
         planId: template.id,
+        householdId: householdId,
         entryDate: entry.entryDate,
         title: entry.title,
         label: entry.label,
@@ -948,6 +961,7 @@ class FirebaseDataRepository implements DataRepository {
       if (!newDate.isAfter(endDate)) {
         await addEntry(
           planId: newPlan.id,
+          householdId: householdId,
           entryDate: newDate,
           title: entry.title,
           label: entry.label,
@@ -1750,10 +1764,12 @@ class FirebaseDataRepository implements DataRepository {
   @override
   Future<List<InventoryLog>> getInventoryLogs({
     required String itemId,
+    required String householdId,
     int limit = 50,
   }) async {
     final snap = await _db
         .collection('inventory_logs')
+        .where('household_id', isEqualTo: householdId)
         .where('item_id', isEqualTo: itemId)
         .orderBy('performed_at', descending: true)
         .limit(limit)
@@ -1840,9 +1856,10 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<List<InventoryAttachment>> getInventoryAttachments(
-      String itemId) async {
+      String itemId, {required String householdId}) async {
     final snap = await _db
         .collection('inventory_attachments')
+        .where('household_id', isEqualTo: householdId)
         .where('item_id', isEqualTo: itemId)
         .orderBy('uploaded_at')
         .get();

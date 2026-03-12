@@ -175,6 +175,7 @@ class Task extends Equatable {
 class Subtask extends Equatable {
   final String id;
   final String taskId;
+  final String householdId;
   final String title;
   final bool isCompleted;
   final int sortOrder;
@@ -182,6 +183,7 @@ class Subtask extends Equatable {
   const Subtask({
     required this.id,
     required this.taskId,
+    this.householdId = '',
     required this.title,
     this.isCompleted = false,
     this.sortOrder = 0,
@@ -190,6 +192,7 @@ class Subtask extends Equatable {
   factory Subtask.fromMap(Map<String, dynamic> map) => Subtask(
         id: map['id'] as String,
         taskId: map['task_id'] as String? ?? '',
+        householdId: map['household_id'] as String? ?? '',
         title: map['title'] as String,
         isCompleted: map['is_completed'] as bool? ?? false,
         sortOrder: map['sort_order'] as int? ?? 0,
@@ -198,6 +201,7 @@ class Subtask extends Equatable {
   Map<String, dynamic> toMap() => {
         'id': id,
         'task_id': taskId,
+        'household_id': householdId,
         'title': title,
         'is_completed': isCompleted,
         'sort_order': sortOrder,

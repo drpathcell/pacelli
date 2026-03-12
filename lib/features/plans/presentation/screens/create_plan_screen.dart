@@ -124,6 +124,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
         final day = start.add(Duration(days: i));
         await repo.addEntry(
           planId: plan.id,
+          householdId: widget.householdId,
           entryDate: day,
           title: '',
           label: dinnerLabel,

@@ -1700,8 +1700,20 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get ieExportPassphrase => 'Cifrare il backup?';
+
+  @override
+  String get ieExportPassphraseHint => 'Lascia vuoto per non cifrare';
+
+  @override
+  String get ieImportPassphrase => 'Inserisci la password';
+
+  @override
+  String get ieImportEncrypted => 'Questo backup è cifrato';
+
+  @override
   String get ieInfoNote =>
-      'I file esportati vengono salvati in testo semplice. Se i tuoi dati sono crittografati nel cloud, verranno decrittografati per l\'esportazione.';
+      'Se imposti una password, l\'esportazione sarà cifrata. Conserva la password in un luogo sicuro — non può essere recuperata.';
 
   @override
   String get searchTitle => 'Cerca';

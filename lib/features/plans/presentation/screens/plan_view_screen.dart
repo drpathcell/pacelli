@@ -148,7 +148,9 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
 
     _checklistItemController.clear();
     try {
-      await ref.read(dataRepositoryProvider).addPlanChecklistItem(planId: planId, title: title);
+      final plan = ref.read(planDetailProvider(widget.planId)).valueOrNull;
+      final householdId = plan?['household_id'] as String? ?? '';
+      await ref.read(dataRepositoryProvider).addPlanChecklistItem(planId: planId, householdId: householdId, title: title);
       ref.invalidate(planDetailProvider(widget.planId));
     } catch (e) {
       if (!mounted) return;

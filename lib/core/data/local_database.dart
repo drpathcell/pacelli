@@ -17,7 +17,7 @@ class LocalDatabase {
 
     _instance = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -85,6 +85,7 @@ class LocalDatabase {
       CREATE TABLE subtasks (
         id           TEXT PRIMARY KEY,
         task_id      TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        household_id TEXT NOT NULL DEFAULT '',
         title        TEXT NOT NULL,
         is_completed INTEGER NOT NULL DEFAULT 0,
         sort_order   INTEGER NOT NULL DEFAULT 0,
@@ -109,6 +110,7 @@ class LocalDatabase {
       CREATE TABLE checklist_items (
         id           TEXT PRIMARY KEY,
         checklist_id TEXT NOT NULL REFERENCES checklists(id) ON DELETE CASCADE,
+        household_id TEXT NOT NULL DEFAULT '',
         title        TEXT NOT NULL,
         quantity     TEXT,
         is_checked   INTEGER NOT NULL DEFAULT 0,
@@ -140,9 +142,10 @@ class LocalDatabase {
     // ── Plan Entries ──
     await db.execute('''
       CREATE TABLE plan_entries (
-        id          TEXT PRIMARY KEY,
-        plan_id     TEXT NOT NULL REFERENCES scratch_plans(id) ON DELETE CASCADE,
-        entry_date  TEXT NOT NULL,
+        id           TEXT PRIMARY KEY,
+        plan_id      TEXT NOT NULL REFERENCES scratch_plans(id) ON DELETE CASCADE,
+        household_id TEXT NOT NULL DEFAULT '',
+        entry_date   TEXT NOT NULL,
         title       TEXT NOT NULL DEFAULT '',
         label       TEXT,
         description TEXT,
@@ -156,9 +159,10 @@ class LocalDatabase {
     // ── Plan Checklist Items ──
     await db.execute('''
       CREATE TABLE plan_checklist_items (
-        id         TEXT PRIMARY KEY,
-        plan_id    TEXT NOT NULL REFERENCES scratch_plans(id) ON DELETE CASCADE,
-        entry_id   TEXT REFERENCES plan_entries(id) ON DELETE SET NULL,
+        id           TEXT PRIMARY KEY,
+        plan_id      TEXT NOT NULL REFERENCES scratch_plans(id) ON DELETE CASCADE,
+        household_id TEXT NOT NULL DEFAULT '',
+        entry_id     TEXT REFERENCES plan_entries(id) ON DELETE SET NULL,
         title      TEXT NOT NULL,
         quantity   TEXT,
         is_checked INTEGER NOT NULL DEFAULT 0,
@@ -408,6 +412,13 @@ class LocalDatabase {
           'CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_id)');
       await db.execute(
           'CREATE INDEX idx_inventory_attachments_item ON inventory_attachments(item_id)');
+    }
+
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE subtasks ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
+      await db.execute("ALTER TABLE checklist_items ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
+      await db.execute("ALTER TABLE plan_entries ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
+      await db.execute("ALTER TABLE plan_checklist_items ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
     }
   }
 }

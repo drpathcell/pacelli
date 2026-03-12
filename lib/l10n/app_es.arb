@@ -532,7 +532,11 @@
   "ieImportFailed": "Error al importar: {error}",
   "ieImportErrorsTitle": "Advertencias de importación",
   "ieImportErrorsCount": "{count} elementos no se pudieron importar",
-  "ieInfoNote": "Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.",
+  "ieExportPassphrase": "¿Cifrar respaldo?",
+  "ieExportPassphraseHint": "Dejar vacío para no cifrar",
+  "ieImportPassphrase": "Ingresa la contraseña",
+  "ieImportEncrypted": "Este respaldo está cifrado",
+  "ieInfoNote": "Si estableces una contraseña, la exportación será cifrada. Guarda la contraseña en un lugar seguro — no se puede recuperar.",
 
   "searchTitle": "Buscar",
   "searchHint": "Buscar tareas, listas, planes...",

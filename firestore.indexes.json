@@ -17,6 +17,14 @@
       ]
     },
     {
+      "collectionGroup": "subtasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "task_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "checklists",
       "queryScope": "COLLECTION",
       "fields": [
@@ -34,11 +42,35 @@
       ]
     },
     {
+      "collectionGroup": "checklist_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "checklist_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "plan_entries",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "plan_id", "order": "ASCENDING" },
         { "fieldPath": "sort_order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "plan_entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "plan_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "plan_checklist_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "plan_id", "order": "ASCENDING" }
       ]
     },
     {
@@ -93,6 +125,7 @@
       "collectionGroup": "inventory_logs",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
         { "fieldPath": "item_id", "order": "ASCENDING" },
         { "fieldPath": "performed_at", "order": "DESCENDING" }
       ]
@@ -101,6 +134,7 @@
       "collectionGroup": "inventory_attachments",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
         { "fieldPath": "item_id", "order": "ASCENDING" },
         { "fieldPath": "uploaded_at", "order": "ASCENDING" }
       ]

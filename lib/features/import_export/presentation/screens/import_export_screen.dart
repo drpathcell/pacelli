@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -36,14 +37,58 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     if (mounted) setState(() => _lastExport = date);
   }
 
+  Future<String?> _askPassphrase({required String title, required String hint}) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          obscureText: true,
+          decoration: InputDecoration(hintText: hint),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: Text(context.l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: Text(context.l10n.commonOk),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
   Future<void> _exportJson() async {
-    setState(() => _busy = true);
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
+
+    // Ask for optional passphrase.
+    final passphrase = await _askPassphrase(
+      title: l10n.ieExportPassphrase,
+      hint: l10n.ieExportPassphraseHint,
+    );
+    // null means the dialog was cancelled.
+    if (passphrase == null) return;
+
+    setState(() => _busy = true);
     try {
       final service = ref.read(exportServiceProvider);
-      final file = await service.exportAsJson(widget.householdId);
+      final file = await service.exportAsJson(
+        widget.householdId,
+        passphrase: passphrase.isNotEmpty ? passphrase : null,
+      );
       await service.shareFile(file);
+      // Auto-delete export file after 5 minutes.
+      unawaited(Future.delayed(const Duration(minutes: 5), () {
+        file.deleteSync();
+      }));
       await _loadLastExportDate();
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.ieExportSuccess)),
@@ -82,13 +127,27 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
 
-    // Pick file
+    // Pick file — allow .json and .enc files.
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['json'],
+      allowedExtensions: ['json', 'enc'],
     );
 
     if (result == null || result.files.single.path == null) return;
+
+    final file = File(result.files.single.path!);
+    final isEncrypted = file.path.endsWith('.enc');
+
+    // If encrypted, ask for the passphrase before starting.
+    String? passphrase;
+    if (isEncrypted) {
+      if (!mounted) return;
+      passphrase = await _askPassphrase(
+        title: l10n.ieImportPassphrase,
+        hint: l10n.ieImportEncrypted,
+      );
+      if (passphrase == null) return; // cancelled
+    }
 
     setState(() {
       _busy = true;
@@ -98,8 +157,7 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
 
     try {
       final service = ref.read(importServiceProvider);
-      final file = File(result.files.single.path!);
-      final data = await service.parseFile(file);
+      final data = await service.parseFile(file, passphrase: passphrase);
 
       // Validate
       final error = service.validate(data);

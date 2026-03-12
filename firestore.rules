@@ -56,10 +56,13 @@ service cloud.firestore {
     }
 
     // ── Household Invites ────────────────────────────────────────
-    // Readable by the invitee (matched by email) or household members.
-    // Creatable/updatable by authenticated users.
     match /household_invites/{docId} {
-      allow read, create, update, delete: if isAuth();
+      allow read: if isAuth() && (
+        resource.data.invited_email == request.auth.token.email ||
+        isMember(resource.data.household_id)
+      );
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+      allow update, delete: if isAuth() && isMember(resource.data.household_id);
     }
 
     // ── Household Encryption Keys ────────────────────────────────
@@ -78,13 +81,9 @@ service cloud.firestore {
     }
 
     // ── Subtasks ─────────────────────────────────────────────────
-    // Subtasks are children of tasks. We validate via the parent task's
-    // household. For performance, we allow any authenticated user to
-    // read/write subtasks (task-level access already checked in app).
-    // Tightening this would require reading the parent task in rules,
-    // which costs an extra read per operation.
     match /subtasks/{subtaskId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Task Categories ──────────────────────────────────────────
@@ -100,9 +99,9 @@ service cloud.firestore {
     }
 
     // ── Checklist Items ──────────────────────────────────────────
-    // Same approach as subtasks — child docs are protected at app level.
     match /checklist_items/{itemId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Scratch Plans ────────────────────────────────────────────
@@ -112,14 +111,15 @@ service cloud.firestore {
     }
 
     // ── Plan Entries ─────────────────────────────────────────────
-    // Child docs — protected at app level like subtasks.
     match /plan_entries/{entryId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Plan Checklist Items ─────────────────────────────────────
     match /plan_checklist_items/{itemId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Task Attachments ───────────────────────────────────────
@@ -153,17 +153,15 @@ service cloud.firestore {
     }
 
     // ── Inventory Logs ─────────────────────────────────────────
-    // Child docs — protected at app level like subtasks.
     match /inventory_logs/{logId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Attachments ──────────────────────────────────
-    // Child docs — protected at app level (like subtasks, inventory_logs).
-    // Queries filter by item_id without household_id, so isMember()
-    // would reject the query at the Firestore level.
     match /inventory_attachments/{attachmentId} {
-      allow read, create, update, delete: if isAuth();
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Household Drive Config ─────────────────────────────────

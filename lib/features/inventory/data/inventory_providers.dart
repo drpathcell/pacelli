@@ -39,10 +39,13 @@ final inventoryLocationsProvider =
 );
 
 /// Inventory logs for a specific item.
-final inventoryLogsProvider = FutureProvider.autoDispose.family<List<InventoryLog>, String>(
-  (ref, itemId) async {
+/// Key is (itemId, householdId).
+final inventoryLogsProvider =
+    FutureProvider.autoDispose.family<List<InventoryLog>, (String, String)>(
+  (ref, args) async {
+    final (itemId, householdId) = args;
     final repo = ref.watch(dataRepositoryProvider);
-    return repo.getInventoryLogs(itemId: itemId);
+    return repo.getInventoryLogs(itemId: itemId, householdId: householdId);
   },
 );
 

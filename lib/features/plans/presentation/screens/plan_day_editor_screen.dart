@@ -117,6 +117,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
     try {
       await ref.read(dataRepositoryProvider).addEntry(
         planId: widget.planId,
+        householdId: _householdId ?? '',
         entryDate: widget.date,
         title: title.isEmpty ? '' : title,
         label: _selectedLabel,
@@ -314,6 +315,7 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
     for (final part in parts) {
       await ref.read(dataRepositoryProvider).addPlanChecklistItem(
         planId: widget.planId,
+        householdId: _householdId ?? '',
         entryId: entry['id'] as String,
         title: part,
       );

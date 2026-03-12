@@ -68,6 +68,7 @@ class LocalDataRepository implements DataRepository {
         await _db.insert('subtasks', {
           'id': _uuid.v4(),
           'task_id': taskId,
+          'household_id': householdId,
           'title': subtaskTitles[i],
           'is_completed': 0,
           'sort_order': i,
@@ -229,6 +230,7 @@ class LocalDataRepository implements DataRepository {
   @override
   Future<Subtask> addSubtask({
     required String taskId,
+    required String householdId,
     required String title,
     int sortOrder = 0,
   }) async {
@@ -238,6 +240,7 @@ class LocalDataRepository implements DataRepository {
     await _db.insert('subtasks', {
       'id': id,
       'task_id': taskId,
+      'household_id': householdId,
       'title': title,
       'is_completed': 0,
       'sort_order': sortOrder,
@@ -247,6 +250,7 @@ class LocalDataRepository implements DataRepository {
     return Subtask(
       id: id,
       taskId: taskId,
+      householdId: householdId,
       title: title,
       isCompleted: false,
       sortOrder: sortOrder,
@@ -421,6 +425,7 @@ class LocalDataRepository implements DataRepository {
   @override
   Future<ChecklistItem> addChecklistItem({
     required String checklistId,
+    required String householdId,
     required String title,
     String? quantity,
   }) async {
@@ -430,6 +435,7 @@ class LocalDataRepository implements DataRepository {
     await _db.insert('checklist_items', {
       'id': id,
       'checklist_id': checklistId,
+      'household_id': householdId,
       'title': title,
       'quantity': quantity,
       'is_checked': 0,
@@ -440,6 +446,7 @@ class LocalDataRepository implements DataRepository {
     return ChecklistItem(
       id: id,
       checklistId: checklistId,
+      householdId: householdId,
       title: title,
       quantity: quantity,
       isChecked: false,
@@ -633,6 +640,7 @@ class LocalDataRepository implements DataRepository {
   @override
   Future<PlanEntry> addEntry({
     required String planId,
+    required String householdId,
     required DateTime entryDate,
     required String title,
     String? label,
@@ -645,6 +653,7 @@ class LocalDataRepository implements DataRepository {
     await _db.insert('plan_entries', {
       'id': id,
       'plan_id': planId,
+      'household_id': householdId,
       'entry_date': _dateOnly(entryDate),
       'title': title,
       'label': label,
@@ -657,6 +666,7 @@ class LocalDataRepository implements DataRepository {
     final entry = PlanEntry(
       id: id,
       planId: planId,
+      householdId: householdId,
       entryDate: entryDate,
       title: title,
       label: label,
@@ -711,6 +721,7 @@ class LocalDataRepository implements DataRepository {
   @override
   Future<PlanChecklistItem> addPlanChecklistItem({
     required String planId,
+    required String householdId,
     String? entryId,
     required String title,
     String? quantity,
@@ -721,6 +732,7 @@ class LocalDataRepository implements DataRepository {
     await _db.insert('plan_checklist_items', {
       'id': id,
       'plan_id': planId,
+      'household_id': householdId,
       'entry_id': entryId,
       'title': title,
       'quantity': quantity,
@@ -732,6 +744,7 @@ class LocalDataRepository implements DataRepository {
     final item = PlanChecklistItem(
       id: id,
       planId: planId,
+      householdId: householdId,
       entryId: entryId,
       title: title,
       quantity: quantity,
@@ -827,6 +840,7 @@ class LocalDataRepository implements DataRepository {
     for (final entry in source.entries) {
       await addEntry(
         planId: template.id,
+        householdId: householdId,
         entryDate: entry.entryDate,
         title: entry.title,
         label: entry.label,
@@ -863,6 +877,7 @@ class LocalDataRepository implements DataRepository {
       if (!newDate.isAfter(endDate)) {
         await addEntry(
           planId: newPlan.id,
+          householdId: householdId,
           entryDate: newDate,
           title: entry.title,
           label: entry.label,
@@ -1558,6 +1573,7 @@ class LocalDataRepository implements DataRepository {
   @override
   Future<List<InventoryLog>> getInventoryLogs({
     required String itemId,
+    required String householdId,
     int limit = 50,
   }) async {
     final rows = await _db.query(
@@ -1622,7 +1638,7 @@ class LocalDataRepository implements DataRepository {
 
   @override
   Future<List<InventoryAttachment>> getInventoryAttachments(
-      String itemId) async {
+      String itemId, {required String householdId}) async {
     final rows = await _db.query(
       'inventory_attachments',
       where: 'item_id = ?',

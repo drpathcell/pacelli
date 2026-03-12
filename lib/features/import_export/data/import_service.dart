@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/crypto/encryption_service.dart';
 import '../../../core/data/data_repository.dart';
 import '../../../core/data/data_repository_provider.dart';
 
@@ -36,10 +37,23 @@ class ImportService {
 
   /// Reads and parses a JSON backup file.
   ///
-  /// Returns the parsed map, or throws if the file can't be read or parsed.
-  Future<Map<String, dynamic>> parseFile(File file) async {
+  /// If the file has a `.enc` extension, it is decrypted using the given
+  /// [passphrase] before parsing. Throws if the passphrase is missing or wrong.
+  Future<Map<String, dynamic>> parseFile(File file, {String? passphrase}) async {
     final content = await file.readAsString();
-    return jsonDecode(content) as Map<String, dynamic>;
+
+    String jsonString;
+    if (file.path.endsWith('.enc')) {
+      if (passphrase == null || passphrase.isEmpty) {
+        throw Exception('This backup is encrypted. Please provide the passphrase.');
+      }
+      final key = EncryptionService.deriveUserKey(passphrase);
+      jsonString = EncryptionService.decrypt(content, key);
+    } else {
+      jsonString = content;
+    }
+
+    return jsonDecode(jsonString) as Map<String, dynamic>;
   }
 
   /// Imports all data from a validated backup into the given household.
@@ -164,6 +178,7 @@ class ImportService {
           final im = Map<String, dynamic>.from(item as Map);
           await _repo.addChecklistItem(
             checklistId: newChecklist.id,
+            householdId: householdId,
             title: im['title'] as String? ?? '',
             quantity: im['quantity'] as String?,
           );
@@ -199,6 +214,7 @@ class ImportService {
           final em = Map<String, dynamic>.from(entry as Map);
           await _repo.addEntry(
             planId: newPlan.id,
+            householdId: householdId,
             entryDate: DateTime.parse(em['entry_date'] as String),
             title: em['title'] as String? ?? '',
             label: em['label'] as String?,
@@ -213,6 +229,7 @@ class ImportService {
           final pm = Map<String, dynamic>.from(pi as Map);
           await _repo.addPlanChecklistItem(
             planId: newPlan.id,
+            householdId: householdId,
             title: pm['title'] as String? ?? '',
             quantity: pm['quantity'] as String?,
           );

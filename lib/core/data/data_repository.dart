@@ -70,6 +70,7 @@ abstract class DataRepository {
   /// Adds a subtask to a task. Returns the created subtask.
   Future<Subtask> addSubtask({
     required String taskId,
+    required String householdId,
     required String title,
     int sortOrder = 0,
   });
@@ -126,6 +127,7 @@ abstract class DataRepository {
   /// Adds an item to a checklist. Returns it.
   Future<ChecklistItem> addChecklistItem({
     required String checklistId,
+    required String householdId,
     required String title,
     String? quantity,
   });
@@ -182,6 +184,7 @@ abstract class DataRepository {
   /// Adds an entry to a plan day. Returns it.
   Future<PlanEntry> addEntry({
     required String planId,
+    required String householdId,
     required DateTime entryDate,
     required String title,
     String? label,
@@ -205,6 +208,7 @@ abstract class DataRepository {
   /// Adds a checklist item to a plan. Returns it.
   Future<PlanChecklistItem> addPlanChecklistItem({
     required String planId,
+    required String householdId,
     String? entryId,
     required String title,
     String? quantity,
@@ -412,6 +416,7 @@ abstract class DataRepository {
   /// Gets inventory logs for an item.
   Future<List<InventoryLog>> getInventoryLogs({
     required String itemId,
+    required String householdId,
     int limit = 50,
   });
 
@@ -431,7 +436,7 @@ abstract class DataRepository {
   });
 
   /// Fetches all attachments for an inventory item.
-  Future<List<InventoryAttachment>> getInventoryAttachments(String itemId);
+  Future<List<InventoryAttachment>> getInventoryAttachments(String itemId, {required String householdId});
 
   /// Deletes an inventory attachment record.
   Future<void> deleteInventoryAttachment(String attachmentId);

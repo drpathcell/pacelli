@@ -3118,10 +3118,34 @@ abstract class AppLocalizations {
   /// **'{count} items could not be imported'**
   String ieImportErrorsCount(int count);
 
+  /// No description provided for @ieExportPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt backup?'**
+  String get ieExportPassphrase;
+
+  /// No description provided for @ieExportPassphraseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank for no encryption'**
+  String get ieExportPassphraseHint;
+
+  /// No description provided for @ieImportPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter passphrase'**
+  String get ieImportPassphrase;
+
+  /// No description provided for @ieImportEncrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is encrypted'**
+  String get ieImportEncrypted;
+
   /// No description provided for @ieInfoNote.
   ///
   /// In en, this message translates to:
-  /// **'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.'**
+  /// **'If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.'**
   String get ieInfoNote;
 
   /// No description provided for @searchTitle.

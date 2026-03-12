@@ -29,7 +29,7 @@ class InventoryItemDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final itemAsync = ref.watch(inventoryItemProvider(itemId));
-    final logsAsync = ref.watch(inventoryLogsProvider(itemId));
+    final logsAsync = ref.watch(inventoryLogsProvider((itemId, householdId)));
 
     return Scaffold(
       appBar: AppBar(

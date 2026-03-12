@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/crypto/encryption_service.dart';
 import '../../../core/data/data_repository.dart';
 import '../../../core/data/data_repository_provider.dart';
 
@@ -26,7 +27,7 @@ class ExportService {
   ///
   /// Data from the repository is already decrypted by the time it reaches
   /// the model layer, so no extra decryption step is needed here.
-  Future<File> exportAsJson(String householdId) async {
+  Future<File> exportAsJson(String householdId, {String? passphrase}) async {
     final tasks = await _repo.getTasks(householdId: householdId);
     final categories = await _repo.getCategories(householdId);
     final checklists = await _repo.getChecklists(householdId);
@@ -40,7 +41,7 @@ class ExportService {
     // Fetch logs per item.
     final invLogs = <Map<String, dynamic>>[];
     for (final item in invItems) {
-      final logs = await _repo.getInventoryLogs(itemId: item.id, limit: 500);
+      final logs = await _repo.getInventoryLogs(itemId: item.id, householdId: householdId, limit: 500);
       invLogs.addAll(logs.map((l) => l.toMap()));
     }
 
@@ -62,10 +63,23 @@ class ExportService {
     };
 
     final json = const JsonEncoder.withIndent('  ').convert(export);
+
+    String fileContent;
+    String extension;
+
+    if (passphrase != null && passphrase.isNotEmpty) {
+      final key = EncryptionService.deriveUserKey(passphrase);
+      fileContent = EncryptionService.encrypt(json, key);
+      extension = 'json.enc';
+    } else {
+      fileContent = json;
+      extension = 'json';
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     final timestamp = DateFormat('yyyy-MM-dd_HHmmss').format(DateTime.now());
-    final file = File('${dir.path}/pacelli_backup_$timestamp.json');
-    await file.writeAsString(json);
+    final file = File('${dir.path}/pacelli_backup_$timestamp.$extension');
+    await file.writeAsString(fileContent);
 
     await _saveLastExportDate();
     debugPrint('[ExportService] JSON backup saved to ${file.path}');

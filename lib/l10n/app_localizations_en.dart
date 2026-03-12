@@ -1684,8 +1684,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ieExportPassphrase => 'Encrypt backup?';
+
+  @override
+  String get ieExportPassphraseHint => 'Leave blank for no encryption';
+
+  @override
+  String get ieImportPassphrase => 'Enter passphrase';
+
+  @override
+  String get ieImportEncrypted => 'This backup is encrypted';
+
+  @override
   String get ieInfoNote =>
-      'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.';
+      'If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.';
 
   @override
   String get searchTitle => 'Search';
