@@ -191,8 +191,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         context.pop();
       }
     } catch (e) {
+      debugPrint('Error creating task: $e');
       if (mounted) {
-        context.showSnackBar('Error: $e',
+        context.showSnackBar(context.l10n.commonErrorGeneric,
             isError: true);
       }
     } finally {
@@ -337,9 +338,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           );
                           ref.invalidate(taskCategoriesProvider(widget.householdId));
                         } catch (e) {
+                          debugPrint('Error creating category: $e');
                           if (mounted) {
                             messenger.showSnackBar(SnackBar(
-                              content: Text('Error: $e'),
+                              content: Text(context.l10n.commonErrorGeneric),
                               backgroundColor: errorColor,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

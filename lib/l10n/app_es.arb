@@ -656,6 +656,10 @@
   "inventoryLowStockAlert": "¡Stock bajo! ¿Crear tarea de compra?",
   "inventoryThresholdCrossed": "{name} bajó de {threshold}",
   "inventoryExpiryCalendarDot": "Artículo por caducar",
+  "inventoryActivityLogEmpty": "Sin actividad aún",
+  "inventoryDefaultLabel": "Predeterminado",
+
+  "commonErrorGeneric": "Algo salió mal. Inténtalo de nuevo.",
 
   "homeInventorySnapshot": "Inventario",
   "homeInvTotal": "Total",

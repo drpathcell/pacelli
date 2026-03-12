@@ -1317,13 +1317,16 @@ class FirebaseDataRepository implements DataRepository {
       }
     }
 
-    // Bulk-fetch categories.
+    // Bulk-fetch categories in parallel.
     final categories = <String, InventoryCategory>{};
-    for (final catId in categoryIds) {
-      final catDoc =
-          await _db.collection('inventory_categories').doc(catId).get();
+    final catDocs = await Future.wait(
+      categoryIds.map((catId) =>
+          _db.collection('inventory_categories').doc(catId).get()),
+    );
+    for (final catDoc in catDocs) {
       if (catDoc.exists) {
         final cd = catDoc.data()!;
+        final catId = catDoc.id;
         categories[catId] = InventoryCategory(
           id: cd['id'] as String? ?? catId,
           householdId: cd['household_id'] as String? ?? '',
@@ -1337,13 +1340,16 @@ class FirebaseDataRepository implements DataRepository {
       }
     }
 
-    // Bulk-fetch locations.
+    // Bulk-fetch locations in parallel.
     final locations = <String, InventoryLocation>{};
-    for (final locId in locationIds) {
-      final locDoc =
-          await _db.collection('inventory_locations').doc(locId).get();
+    final locDocs = await Future.wait(
+      locationIds.map((locId) =>
+          _db.collection('inventory_locations').doc(locId).get()),
+    );
+    for (final locDoc in locDocs) {
       if (locDoc.exists) {
         final ld = locDoc.data()!;
+        final locId = locDoc.id;
         locations[locId] = InventoryLocation(
           id: ld['id'] as String? ?? locId,
           householdId: ld['household_id'] as String? ?? '',
@@ -1868,34 +1874,48 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<Map<String, int>> getInventoryStats(String householdId) async {
-    final snap = await _db
+    final baseQuery = _db
         .collection('inventory_items')
-        .where('household_id', isEqualTo: householdId)
-        .get();
+        .where('household_id', isEqualTo: householdId);
 
-    int total = 0;
-    int lowStock = 0;
-    int expiringSoon = 0;
-    int expired = 0;
     final now = DateTime.now();
+    final weekFromNow = now.add(const Duration(days: 7));
 
-    for (final doc in snap.docs) {
-      total++;
+    // Total count via aggregation (no doc reads).
+    final totalAgg = await baseQuery.count().get();
+    final total = totalAgg.count ?? 0;
+
+    // Low stock: must read docs because Firestore can't compare two fields.
+    // Only fetch items that HAVE a threshold set to minimise reads.
+    final lowStockQuery =
+        baseQuery.where('low_stock_threshold', isGreaterThan: 0);
+    final lowStockDocs = await lowStockQuery.get();
+    int lowStock = 0;
+    for (final doc in lowStockDocs.docs) {
       final d = doc.data();
       final qty = (d['quantity'] as num?)?.toInt() ?? 0;
-      final threshold = (d['low_stock_threshold'] as num?)?.toInt();
-      if (threshold != null && qty <= threshold) {
-        lowStock++;
-      }
-      final expiry = _parseDate(d['expiry_date']);
-      if (expiry != null) {
-        if (expiry.isBefore(now)) {
-          expired++;
-        } else if (expiry.difference(now).inDays <= 7) {
-          expiringSoon++;
-        }
-      }
+      final threshold = (d['low_stock_threshold'] as num?)?.toInt() ?? 0;
+      if (qty <= threshold) lowStock++;
     }
+
+    // Expired: expiry_date < now (server-side filter).
+    final expiredAgg = await baseQuery
+        .where('expiry_date', isLessThan: Timestamp.fromDate(now))
+        .where('expiry_date',
+            isGreaterThan: Timestamp.fromDate(DateTime(2000)))
+        .count()
+        .get();
+    final expired = expiredAgg.count ?? 0;
+
+    // Expiring soon: expiry_date between now and now+7 days.
+    final expiringAgg = await baseQuery
+        .where('expiry_date',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+        .where('expiry_date',
+            isLessThanOrEqualTo: Timestamp.fromDate(weekFromNow))
+        .count()
+        .get();
+    final expiringSoon = expiringAgg.count ?? 0;
 
     return {
       'total': total,

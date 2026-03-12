@@ -3838,6 +3838,24 @@ abstract class AppLocalizations {
   /// **'Item expiring'**
   String get inventoryExpiryCalendarDot;
 
+  /// No description provided for @inventoryActivityLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get inventoryActivityLogEmpty;
+
+  /// No description provided for @inventoryDefaultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get inventoryDefaultLabel;
+
+  /// No description provided for @commonErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get commonErrorGeneric;
+
   /// No description provided for @homeInventorySnapshot.
   ///
   /// In en, this message translates to:

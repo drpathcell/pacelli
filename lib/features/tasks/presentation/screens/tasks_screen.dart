@@ -572,9 +572,9 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                                 const SizedBox(width: 4),
                                 Text(
                                   dueDate.isToday
-                                      ? 'Today'
+                                      ? context.l10n.commonToday
                                       : dueDate.isTomorrow
-                                          ? 'Tomorrow'
+                                          ? context.l10n.commonTomorrow
                                           : dueDate.formatted,
                                   style:
                                       context.textTheme.bodySmall?.copyWith(

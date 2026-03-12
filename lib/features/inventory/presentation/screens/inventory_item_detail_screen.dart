@@ -205,7 +205,7 @@ class InventoryItemDetailScreen extends ConsumerWidget {
                       return Padding(
                         padding: const EdgeInsets.all(16),
                         child: Center(
-                          child: Text(l10n.inventoryNoLocation,
+                          child: Text(l10n.inventoryActivityLogEmpty,
                               style: context.textTheme.bodyMedium),
                         ),
                       );

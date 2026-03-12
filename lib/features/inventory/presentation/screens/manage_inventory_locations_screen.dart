@@ -46,7 +46,7 @@ class ManageInventoryLocationsScreen extends ConsumerWidget {
                 ),
                 title: Text(loc.name),
                 subtitle: loc.isDefault
-                    ? Text('Default',
+                    ? Text(l10n.inventoryDefaultLabel,
                         style: context.textTheme.bodySmall
                             ?.copyWith(color: context.colorScheme.outline))
                     : null,

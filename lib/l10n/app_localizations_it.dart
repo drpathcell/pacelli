@@ -2101,6 +2101,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get inventoryExpiryCalendarDot => 'Articolo in scadenza';
 
   @override
+  String get inventoryActivityLogEmpty => 'Nessuna attività ancora';
+
+  @override
+  String get inventoryDefaultLabel => 'Predefinito';
+
+  @override
+  String get commonErrorGeneric => 'Qualcosa è andato storto. Riprova.';
+
+  @override
   String get homeInventorySnapshot => 'Inventario';
 
   @override

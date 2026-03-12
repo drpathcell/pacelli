@@ -1023,6 +1023,10 @@
     }
   },
   "inventoryExpiryCalendarDot": "Item expiring",
+  "inventoryActivityLogEmpty": "No activity yet",
+  "inventoryDefaultLabel": "Default",
+
+  "commonErrorGeneric": "Something went wrong. Please try again.",
 
   "homeInventorySnapshot": "Inventory",
   "homeInvTotal": "Total",

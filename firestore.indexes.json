@@ -58,6 +58,22 @@
       ]
     },
     {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "expiry_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "low_stock_threshold", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "inventory_categories",
       "queryScope": "COLLECTION",
       "fields": [

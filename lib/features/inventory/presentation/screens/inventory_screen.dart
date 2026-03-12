@@ -29,9 +29,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final itemsAsync = ref.watch(inventoryItemsProvider(widget.householdId));
     final categoriesAsync =
         ref.watch(inventoryCategoriesProvider(widget.householdId));
-    final locationsAsync =
-        ref.watch(inventoryLocationsProvider(widget.householdId));
-
     // Seed defaults on first load when categories are empty.
     categoriesAsync.whenData((cats) {
       if (!_seeded && cats.isEmpty) {
@@ -145,13 +142,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     );
                   }
 
-                  return _buildGroupedList(
-                    context,
-                    items,
-                    viewMode,
-                    categoriesAsync.valueOrNull ?? [],
-                    locationsAsync.valueOrNull ?? [],
-                  );
+                  final grouped = ref.watch(
+                      inventoryGroupedProvider((widget.householdId, viewMode)));
+                  return _buildFromGrouped(context, grouped, viewMode);
                 },
               ),
             ),
@@ -161,14 +154,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  Widget _buildGroupedList(
+  Widget _buildFromGrouped(
     BuildContext context,
-    List<InventoryItem> items,
+    Map<String, List<InventoryItem>> grouped,
     String viewMode,
-    List<InventoryCategory> categories,
-    List<InventoryLocation> locations,
   ) {
     if (viewMode == 'all') {
+      final items = grouped['_all'] ?? [];
       return ListView.separated(
         itemCount: items.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
@@ -179,30 +171,26 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       );
     }
 
-    // Group by category or location.
-    final grouped = <String, List<InventoryItem>>{};
     final l10n = context.l10n;
-
-    for (final item in items) {
-      final key = viewMode == 'category'
-          ? (item.category?.name ?? l10n.inventoryUncategorised)
-          : (item.location?.name ?? l10n.inventoryNoLocation);
-      grouped.putIfAbsent(key, () => []).add(item);
-    }
-
-    final sortedKeys = grouped.keys.toList()..sort();
+    final sortedKeys = grouped.keys.toList();
 
     return ListView.builder(
       itemCount: sortedKeys.length,
       itemBuilder: (_, gi) {
         final group = sortedKeys[gi];
         final groupItems = grouped[group]!;
+        // Replace sentinel key with localised fallback.
+        final displayName = group == '\u{FFFF}'
+            ? (viewMode == 'category'
+                ? l10n.inventoryUncategorised
+                : l10n.inventoryNoLocation)
+            : group;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Text(group,
+              child: Text(displayName,
                   style: context.textTheme.titleSmall
                       ?.copyWith(fontWeight: FontWeight.bold)),
             ),

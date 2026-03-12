@@ -57,3 +57,26 @@ final inventoryStatsProvider =
 
 /// View mode for the inventory list: 'category', 'location', or 'all'.
 final inventoryViewModeProvider = StateProvider<String>((ref) => 'category');
+
+/// Inventory items grouped by the current view mode.
+/// Key is (householdId, viewMode). Returns a sorted map of group name → items.
+final inventoryGroupedProvider =
+    Provider.family<Map<String, List<InventoryItem>>, (String, String)>(
+  (ref, args) {
+    final (householdId, viewMode) = args;
+    final items =
+        ref.watch(inventoryItemsProvider(householdId)).valueOrNull ?? [];
+    if (viewMode == 'all') return {'_all': items};
+
+    final grouped = <String, List<InventoryItem>>{};
+    for (final item in items) {
+      final key = viewMode == 'category'
+          ? (item.category?.name ?? '\u{FFFF}') // sort uncategorised last
+          : (item.location?.name ?? '\u{FFFF}');
+      grouped.putIfAbsent(key, () => []).add(item);
+    }
+    return Map.fromEntries(
+      grouped.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
+    );
+  },
+);

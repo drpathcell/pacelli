@@ -36,6 +36,13 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.init();
 
+  // Clear orphaned notifications on first launch after install/reinstall.
+  final isFirstLaunch = prefs.getBool('notifications_initialised') ?? true;
+  if (isFirstLaunch) {
+    await notificationService.cancelAll();
+    await prefs.setBool('notifications_initialised', true);
+  }
+
   // Create a provider container so we can seed the local DB provider.
   final container = ProviderContainer(
     overrides: [

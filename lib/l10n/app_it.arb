@@ -656,6 +656,10 @@
   "inventoryLowStockAlert": "Scorte basse! Creare un'attività di acquisto?",
   "inventoryThresholdCrossed": "{name} è sceso sotto {threshold}",
   "inventoryExpiryCalendarDot": "Articolo in scadenza",
+  "inventoryActivityLogEmpty": "Nessuna attività ancora",
+  "inventoryDefaultLabel": "Predefinito",
+
+  "commonErrorGeneric": "Qualcosa è andato storto. Riprova.",
 
   "homeInventorySnapshot": "Inventario",
   "homeInvTotal": "Totale",

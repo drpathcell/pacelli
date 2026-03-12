@@ -46,7 +46,7 @@ class ManageInventoryCategoriesScreen extends ConsumerWidget {
                 ),
                 title: Text(cat.name),
                 subtitle: cat.isDefault
-                    ? Text('Default',
+                    ? Text(l10n.inventoryDefaultLabel,
                         style: context.textTheme.bodySmall
                             ?.copyWith(color: context.colorScheme.outline))
                     : null,

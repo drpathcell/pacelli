@@ -116,6 +116,7 @@ class _BatchCreateScreenState extends ConsumerState<BatchCreateScreen> {
       final repo = ref.read(dataRepositoryProvider);
 
       final notifService = ref.read(notificationServiceProvider);
+      final notifFutures = <Future>[];
 
       for (int i = 1; i <= portions; i++) {
         final name =
@@ -133,15 +134,18 @@ class _BatchCreateScreenState extends ConsumerState<BatchCreateScreen> {
           notes: widget.notes,
         );
 
-        // Schedule expiry notification for each batch item.
+        // Collect notification futures for parallel scheduling.
         if (widget.expiryDate != null) {
-          notifService.scheduleExpiryReminder(
+          notifFutures.add(notifService.scheduleExpiryReminder(
             itemId: createdItem.id,
             itemName: name,
             expiryDate: widget.expiryDate!,
-          );
+          ));
         }
       }
+
+      // Schedule all notifications in parallel.
+      await Future.wait(notifFutures);
 
       if (mounted) {
         ref.invalidate(inventoryItemsProvider);
