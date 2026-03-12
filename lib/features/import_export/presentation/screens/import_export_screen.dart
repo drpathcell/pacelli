@@ -158,6 +158,51 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
           ),
         ),
       );
+
+      // Show error details if any items failed.
+      if (importResult.hasErrors && mounted) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.ieImportErrorsTitle),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.ieImportErrorsCount(importResult.errors.length)),
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: importResult.errors.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final err = importResult.errors[i];
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(Icons.warning_amber_rounded,
+                              size: 20, color: Theme.of(ctx).colorScheme.error),
+                          title: Text('${err.entityType}: ${err.entityName}'),
+                          subtitle: Text(err.message,
+                              maxLines: 2, overflow: TextOverflow.ellipsis),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(l10n.commonOk),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.ieImportFailed(e.toString()))),

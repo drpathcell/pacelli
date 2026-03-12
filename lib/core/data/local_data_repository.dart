@@ -1884,27 +1884,44 @@ class LocalDataRepository implements DataRepository {
 
   @override
   Future<void> wipeAllData(String userId) async {
-    // For local SQLite, just drop all rows from every table.
-    // Order: children before parents to respect FK constraints.
-    await _db.delete('inventory_attachments');
-    await _db.delete('inventory_logs');
-    await _db.delete('inventory_items');
-    await _db.delete('inventory_locations');
-    await _db.delete('inventory_categories');
-    await _db.delete('task_attachments');
-    await _db.delete('plan_attachments');
-    await _db.delete('subtasks');
-    await _db.delete('plan_checklist_items');
-    await _db.delete('plan_entries');
-    await _db.delete('checklist_items');
-    await _db.delete('tasks');
-    await _db.delete('checklists');
-    await _db.delete('scratch_plans');
-    await _db.delete('task_categories');
+    // Wrap all deletes in a transaction so it's all-or-nothing.
+    await _db.transaction((txn) async {
+      // Order: children before parents to respect FK constraints.
+      await txn.delete('inventory_attachments');
+      await txn.delete('inventory_logs');
+      await txn.delete('inventory_items');
+      await txn.delete('inventory_locations');
+      await txn.delete('inventory_categories');
+      await txn.delete('task_attachments');
+      await txn.delete('plan_attachments');
+      await txn.delete('subtasks');
+      await txn.delete('plan_checklist_items');
+      await txn.delete('plan_entries');
+      await txn.delete('checklist_items');
+      await txn.delete('tasks');
+      await txn.delete('checklists');
+      await txn.delete('scratch_plans');
+      await txn.delete('task_categories');
+    });
+
+    // Close any open stream controllers.
+    closeAllStreams();
   }
 
   static String _dateOnly(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
+  /// Closes all active stream controllers.
+  void closeAllStreams() {
+    for (final c in _entryStreams.values) {
+      c.close();
+    }
+    _entryStreams.clear();
+    for (final c in _checklistStreams.values) {
+      c.close();
+    }
+    _checklistStreams.clear();
+  }
 
   /// Notifies any active entry stream listeners for a given plan.
   void _notifyEntryChange(String planId) {

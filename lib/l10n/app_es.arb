@@ -530,6 +530,8 @@
   "ieImportConfirmMessage": "Esto agregará los datos del respaldo a tu hogar actual. Los datos existentes no se eliminarán.",
   "ieImportSuccess": "Importación completa. {created} elementos creados, {skipped} omitidos.",
   "ieImportFailed": "Error al importar: {error}",
+  "ieImportErrorsTitle": "Advertencias de importación",
+  "ieImportErrorsCount": "{count} elementos no se pudieron importar",
   "ieInfoNote": "Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.",
 
   "searchTitle": "Buscar",

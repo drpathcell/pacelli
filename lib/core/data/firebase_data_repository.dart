@@ -2311,20 +2311,34 @@ class FirebaseDataRepository implements DataRepository {
 
     // ── Step 3: Batch-delete in chunks of 400 (under 500-op limit) ──
 
-    debugPrint('[BURN] Deleting ${allDocs.length} total docs in ${(_chunk(allDocs, 400)).length} batches');
-    var batchIndex = 0;
-    for (final chunk in _chunk(allDocs, 400)) {
-      batchIndex++;
-      final batch = _db.batch();
-      for (final ref in chunk) {
-        batch.delete(ref);
-      }
-      try {
-        await batch.commit();
-        debugPrint('[BURN] ✓ Batch $batchIndex committed (${chunk.length} docs)');
-      } catch (e) {
-        debugPrint('[BURN] ✗ Batch $batchIndex failed (${chunk.length} docs): $e');
-        rethrow;
+    final chunks = _chunk(allDocs, 400);
+    debugPrint('[BURN] Deleting ${allDocs.length} total docs in ${chunks.length} batches');
+    var deleted = 0;
+    const maxRetries = 3;
+
+    for (var i = 0; i < chunks.length; i++) {
+      final chunk = chunks[i];
+      var retries = 0;
+
+      while (retries < maxRetries) {
+        try {
+          final batch = _db.batch();
+          for (final ref in chunk) {
+            batch.delete(ref);
+          }
+          await batch.commit();
+          deleted += chunk.length;
+          debugPrint('[BURN] ✓ Batch ${i + 1}/${chunks.length} committed ($deleted total)');
+          break;
+        } catch (e) {
+          retries++;
+          if (retries >= maxRetries) {
+            debugPrint('[BURN] ✗ Batch ${i + 1} failed after $maxRetries retries: $e');
+            break;
+          }
+          debugPrint('[BURN] Batch ${i + 1} attempt $retries failed, retrying in ${retries * 2}s...');
+          await Future.delayed(Duration(seconds: retries * 2));
+        }
       }
     }
 

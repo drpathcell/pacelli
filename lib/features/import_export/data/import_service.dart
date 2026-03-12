@@ -55,6 +55,7 @@ class ImportService {
   }) async {
     int created = 0;
     int skipped = 0;
+    final errors = <ImportError>[];
 
     final categories = data['categories'] as List;
     final tasks = data['tasks'] as List;
@@ -98,6 +99,11 @@ class ImportService {
       } catch (e) {
         debugPrint('[ImportService] Skip category: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Category',
+          entityName: m['name'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
       }
       report('Categories');
     }
@@ -135,6 +141,11 @@ class ImportService {
       } catch (e) {
         debugPrint('[ImportService] Skip task: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Task',
+          entityName: m['title'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
       }
       report('Tasks');
     }
@@ -161,6 +172,11 @@ class ImportService {
       } catch (e) {
         debugPrint('[ImportService] Skip checklist: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Checklist',
+          entityName: m['title'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
       }
       report('Checklists');
     }
@@ -205,26 +221,67 @@ class ImportService {
       } catch (e) {
         debugPrint('[ImportService] Skip plan: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Plan',
+          entityName: m['title'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
       }
       report('Plans');
     }
+
+    // ── Pre-fetch existing inventory data for duplicate detection ──
+    final existingInvCategories =
+        await _repo.getInventoryCategories(householdId);
+    final existingCatNames =
+        existingInvCategories.map((c) => c.name).toSet();
+
+    final existingInvLocations =
+        await _repo.getInventoryLocations(householdId);
+    final existingLocNames =
+        existingInvLocations.map((l) => l.name).toSet();
+
+    final existingInvItems =
+        await _repo.getInventoryItems(householdId: householdId);
+    final existingItemKeys =
+        existingInvItems.map((i) => '${i.name}|${i.barcode ?? ''}').toSet();
 
     // ── 5. Inventory Categories ──
     final invCategoryIdMap = <String, String>{};
     for (final cat in invCategories) {
       final m = Map<String, dynamic>.from(cat as Map);
+      final catName = m['name'] as String? ?? 'Imported';
+      if (existingCatNames.contains(catName)) {
+        skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Category',
+          entityName: catName,
+          message: 'Duplicate category already exists',
+        ));
+        // Map old ID to the existing category's ID so items still resolve.
+        final existing = existingInvCategories.firstWhere((c) => c.name == catName);
+        invCategoryIdMap[m['id'] as String] = existing.id;
+        report('Inventory Categories');
+        continue;
+      }
       try {
         final newCat = await _repo.createInventoryCategory(
           householdId: householdId,
-          name: m['name'] as String? ?? 'Imported',
+          name: catName,
           icon: m['icon'] as String? ?? 'inventory_2',
           color: m['color'] as String? ?? '#A5B4A5',
         );
         invCategoryIdMap[m['id'] as String] = newCat.id;
+        existingCatNames.add(catName);
         created++;
       } catch (e) {
         debugPrint('[ImportService] Skip inv category: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Category',
+          entityName: catName,
+          message: e.toString(),
+        ));
       }
       report('Inventory Categories');
     }
@@ -233,17 +290,36 @@ class ImportService {
     final invLocationIdMap = <String, String>{};
     for (final loc in invLocations) {
       final m = Map<String, dynamic>.from(loc as Map);
+      final locName = m['name'] as String? ?? 'Imported';
+      if (existingLocNames.contains(locName)) {
+        skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Location',
+          entityName: locName,
+          message: 'Duplicate location already exists',
+        ));
+        final existing = existingInvLocations.firstWhere((l) => l.name == locName);
+        invLocationIdMap[m['id'] as String] = existing.id;
+        report('Inventory Locations');
+        continue;
+      }
       try {
         final newLoc = await _repo.createInventoryLocation(
           householdId: householdId,
-          name: m['name'] as String? ?? 'Imported',
+          name: locName,
           icon: m['icon'] as String? ?? 'place',
         );
         invLocationIdMap[m['id'] as String] = newLoc.id;
+        existingLocNames.add(locName);
         created++;
       } catch (e) {
         debugPrint('[ImportService] Skip inv location: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Location',
+          entityName: locName,
+          message: e.toString(),
+        ));
       }
       report('Inventory Locations');
     }
@@ -251,6 +327,19 @@ class ImportService {
     // ── 7. Inventory Items ──
     for (final item in invItems) {
       final m = Map<String, dynamic>.from(item as Map);
+      final itemName = m['name'] as String? ?? 'Imported';
+      final itemBarcode = m['barcode'] as String?;
+      final itemKey = '$itemName|${itemBarcode ?? ''}';
+      if (existingItemKeys.contains(itemKey)) {
+        skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Item',
+          entityName: itemName,
+          message: 'Duplicate item already exists',
+        ));
+        report('Inventory Items');
+        continue;
+      }
       final oldCatId = m['category_id'] as String?;
       final oldLocId = m['location_id'] as String?;
       try {
@@ -273,15 +362,21 @@ class ImportService {
               : null,
           notes: m['notes'] as String?,
         );
+        existingItemKeys.add(itemKey);
         created++;
       } catch (e) {
         debugPrint('[ImportService] Skip inv item: $e');
         skipped++;
+        errors.add(ImportError(
+          entityType: 'Inventory Item',
+          entityName: m['name'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
       }
       report('Inventory Items');
     }
 
-    return ImportResult(created: created, skipped: skipped);
+    return ImportResult(created: created, skipped: skipped, errors: errors);
   }
 }
 
@@ -289,8 +384,28 @@ class ImportService {
 class ImportResult {
   final int created;
   final int skipped;
+  final List<ImportError> errors;
 
-  const ImportResult({required this.created, required this.skipped});
+  const ImportResult({
+    required this.created,
+    required this.skipped,
+    this.errors = const [],
+  });
+
+  bool get hasErrors => errors.isNotEmpty;
+}
+
+/// Details about a single entity that failed to import.
+class ImportError {
+  final String entityType;
+  final String entityName;
+  final String message;
+
+  const ImportError({
+    required this.entityType,
+    required this.entityName,
+    required this.message,
+  });
 }
 
 /// Provider for the import service.

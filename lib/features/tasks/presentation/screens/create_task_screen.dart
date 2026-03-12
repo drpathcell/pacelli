@@ -308,6 +308,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     onPressed: () async {
                       final errorColor = Theme.of(context).colorScheme.error;
                       final messenger = ScaffoldMessenger.of(context);
+                      final l10n = context.l10n;
                       final name = await showDialog<String>(
                         context: context,
                         builder: (ctx) {
@@ -341,7 +342,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           debugPrint('Error creating category: $e');
                           if (mounted) {
                             messenger.showSnackBar(SnackBar(
-                              content: Text(context.l10n.commonErrorGeneric),
+                              content: Text(l10n.commonErrorGeneric),
                               backgroundColor: errorColor,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

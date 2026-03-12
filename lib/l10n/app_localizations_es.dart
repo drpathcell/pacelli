@@ -1692,6 +1692,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get ieImportErrorsTitle => 'Advertencias de importación';
+
+  @override
+  String ieImportErrorsCount(int count) {
+    return '$count elementos no se pudieron importar';
+  }
+
+  @override
   String get ieInfoNote =>
       'Los archivos exportados se guardan en texto plano. Si tus datos están cifrados en la nube, se descifrarán para la exportación.';
 

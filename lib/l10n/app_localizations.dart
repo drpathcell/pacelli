@@ -3106,6 +3106,18 @@ abstract class AppLocalizations {
   /// **'Import failed: {error}'**
   String ieImportFailed(String error);
 
+  /// No description provided for @ieImportErrorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Warnings'**
+  String get ieImportErrorsTitle;
+
+  /// No description provided for @ieImportErrorsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items could not be imported'**
+  String ieImportErrorsCount(int count);
+
   /// No description provided for @ieInfoNote.
   ///
   /// In en, this message translates to:

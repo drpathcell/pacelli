@@ -5,7 +5,7 @@ import '../../../core/models/models.dart';
 
 /// All inventory items for a household.
 final inventoryItemsProvider =
-    FutureProvider.family<List<InventoryItem>, String>(
+    FutureProvider.autoDispose.family<List<InventoryItem>, String>(
   (ref, householdId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryItems(householdId: householdId);
@@ -13,7 +13,7 @@ final inventoryItemsProvider =
 );
 
 /// A single inventory item by ID.
-final inventoryItemProvider = FutureProvider.family<InventoryItem, String>(
+final inventoryItemProvider = FutureProvider.autoDispose.family<InventoryItem, String>(
   (ref, itemId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryItem(itemId);
@@ -22,7 +22,7 @@ final inventoryItemProvider = FutureProvider.family<InventoryItem, String>(
 
 /// All inventory categories for a household.
 final inventoryCategoriesProvider =
-    FutureProvider.family<List<InventoryCategory>, String>(
+    FutureProvider.autoDispose.family<List<InventoryCategory>, String>(
   (ref, householdId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryCategories(householdId);
@@ -31,7 +31,7 @@ final inventoryCategoriesProvider =
 
 /// All inventory locations for a household.
 final inventoryLocationsProvider =
-    FutureProvider.family<List<InventoryLocation>, String>(
+    FutureProvider.autoDispose.family<List<InventoryLocation>, String>(
   (ref, householdId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryLocations(householdId);
@@ -39,7 +39,7 @@ final inventoryLocationsProvider =
 );
 
 /// Inventory logs for a specific item.
-final inventoryLogsProvider = FutureProvider.family<List<InventoryLog>, String>(
+final inventoryLogsProvider = FutureProvider.autoDispose.family<List<InventoryLog>, String>(
   (ref, itemId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryLogs(itemId: itemId);
@@ -48,7 +48,7 @@ final inventoryLogsProvider = FutureProvider.family<List<InventoryLog>, String>(
 
 /// Inventory stats for the home screen summary.
 final inventoryStatsProvider =
-    FutureProvider.family<Map<String, int>, String>(
+    FutureProvider.autoDispose.family<Map<String, int>, String>(
   (ref, householdId) async {
     final repo = ref.watch(dataRepositoryProvider);
     return repo.getInventoryStats(householdId);

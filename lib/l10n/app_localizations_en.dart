@@ -1676,6 +1676,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ieImportErrorsTitle => 'Import Warnings';
+
+  @override
+  String ieImportErrorsCount(int count) {
+    return '$count items could not be imported';
+  }
+
+  @override
   String get ieInfoNote =>
       'Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.';
 

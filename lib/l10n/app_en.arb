@@ -813,6 +813,13 @@
       "error": {"type": "String"}
     }
   },
+  "ieImportErrorsTitle": "Import Warnings",
+  "ieImportErrorsCount": "{count} items could not be imported",
+  "@ieImportErrorsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "ieInfoNote": "Exported files are saved in plaintext. If your data is encrypted in the cloud, it will be decrypted for the export.",
 
   "searchTitle": "Search",

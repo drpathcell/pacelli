@@ -530,6 +530,8 @@
   "ieImportConfirmMessage": "Questo aggiungerà i dati del backup alla tua famiglia attuale. I dati esistenti non verranno eliminati.",
   "ieImportSuccess": "Importazione completata! {created} elementi creati, {skipped} saltati.",
   "ieImportFailed": "Errore nell'importazione: {error}",
+  "ieImportErrorsTitle": "Avvisi di importazione",
+  "ieImportErrorsCount": "{count} elementi non sono stati importati",
   "ieInfoNote": "I file esportati vengono salvati in testo semplice. Se i tuoi dati sono crittografati nel cloud, verranno decrittografati per l'esportazione.",
 
   "searchTitle": "Cerca",
