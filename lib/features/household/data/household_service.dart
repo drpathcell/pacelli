@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/crypto/encryption_service.dart';
@@ -82,6 +83,9 @@ class HouseholdService {
     await batch.commit();
 
     debugPrint('[HouseholdService] ✓ Created household $householdId');
+
+    // Encrypt and store the profile name now that we have a household key.
+    await _encryptProfileName(uid, householdKey);
 
     return {
       'id': householdId,
@@ -248,6 +252,13 @@ class HouseholdService {
 
     await batch.commit();
 
+    // Load the household key and encrypt the profile name.
+    final km = keyManager ?? KeyManager.instance;
+    final hKey = await km.loadHouseholdKey(householdId);
+    if (hKey != null) {
+      await _encryptProfileName(user.uid, hKey);
+    }
+
     // Fetch the household info.
     final householdDoc =
         await _db.collection('households').doc(householdId).get();
@@ -295,6 +306,24 @@ class HouseholdService {
     }
 
     await batch.commit();
+  }
+
+  /// Reads the locally-cached profile name, encrypts it with the household
+  /// key, and writes it to the Firestore profile doc.
+  static Future<void> _encryptProfileName(String uid, String householdKey) async {
+    try {
+      const secureStorage = FlutterSecureStorage();
+      final localName = await secureStorage.read(key: 'profile_name_$uid');
+      if (localName != null && localName.isNotEmpty) {
+        final encryptedName = EncryptionService.encrypt(localName, householdKey);
+        await _db.collection('profiles').doc(uid).update({
+          'full_name': encryptedName,
+        });
+        debugPrint('[HouseholdService] ✓ Encrypted profile name for $uid');
+      }
+    } catch (e) {
+      debugPrint('[HouseholdService] ✗ Failed to encrypt profile name: $e');
+    }
   }
 
   /// Updates the household name (encrypted).

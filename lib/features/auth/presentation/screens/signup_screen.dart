@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -43,7 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final googleSignIn = GoogleSignIn(
-        clientId: AppConstants.googleiOSClientId,
+        // iOS client ID is auto-read from GoogleService-Info.plist.
         serverClientId: AppConstants.googleWebClientId,
       );
 
@@ -70,10 +71,18 @@ class _SignupScreenState extends State<SignupScreen> {
           await FirebaseAuth.instance.signInWithCredential(credential);
 
       // Create a profile doc in Firestore for new Google users.
+      // Store the display name locally only — it will be encrypted with
+      // the household key once the user creates/joins a household.
       final user = userCredential.user;
       if (user != null && userCredential.additionalUserInfo?.isNewUser == true) {
+        const secureStorage = FlutterSecureStorage();
+        await secureStorage.write(
+          key: 'profile_name_${user.uid}',
+          value: user.displayName ?? '',
+        );
+
         await FirebaseFirestore.instance.collection('profiles').doc(user.uid).set({
-          'full_name': user.displayName ?? '',
+          'full_name': '', // Empty until household key is available
           'avatar_url': user.photoURL ?? '',
           'updated_at': FieldValue.serverTimestamp(),
         });
@@ -114,12 +123,18 @@ class _SignupScreenState extends State<SignupScreen> {
         _nameController.text.trim(),
       );
 
-      // Create a Firestore profile doc (full_name will be encrypted later
-      // once the user joins/creates a household and has a household key).
+      // Store name locally — it will be encrypted with the household key
+      // once the user creates/joins a household.
       final uid = userCredential.user?.uid;
       if (uid != null) {
+        const secureStorage = FlutterSecureStorage();
+        await secureStorage.write(
+          key: 'profile_name_$uid',
+          value: _nameController.text.trim(),
+        );
+
         await FirebaseFirestore.instance.collection('profiles').doc(uid).set({
-          'full_name': _nameController.text.trim(),
+          'full_name': '', // Empty until household key is available
           'avatar_url': '',
           'updated_at': FieldValue.serverTimestamp(),
         });

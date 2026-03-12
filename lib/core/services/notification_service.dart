@@ -149,13 +149,15 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: notificationId,
       title: 'Pacelli',
-      body: taskTitle,
+      // Generic body — avoids leaking task content to the lock screen.
+      body: 'You have a task reminder',
+      payload: taskId,
       scheduledDate: tzScheduled,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
 
-    debugPrint('[NotificationService] Scheduled reminder for "$taskTitle" at $scheduledDate');
+    debugPrint('[NotificationService] Scheduled reminder for task $taskId at $scheduledDate');
   }
 
   /// Cancels the notification for a specific task.
@@ -209,13 +211,15 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: notificationId,
       title: 'Pacelli',
-      body: '$itemName is expiring soon',
+      // Generic body — avoids leaking item names to the lock screen.
+      body: 'An inventory item is expiring soon',
+      payload: itemId,
       scheduledDate: tzScheduled,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
 
-    debugPrint('[NotificationService] Scheduled expiry reminder for "$itemName" at $scheduledDate');
+    debugPrint('[NotificationService] Scheduled expiry reminder for item $itemId at $scheduledDate');
   }
 
   /// Cancels an expiry reminder for an inventory item.
@@ -259,12 +263,14 @@ class NotificationService {
 
     await _plugin.show(
       id: notificationId,
-      title: 'Pacelli — Low Stock',
-      body: '$itemName is running low ($currentQuantity remaining)',
+      title: 'Pacelli',
+      // Generic body — avoids leaking item names/quantities to the lock screen.
+      body: 'An inventory item is running low',
+      payload: itemId,
       notificationDetails: details,
     );
 
-    debugPrint('[NotificationService] Sent low stock notification for "$itemName"');
+    debugPrint('[NotificationService] Sent low stock notification for item $itemId');
   }
 
   /// Cancels all pending notifications.

@@ -62,7 +62,7 @@ class GoogleDriveService {
   /// Returns a GoogleSignIn instance configured with Drive scope.
   GoogleSignIn _getGoogleSignIn() {
     return GoogleSignIn(
-      clientId: AppConstants.googleiOSClientId,
+      // iOS client ID is auto-read from GoogleService-Info.plist.
       serverClientId: AppConstants.googleWebClientId,
       scopes: [_driveFileScope],
     );

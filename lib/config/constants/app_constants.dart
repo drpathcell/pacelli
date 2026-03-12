@@ -3,15 +3,14 @@ class AppConstants {
   AppConstants._(); // Prevent instantiation
 
   // ── Google OAuth (Firebase project: pacelli-35621) ─────────
-  /// Web client ID — required as `serverClientId` for GoogleSignIn.
-  /// Find in Firebase Console → Authentication → Sign-in method →
-  /// Google → Web SDK configuration → Web client ID.
+  /// Web client ID — needed as `serverClientId` for Firebase Auth token
+  /// exchange. This is NOT a secret (it's embedded in every Google Sign-In
+  /// flow and visible in the browser).
   static const String googleWebClientId =
       '506154778945-3iuom6m8sgd6aqj8pcum9v9744tnojt3.apps.googleusercontent.com';
 
-  /// iOS client ID — from GoogleService-Info.plist CLIENT_ID field.
-  static const String googleiOSClientId =
-      '506154778945-68ta2sjllehr81l6ubl34e8htfcgtfig.apps.googleusercontent.com';
+  // iOS client ID is auto-read from GoogleService-Info.plist by the
+  // google_sign_in plugin — no need to duplicate it here.
 
   // ── App Info ──────────────────────────────────────────────
   static const String appName = 'Pacelli';

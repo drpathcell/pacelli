@@ -80,8 +80,6 @@ class KeyManager {
     }
 
     try {
-      final userKey = EncryptionService.deriveUserKey(uid);
-
       // Try local secure storage first (faster, works offline).
       final localKey = await _secureStorage.read(
         key: 'hk_$householdId',
@@ -106,8 +104,23 @@ class KeyManager {
       }
 
       final encryptedKey = snapshot.docs.first.data()['encrypted_key'] as String;
+
+      // Decrypt with migration support (tries v2 HKDF, falls back to v1 HMAC).
       final decryptedKey =
-          EncryptionService.decryptKeyForUser(encryptedKey, userKey);
+          EncryptionService.decryptKeyWithMigration(encryptedKey, uid);
+
+      // Check if v1 was used — if so, re-wrap with v2 for next time.
+      try {
+        final v2Key = EncryptionService.deriveUserKey(uid);
+        EncryptionService.decrypt(encryptedKey, v2Key);
+      } catch (_) {
+        // v1 was used — migrate to v2 wrapping.
+        debugPrint('[KeyManager] Migrating key wrapping from v1 to v2 HKDF');
+        final newWrapped = EncryptionService.encryptKeyForUser(decryptedKey, uid);
+        await snapshot.docs.first.reference.update({
+          'encrypted_key': newWrapped,
+        });
+      }
 
       // Cache in memory + secure storage.
       _cachedHouseholdKey = decryptedKey;

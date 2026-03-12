@@ -88,14 +88,46 @@ class EncryptionService {
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
-  /// Derives a deterministic user key from their Firebase UID.
-  /// Uses HMAC-SHA256 with a fixed salt — this is used only to
-  /// wrap/unwrap the household key, NOT to encrypt user data directly.
-  static String deriveUserKey(String uid) {
+  /// Legacy v1 key derivation (raw HMAC) — kept for migration only.
+  static String _deriveUserKeyV1(String uid) {
     final salt = utf8.encode('pacelli_e2e_key_derivation_v1');
     final hmacSha256 = Hmac(sha256, salt);
     final digest = hmacSha256.convert(utf8.encode(uid));
-    return digest.toString(); // 64-char hex string
+    return digest.toString();
+  }
+
+  /// Derives a 256-bit user-specific key from their Firebase UID using HKDF.
+  ///
+  /// HKDF (HMAC-based Key Derivation Function) provides proper key stretching
+  /// with extract-then-expand pattern per RFC 5869. Used only to wrap/unwrap
+  /// the household key, NOT to encrypt user data directly.
+  static String deriveUserKey(String uid) {
+    // HKDF-Extract: create a pseudorandom key from uid + salt
+    final salt = utf8.encode('pacelli_hkdf_salt_v2');
+    final ikm = utf8.encode(uid);
+    final prk = Hmac(sha256, salt).convert(ikm);
+
+    // HKDF-Expand: derive output key material from PRK + info
+    final info = utf8.encode('pacelli_e2e_user_key_v2');
+    final expandInput = [...info, 0x01]; // info || counter byte
+    final okm = Hmac(sha256, prk.bytes).convert(expandInput);
+
+    return okm.toString(); // 64-char hex string = 256-bit key
+  }
+
+  /// Attempts to decrypt with v2 (HKDF) key first, falls back to v1 (HMAC).
+  ///
+  /// Used during key migration to support existing encrypted household keys.
+  static String decryptKeyWithMigration(String encryptedKey, String uid) {
+    // Try v2 first
+    try {
+      final v2Key = deriveUserKey(uid);
+      return decrypt(encryptedKey, v2Key);
+    } catch (_) {}
+
+    // Fall back to v1
+    final v1Key = _deriveUserKeyV1(uid);
+    return decrypt(encryptedKey, v1Key);
   }
 
   /// Encrypts [householdKey] using [userKey] for secure storage.

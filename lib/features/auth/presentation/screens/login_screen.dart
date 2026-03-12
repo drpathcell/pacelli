@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final googleSignIn = GoogleSignIn(
-        clientId: AppConstants.googleiOSClientId,
+        // iOS client ID is auto-read from GoogleService-Info.plist.
         serverClientId: AppConstants.googleWebClientId,
       );
 
