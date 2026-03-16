@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "pacelli": {
+      "command": "node",
+      "args": [
+        "/path/to/pacelli/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "PACELLI_API_URL": "https://us-central1-YOUR-PROJECT.cloudfunctions.net",
+        "PACELLI_AUTH_TOKEN": "YOUR_FIREBASE_ID_TOKEN"
+      }
+    }
+  }
+}

@@ -51,3 +51,11 @@ lib/config/constants/secrets.dart
 *.mocks.dart
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Cloud Functions
+functions/node_modules/
+functions/dist/
+
+# MCP Server
+mcp-server/node_modules/
+mcp-server/dist/

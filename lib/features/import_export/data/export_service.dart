@@ -45,8 +45,12 @@ class ExportService {
       invLogs.addAll(logs.map((l) => l.toMap()));
     }
 
+    // Manual data.
+    final manualEntries = await _repo.getManualEntries(householdId: householdId);
+    final manualCategories = await _repo.getManualCategories(householdId);
+
     final export = {
-      'version': 2,
+      'version': 3,
       'exported_at': DateTime.now().toIso8601String(),
       'household_id': householdId,
       'tasks': tasks.map((t) => {
@@ -60,6 +64,8 @@ class ExportService {
       'inventory_categories': invCategories.map((c) => c.toMap()).toList(),
       'inventory_locations': invLocations.map((l) => l.toMap()).toList(),
       'inventory_logs': invLogs,
+      'manual_entries': manualEntries.map((e) => e.toMap()).toList(),
+      'manual_categories': manualCategories.map((c) => c.toMap()).toList(),
     };
 
     final json = const JsonEncoder.withIndent('  ').convert(export);

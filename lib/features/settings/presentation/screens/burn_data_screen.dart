@@ -412,7 +412,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                       context.l10n.settingsBurnDriveWarning,
                       style: TextStyle(
                         color: Colors.orange.shade300,
-                        fontSize: 12,
+                        fontSize: 13,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,

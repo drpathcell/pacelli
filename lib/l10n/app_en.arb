@@ -1055,5 +1055,234 @@
       "count": {"type": "int"},
       "alert": {"type": "int"}
     }
-  }
+  },
+
+  "settingsAiAssistant": "AI Assistant",
+  "settingsAiAssistantSubtitle": "Connect your AI assistant to your household",
+
+  "aiAssistantTitle": "AI Assistant",
+  "aiAssistantHeroTitle": "AI Integration",
+  "aiAssistantHeroSubtitle": "Connect your AI assistant to manage your household with natural language.",
+
+  "aiAssistantStep1Title": "1. Generate Auth Token",
+  "aiAssistantStep1Desc": "Generate a Firebase ID token that authenticates the MCP server with your Pacelli account. Tokens expire after 1 hour — regenerate as needed.",
+  "aiAssistantGenerateToken": "Generate Token",
+  "aiAssistantRegenerateToken": "Regenerate Token",
+  "aiAssistantTokenLabel": "Auth Token",
+  "aiAssistantTokenWarning": "This token grants full access to your household data. Do not share it with anyone. It expires automatically after 1 hour.",
+  "aiAssistantTokenError": "Failed to generate token. Please try again.",
+
+  "aiAssistantStep2Title": "2. API Endpoint",
+  "aiAssistantStep2Desc": "The Cloud Functions URL that the MCP server connects to. This is pre-configured for your Pacelli instance.",
+  "aiAssistantApiUrlLabel": "API URL",
+
+  "aiAssistantStep3Title": "3. Configure Your MCP Client",
+  "aiAssistantStep3Desc": "Add this to your MCP client's configuration file (e.g. Claude Desktop, Cursor, or any MCP-compatible app). Replace the path with your actual MCP server location.",
+  "aiAssistantConfig": "Configuration",
+
+  "aiAssistantStep4Title": "4. Test Connection",
+  "aiAssistantStep4Desc": "Verify that your token is valid and the connection is ready.",
+  "aiAssistantTestConnection": "Test Connection",
+
+  "aiAssistantStatusReady": "Ready! Your token is valid. Start your MCP client to connect.",
+  "aiAssistantStatusNoUser": "Not signed in. Please sign in to generate a token.",
+  "aiAssistantStatusError": "Connection test failed. Try regenerating your token.",
+
+  "aiAssistantCopied": "{label} copied to clipboard",
+  "@aiAssistantCopied": {
+    "placeholders": {
+      "label": {"type": "String"}
+    }
+  },
+
+  "aiAssistantConnectionMode": "Connection Mode",
+  "aiAssistantModeLocal": "Local",
+  "aiAssistantModeHosted": "Hosted",
+  "aiAssistantModeLocalDesc": "Run the MCP server on your computer. Best for development and single-user setups.",
+  "aiAssistantModeHostedDesc": "Connect to a cloud-hosted MCP server. Best for always-on access from any device.",
+
+  "aiAssistantChooseProvider": "Choose your AI provider",
+  "aiAssistantChooseProviderDesc": "Select which AI assistant you'd like to connect to Pacelli.",
+  "aiAssistantEnterApiKey": "Enter your {provider} API key",
+  "@aiAssistantEnterApiKey": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "aiAssistantApiKeyDesc": "You can find your API key in your {provider} account settings. It will be stored securely on your device.",
+  "@aiAssistantApiKeyDesc": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "aiAssistantApiKeySecure": "Your API key is encrypted and stored locally on your device. It never leaves your phone.",
+  "aiAssistantConnect": "Connect",
+  "aiAssistantConnected": "AI assistant connected successfully!",
+  "aiAssistantConnectError": "Failed to connect. Please check your API key and try again.",
+  "aiAssistantDisconnect": "Disconnect",
+  "aiAssistantDisconnected": "AI assistant disconnected.",
+  "aiAssistantStatusConnected": "Connected",
+  "aiAssistantConnectedTo": "Using {provider} as your AI assistant.",
+  "@aiAssistantConnectedTo": {
+    "placeholders": {
+      "provider": {"type": "String"}
+    }
+  },
+  "aiAssistantAdvancedTitle": "Advanced: MCP Configuration",
+  "aiAssistantAdvancedDesc": "For developers connecting external MCP clients (Claude Desktop, Cursor, etc.) directly to Pacelli's API.",
+
+  "aiAssistantTipsTitle": "Tips",
+  "aiAssistantTip1": "Tokens expire after 1 hour. Regenerate before each session.",
+  "aiAssistantTip2": "All data is decrypted server-side — the AI sees plaintext but your Firestore stays encrypted.",
+  "aiAssistantTip3": "Try asking: \"What tasks are due this week?\" or \"Create a shopping list for Saturday.\"",
+
+  "commonClear": "Clear",
+
+  "aiChatWelcomeTitle": "How can I help?",
+  "aiChatWelcomeSubtitle": "Ask me anything about your household — tasks, plans, inventory, or just chat.",
+  "aiChatInputHint": "Ask your assistant...",
+  "aiChatSuggestion1": "What tasks are due this week?",
+  "aiChatSuggestion2": "Summarise my shopping list",
+  "aiChatSuggestion3": "What's expiring soon?",
+
+  "settingsCapabilities": "What Can Pacelli Do?",
+  "settingsCapabilitiesSubtitle": "Explore all features and capabilities",
+  "capScreenTitle": "Capabilities",
+
+  "capGroupTasks": "Tasks",
+  "capGroupTasksDesc": "Create, organise, and track household to-dos",
+  "capCreateTasks": "Create & manage tasks",
+  "capCreateTasksDesc": "Add tasks with titles, descriptions, due dates, and priorities.",
+  "capRecurringTasks": "Recurring tasks",
+  "capRecurringTasksDesc": "Set tasks to repeat daily, weekly, or monthly.",
+  "capTaskPriority": "Priority levels",
+  "capTaskPriorityDesc": "Low, medium, high, and urgent priorities to stay on top of what matters.",
+  "capSharedTasks": "Shared tasks",
+  "capSharedTasksDesc": "Assign tasks to household members and collaborate.",
+  "capSubtasks": "Subtasks",
+  "capSubtasksDesc": "Break large tasks into smaller, trackable steps.",
+
+  "capGroupChecklists": "Checklists",
+  "capGroupChecklistsDesc": "Shopping lists, packing lists, and more",
+  "capShoppingLists": "Shopping & packing lists",
+  "capShoppingListsDesc": "Create reusable checklists with quantities and check-off items.",
+  "capPushAsTask": "Push to task",
+  "capPushAsTaskDesc": "Convert any checklist item into a standalone task.",
+
+  "capGroupPlans": "Plans",
+  "capGroupPlansDesc": "Multi-day trip plans, meal plans, and schedules",
+  "capTripPlans": "Trip & event planning",
+  "capTripPlansDesc": "Create day-by-day plans with entries, checklists, and notes.",
+  "capPlanTemplates": "Plan templates",
+  "capPlanTemplatesDesc": "Save plans as templates and reuse them for future trips.",
+  "capFinalisePlan": "Finalise & convert",
+  "capFinalisePlanDesc": "Finalise a plan to convert entries into tasks or checklist items.",
+
+  "capGroupInventory": "Inventory",
+  "capGroupInventoryDesc": "Track household items, stock levels, and expiry dates",
+  "capTrackItems": "Item tracking",
+  "capTrackItemsDesc": "Record items with quantities, units, categories, and locations.",
+  "capExpiryAlerts": "Expiry & low-stock alerts",
+  "capExpiryAlertsDesc": "Get notified when items are about to expire or run low.",
+  "capBarcodeScanning": "Barcode scanning",
+  "capBarcodeScanningDesc": "Scan barcodes to quickly add or find items.",
+  "capLocations": "Storage locations",
+  "capLocationsDesc": "Organise items by room, shelf, fridge, or custom locations.",
+
+  "capGroupCalendar": "Calendar",
+  "capGroupCalendarDesc": "View tasks, plans, and expiry dates on a calendar",
+  "capCalendarView": "Calendar view",
+  "capCalendarViewDesc": "See all due dates, plan entries, and expiring items at a glance.",
+  "capReminders": "Reminders & notifications",
+  "capRemindersDesc": "Receive push notifications for deadlines and important events.",
+
+  "capGroupAi": "AI Assistant",
+  "capGroupAiDesc": "Natural-language control and automation",
+  "capNaturalLanguage": "Chat with your household",
+  "capNaturalLanguageDesc": "Ask questions and give commands in plain English via the in-app chat.",
+  "capMcpIntegration": "MCP integration",
+  "capMcpIntegrationDesc": "Connect external AI tools (Claude, Cursor, etc.) to your household data.",
+
+  "capGroupSecurity": "Security & Privacy",
+  "capGroupSecurityDesc": "End-to-end encryption and data control",
+  "capEncryption": "End-to-end encryption",
+  "capEncryptionDesc": "All human-readable data is encrypted with AES-256 before leaving your device.",
+  "capBurnData": "Burn all data",
+  "capBurnDataDesc": "Permanently delete all household data, keys, and credentials in one tap.",
+  "capBackupRestore": "Backup & restore",
+  "capBackupRestoreDesc": "Export encrypted backups and restore them on any device.",
+
+  "capGroupFeedback": "Feedback & Insights",
+  "capGroupFeedbackDesc": "Share feedback, track app health, and review weekly usage",
+  "capSubmitFeedback": "Submit feedback",
+  "capSubmitFeedbackDesc": "Report bugs, request features, or share general feedback with the development team.",
+  "capAiChatFeedback": "AI response rating",
+  "capAiChatFeedbackDesc": "Rate AI assistant responses with thumbs up or down to improve quality over time.",
+  "capWeeklyDigest": "Weekly usage digest",
+  "capWeeklyDigestDesc": "Automatic weekly summary of tasks, plans, inventory changes, and app health metrics.",
+
+  "settingsManual": "House Manual",
+  "settingsManualSubtitle": "Guides, recipes, SOPs & how-tos",
+
+  "manualTitle": "House Manual",
+  "manualSearchHint": "Search guides…",
+  "manualEmpty": "No entries yet",
+  "manualEmptyHint": "Tap + to add your first guide, recipe, or how-to",
+  "manualPinned": "Pinned",
+  "manualManageCategories": "Manage categories",
+  "manualCreateTitle": "New Entry",
+  "manualEditTitle": "Edit Entry",
+  "manualEntryTitle": "Title",
+  "manualCategory": "Category",
+  "manualNoCategory": "No category",
+  "manualAddTag": "Add tag",
+  "manualPinEntry": "Pin to top",
+  "manualContent": "Content",
+  "manualContentHint": "Write your guide, recipe, or instructions here…",
+  "manualTitleRequired": "Title is required",
+  "manualDeleteTitle": "Delete entry?",
+  "manualDeleteConfirm": "This will permanently remove this entry from the house manual.",
+  "manualNoContent": "No content yet. Tap edit to add some.",
+  "manualLastEdited": "Last edited",
+  "manualNoCategoriesYet": "No categories yet",
+  "manualAddCategory": "Add Category",
+  "manualCategoryName": "Category name",
+  "manualDeleteCategoryTitle": "Delete category?",
+  "manualDeleteCategoryConfirm": "Entries in this category will become uncategorised.",
+  "commonAll": "All",
+  "commonEdit": "Edit",
+
+  "settingsFeedback": "Feedback & Insights",
+  "settingsFeedbackSubtitle": "Submit feedback, view diagnostics and weekly digests",
+
+  "feedbackTitle": "Feedback & Insights",
+  "feedbackTabSubmit": "Submit",
+  "feedbackTabHistory": "History",
+  "feedbackTabDigests": "Digests",
+
+  "feedbackType": "Feedback type",
+  "feedbackTypeGeneral": "General",
+  "feedbackTypeBug": "Bug",
+  "feedbackTypeFeature": "Feature",
+  "feedbackRating": "How was your experience?",
+  "feedbackPositive": "Good",
+  "feedbackNeutral": "OK",
+  "feedbackNegative": "Poor",
+  "feedbackMessage": "Your feedback",
+  "feedbackMessageHint": "Tell us what happened or what you'd like to see...",
+  "feedbackMessageRequired": "Please enter your feedback",
+  "feedbackSubmit": "Submit Feedback",
+  "feedbackSubmitted": "Thank you for your feedback!",
+  "feedbackError": "Failed to submit feedback",
+
+  "feedbackNoHistory": "No feedback submitted yet",
+  "feedbackNoDigests": "No weekly digests yet",
+  "feedbackNoDigestsHint": "Digests are generated weekly to summarise your household activity",
+
+  "feedbackDigestTasks": "Tasks",
+  "feedbackDigestChecklists": "Checklists",
+  "feedbackDigestPlans": "Plans",
+  "feedbackDigestInventory": "Inventory",
+  "feedbackDigestManual": "Manual",
+  "feedbackDigestAI": "AI chats"
 }

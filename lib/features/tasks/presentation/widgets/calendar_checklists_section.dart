@@ -321,7 +321,7 @@ class _CalendarChecklistsSectionState
                 child: Text(
                   group.isPlan ? context.l10n.checklistBadgePlan : context.l10n.checklistBadgeList,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: group.isPlan
                         ? AppColors.primaryLight
@@ -343,7 +343,7 @@ class _CalendarChecklistsSectionState
                 context.l10n.checklistCountProgress(checkedCount, total),
                 style: context.textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondaryLight,
-                  fontSize: 11,
+                  fontSize: 13,
                 ),
               ),
               if (!group.isPlan) ...[
@@ -405,7 +405,7 @@ class _CalendarChecklistsSectionState
             subtitle: quantity != null && quantity.isNotEmpty
                 ? Text(quantity,
                     style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         color: AppColors.textSecondaryLight))
                 : null,
             trailing: PopupMenuButton<String>(

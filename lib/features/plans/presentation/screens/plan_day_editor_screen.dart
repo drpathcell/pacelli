@@ -687,7 +687,7 @@ class _EntryAttachBadge extends ConsumerWidget {
                   '${attachments.length}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -3915,6 +3915,1086 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} items · {alert} alerts'**
   String homeInventorySummaryPlural(int count, int alert);
+
+  /// No description provided for @settingsAiAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get settingsAiAssistant;
+
+  /// No description provided for @settingsAiAssistantSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your AI assistant to your household'**
+  String get settingsAiAssistantSubtitle;
+
+  /// No description provided for @aiAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get aiAssistantTitle;
+
+  /// No description provided for @aiAssistantHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Integration'**
+  String get aiAssistantHeroTitle;
+
+  /// No description provided for @aiAssistantHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your AI assistant to manage your household with natural language.'**
+  String get aiAssistantHeroSubtitle;
+
+  /// No description provided for @aiAssistantStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Generate Auth Token'**
+  String get aiAssistantStep1Title;
+
+  /// No description provided for @aiAssistantStep1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a Firebase ID token that authenticates the MCP server with your Pacelli account. Tokens expire after 1 hour — regenerate as needed.'**
+  String get aiAssistantStep1Desc;
+
+  /// No description provided for @aiAssistantGenerateToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Token'**
+  String get aiAssistantGenerateToken;
+
+  /// No description provided for @aiAssistantRegenerateToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate Token'**
+  String get aiAssistantRegenerateToken;
+
+  /// No description provided for @aiAssistantTokenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth Token'**
+  String get aiAssistantTokenLabel;
+
+  /// No description provided for @aiAssistantTokenWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This token grants full access to your household data. Do not share it with anyone. It expires automatically after 1 hour.'**
+  String get aiAssistantTokenWarning;
+
+  /// No description provided for @aiAssistantTokenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate token. Please try again.'**
+  String get aiAssistantTokenError;
+
+  /// No description provided for @aiAssistantStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'2. API Endpoint'**
+  String get aiAssistantStep2Title;
+
+  /// No description provided for @aiAssistantStep2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'The Cloud Functions URL that the MCP server connects to. This is pre-configured for your Pacelli instance.'**
+  String get aiAssistantStep2Desc;
+
+  /// No description provided for @aiAssistantApiUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API URL'**
+  String get aiAssistantApiUrlLabel;
+
+  /// No description provided for @aiAssistantStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Configure Your MCP Client'**
+  String get aiAssistantStep3Title;
+
+  /// No description provided for @aiAssistantStep3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add this to your MCP client\'s configuration file (e.g. Claude Desktop, Cursor, or any MCP-compatible app). Replace the path with your actual MCP server location.'**
+  String get aiAssistantStep3Desc;
+
+  /// No description provided for @aiAssistantConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get aiAssistantConfig;
+
+  /// No description provided for @aiAssistantStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Test Connection'**
+  String get aiAssistantStep4Title;
+
+  /// No description provided for @aiAssistantStep4Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify that your token is valid and the connection is ready.'**
+  String get aiAssistantStep4Desc;
+
+  /// No description provided for @aiAssistantTestConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Connection'**
+  String get aiAssistantTestConnection;
+
+  /// No description provided for @aiAssistantStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready! Your token is valid. Start your MCP client to connect.'**
+  String get aiAssistantStatusReady;
+
+  /// No description provided for @aiAssistantStatusNoUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Not signed in. Please sign in to generate a token.'**
+  String get aiAssistantStatusNoUser;
+
+  /// No description provided for @aiAssistantStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection test failed. Try regenerating your token.'**
+  String get aiAssistantStatusError;
+
+  /// No description provided for @aiAssistantCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} copied to clipboard'**
+  String aiAssistantCopied(String label);
+
+  /// No description provided for @aiAssistantConnectionMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Mode'**
+  String get aiAssistantConnectionMode;
+
+  /// No description provided for @aiAssistantModeLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get aiAssistantModeLocal;
+
+  /// No description provided for @aiAssistantModeHosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosted'**
+  String get aiAssistantModeHosted;
+
+  /// No description provided for @aiAssistantModeLocalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Run the MCP server on your computer. Best for development and single-user setups.'**
+  String get aiAssistantModeLocalDesc;
+
+  /// No description provided for @aiAssistantModeHostedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a cloud-hosted MCP server. Best for always-on access from any device.'**
+  String get aiAssistantModeHostedDesc;
+
+  /// No description provided for @aiAssistantChooseProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your AI provider'**
+  String get aiAssistantChooseProvider;
+
+  /// No description provided for @aiAssistantChooseProviderDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Select which AI assistant you\'d like to connect to Pacelli.'**
+  String get aiAssistantChooseProviderDesc;
+
+  /// No description provided for @aiAssistantEnterApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your {provider} API key'**
+  String aiAssistantEnterApiKey(String provider);
+
+  /// No description provided for @aiAssistantApiKeyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You can find your API key in your {provider} account settings. It will be stored securely on your device.'**
+  String aiAssistantApiKeyDesc(String provider);
+
+  /// No description provided for @aiAssistantApiKeySecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Your API key is encrypted and stored locally on your device. It never leaves your phone.'**
+  String get aiAssistantApiKeySecure;
+
+  /// No description provided for @aiAssistantConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get aiAssistantConnect;
+
+  /// No description provided for @aiAssistantConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant connected successfully!'**
+  String get aiAssistantConnected;
+
+  /// No description provided for @aiAssistantConnectError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to connect. Please check your API key and try again.'**
+  String get aiAssistantConnectError;
+
+  /// No description provided for @aiAssistantDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get aiAssistantDisconnect;
+
+  /// No description provided for @aiAssistantDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant disconnected.'**
+  String get aiAssistantDisconnected;
+
+  /// No description provided for @aiAssistantStatusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get aiAssistantStatusConnected;
+
+  /// No description provided for @aiAssistantConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Using {provider} as your AI assistant.'**
+  String aiAssistantConnectedTo(String provider);
+
+  /// No description provided for @aiAssistantAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced: MCP Configuration'**
+  String get aiAssistantAdvancedTitle;
+
+  /// No description provided for @aiAssistantAdvancedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'For developers connecting external MCP clients (Claude Desktop, Cursor, etc.) directly to Pacelli\'s API.'**
+  String get aiAssistantAdvancedDesc;
+
+  /// No description provided for @aiAssistantTipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips'**
+  String get aiAssistantTipsTitle;
+
+  /// No description provided for @aiAssistantTip1.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens expire after 1 hour. Regenerate before each session.'**
+  String get aiAssistantTip1;
+
+  /// No description provided for @aiAssistantTip2.
+  ///
+  /// In en, this message translates to:
+  /// **'All data is decrypted server-side — the AI sees plaintext but your Firestore stays encrypted.'**
+  String get aiAssistantTip2;
+
+  /// No description provided for @aiAssistantTip3.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking: \"What tasks are due this week?\" or \"Create a shopping list for Saturday.\"'**
+  String get aiAssistantTip3;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @aiChatWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How can I help?'**
+  String get aiChatWelcomeTitle;
+
+  /// No description provided for @aiChatWelcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me anything about your household — tasks, plans, inventory, or just chat.'**
+  String get aiChatWelcomeSubtitle;
+
+  /// No description provided for @aiChatInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask your assistant...'**
+  String get aiChatInputHint;
+
+  /// No description provided for @aiChatSuggestion1.
+  ///
+  /// In en, this message translates to:
+  /// **'What tasks are due this week?'**
+  String get aiChatSuggestion1;
+
+  /// No description provided for @aiChatSuggestion2.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarise my shopping list'**
+  String get aiChatSuggestion2;
+
+  /// No description provided for @aiChatSuggestion3.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s expiring soon?'**
+  String get aiChatSuggestion3;
+
+  /// No description provided for @settingsCapabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'What Can Pacelli Do?'**
+  String get settingsCapabilities;
+
+  /// No description provided for @settingsCapabilitiesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore all features and capabilities'**
+  String get settingsCapabilitiesSubtitle;
+
+  /// No description provided for @capScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capabilities'**
+  String get capScreenTitle;
+
+  /// No description provided for @capGroupTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get capGroupTasks;
+
+  /// No description provided for @capGroupTasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create, organise, and track household to-dos'**
+  String get capGroupTasksDesc;
+
+  /// No description provided for @capCreateTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Create & manage tasks'**
+  String get capCreateTasks;
+
+  /// No description provided for @capCreateTasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tasks with titles, descriptions, due dates, and priorities.'**
+  String get capCreateTasksDesc;
+
+  /// No description provided for @capRecurringTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring tasks'**
+  String get capRecurringTasks;
+
+  /// No description provided for @capRecurringTasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Set tasks to repeat daily, weekly, or monthly.'**
+  String get capRecurringTasksDesc;
+
+  /// No description provided for @capTaskPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority levels'**
+  String get capTaskPriority;
+
+  /// No description provided for @capTaskPriorityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Low, medium, high, and urgent priorities to stay on top of what matters.'**
+  String get capTaskPriorityDesc;
+
+  /// No description provided for @capSharedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared tasks'**
+  String get capSharedTasks;
+
+  /// No description provided for @capSharedTasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign tasks to household members and collaborate.'**
+  String get capSharedTasksDesc;
+
+  /// No description provided for @capSubtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtasks'**
+  String get capSubtasks;
+
+  /// No description provided for @capSubtasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Break large tasks into smaller, trackable steps.'**
+  String get capSubtasksDesc;
+
+  /// No description provided for @capGroupChecklists.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklists'**
+  String get capGroupChecklists;
+
+  /// No description provided for @capGroupChecklistsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping lists, packing lists, and more'**
+  String get capGroupChecklistsDesc;
+
+  /// No description provided for @capShoppingLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping & packing lists'**
+  String get capShoppingLists;
+
+  /// No description provided for @capShoppingListsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create reusable checklists with quantities and check-off items.'**
+  String get capShoppingListsDesc;
+
+  /// No description provided for @capPushAsTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Push to task'**
+  String get capPushAsTask;
+
+  /// No description provided for @capPushAsTaskDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert any checklist item into a standalone task.'**
+  String get capPushAsTaskDesc;
+
+  /// No description provided for @capGroupPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get capGroupPlans;
+
+  /// No description provided for @capGroupPlansDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-day trip plans, meal plans, and schedules'**
+  String get capGroupPlansDesc;
+
+  /// No description provided for @capTripPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip & event planning'**
+  String get capTripPlans;
+
+  /// No description provided for @capTripPlansDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create day-by-day plans with entries, checklists, and notes.'**
+  String get capTripPlansDesc;
+
+  /// No description provided for @capPlanTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan templates'**
+  String get capPlanTemplates;
+
+  /// No description provided for @capPlanTemplatesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save plans as templates and reuse them for future trips.'**
+  String get capPlanTemplatesDesc;
+
+  /// No description provided for @capFinalisePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalise & convert'**
+  String get capFinalisePlan;
+
+  /// No description provided for @capFinalisePlanDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalise a plan to convert entries into tasks or checklist items.'**
+  String get capFinalisePlanDesc;
+
+  /// No description provided for @capGroupInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get capGroupInventory;
+
+  /// No description provided for @capGroupInventoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Track household items, stock levels, and expiry dates'**
+  String get capGroupInventoryDesc;
+
+  /// No description provided for @capTrackItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Item tracking'**
+  String get capTrackItems;
+
+  /// No description provided for @capTrackItemsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Record items with quantities, units, categories, and locations.'**
+  String get capTrackItemsDesc;
+
+  /// No description provided for @capExpiryAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry & low-stock alerts'**
+  String get capExpiryAlerts;
+
+  /// No description provided for @capExpiryAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get notified when items are about to expire or run low.'**
+  String get capExpiryAlertsDesc;
+
+  /// No description provided for @capBarcodeScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode scanning'**
+  String get capBarcodeScanning;
+
+  /// No description provided for @capBarcodeScanningDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan barcodes to quickly add or find items.'**
+  String get capBarcodeScanningDesc;
+
+  /// No description provided for @capLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage locations'**
+  String get capLocations;
+
+  /// No description provided for @capLocationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Organise items by room, shelf, fridge, or custom locations.'**
+  String get capLocationsDesc;
+
+  /// No description provided for @capGroupCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get capGroupCalendar;
+
+  /// No description provided for @capGroupCalendarDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View tasks, plans, and expiry dates on a calendar'**
+  String get capGroupCalendarDesc;
+
+  /// No description provided for @capCalendarView.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar view'**
+  String get capCalendarView;
+
+  /// No description provided for @capCalendarViewDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'See all due dates, plan entries, and expiring items at a glance.'**
+  String get capCalendarViewDesc;
+
+  /// No description provided for @capReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders & notifications'**
+  String get capReminders;
+
+  /// No description provided for @capRemindersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive push notifications for deadlines and important events.'**
+  String get capRemindersDesc;
+
+  /// No description provided for @capGroupAi.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get capGroupAi;
+
+  /// No description provided for @capGroupAiDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural-language control and automation'**
+  String get capGroupAiDesc;
+
+  /// No description provided for @capNaturalLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with your household'**
+  String get capNaturalLanguage;
+
+  /// No description provided for @capNaturalLanguageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask questions and give commands in plain English via the in-app chat.'**
+  String get capNaturalLanguageDesc;
+
+  /// No description provided for @capMcpIntegration.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP integration'**
+  String get capMcpIntegration;
+
+  /// No description provided for @capMcpIntegrationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect external AI tools (Claude, Cursor, etc.) to your household data.'**
+  String get capMcpIntegrationDesc;
+
+  /// No description provided for @capGroupSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security & Privacy'**
+  String get capGroupSecurity;
+
+  /// No description provided for @capGroupSecurityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'End-to-end encryption and data control'**
+  String get capGroupSecurityDesc;
+
+  /// No description provided for @capEncryption.
+  ///
+  /// In en, this message translates to:
+  /// **'End-to-end encryption'**
+  String get capEncryption;
+
+  /// No description provided for @capEncryptionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'All human-readable data is encrypted with AES-256 before leaving your device.'**
+  String get capEncryptionDesc;
+
+  /// No description provided for @capBurnData.
+  ///
+  /// In en, this message translates to:
+  /// **'Burn all data'**
+  String get capBurnData;
+
+  /// No description provided for @capBurnDataDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete all household data, keys, and credentials in one tap.'**
+  String get capBurnDataDesc;
+
+  /// No description provided for @capBackupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get capBackupRestore;
+
+  /// No description provided for @capBackupRestoreDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Export encrypted backups and restore them on any device.'**
+  String get capBackupRestoreDesc;
+
+  /// No description provided for @capGroupFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback & Insights'**
+  String get capGroupFeedback;
+
+  /// No description provided for @capGroupFeedbackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Share feedback, track app health, and review weekly usage'**
+  String get capGroupFeedbackDesc;
+
+  /// No description provided for @capSubmitFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit feedback'**
+  String get capSubmitFeedback;
+
+  /// No description provided for @capSubmitFeedbackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Report bugs, request features, or share general feedback with the development team.'**
+  String get capSubmitFeedbackDesc;
+
+  /// No description provided for @capAiChatFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'AI response rating'**
+  String get capAiChatFeedback;
+
+  /// No description provided for @capAiChatFeedbackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate AI assistant responses with thumbs up or down to improve quality over time.'**
+  String get capAiChatFeedbackDesc;
+
+  /// No description provided for @capWeeklyDigest.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly usage digest'**
+  String get capWeeklyDigest;
+
+  /// No description provided for @capWeeklyDigestDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic weekly summary of tasks, plans, inventory changes, and app health metrics.'**
+  String get capWeeklyDigestDesc;
+
+  /// No description provided for @settingsManual.
+  ///
+  /// In en, this message translates to:
+  /// **'House Manual'**
+  String get settingsManual;
+
+  /// No description provided for @settingsManualSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guides, recipes, SOPs & how-tos'**
+  String get settingsManualSubtitle;
+
+  /// No description provided for @manualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'House Manual'**
+  String get manualTitle;
+
+  /// No description provided for @manualSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search guides…'**
+  String get manualSearchHint;
+
+  /// No description provided for @manualEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries yet'**
+  String get manualEmpty;
+
+  /// No description provided for @manualEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add your first guide, recipe, or how-to'**
+  String get manualEmptyHint;
+
+  /// No description provided for @manualPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get manualPinned;
+
+  /// No description provided for @manualManageCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage categories'**
+  String get manualManageCategories;
+
+  /// No description provided for @manualCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Entry'**
+  String get manualCreateTitle;
+
+  /// No description provided for @manualEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Entry'**
+  String get manualEditTitle;
+
+  /// No description provided for @manualEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get manualEntryTitle;
+
+  /// No description provided for @manualCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get manualCategory;
+
+  /// No description provided for @manualNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get manualNoCategory;
+
+  /// No description provided for @manualAddTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get manualAddTag;
+
+  /// No description provided for @manualPinEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to top'**
+  String get manualPinEntry;
+
+  /// No description provided for @manualContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get manualContent;
+
+  /// No description provided for @manualContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your guide, recipe, or instructions here…'**
+  String get manualContentHint;
+
+  /// No description provided for @manualTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get manualTitleRequired;
+
+  /// No description provided for @manualDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete entry?'**
+  String get manualDeleteTitle;
+
+  /// No description provided for @manualDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently remove this entry from the house manual.'**
+  String get manualDeleteConfirm;
+
+  /// No description provided for @manualNoContent.
+  ///
+  /// In en, this message translates to:
+  /// **'No content yet. Tap edit to add some.'**
+  String get manualNoContent;
+
+  /// No description provided for @manualLastEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Last edited'**
+  String get manualLastEdited;
+
+  /// No description provided for @manualNoCategoriesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet'**
+  String get manualNoCategoriesYet;
+
+  /// No description provided for @manualAddCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get manualAddCategory;
+
+  /// No description provided for @manualCategoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get manualCategoryName;
+
+  /// No description provided for @manualDeleteCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get manualDeleteCategoryTitle;
+
+  /// No description provided for @manualDeleteCategoryConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries in this category will become uncategorised.'**
+  String get manualDeleteCategoryConfirm;
+
+  /// No description provided for @commonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commonAll;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @settingsFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback & Insights'**
+  String get settingsFeedback;
+
+  /// No description provided for @settingsFeedbackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit feedback, view diagnostics and weekly digests'**
+  String get settingsFeedbackSubtitle;
+
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback & Insights'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackTabSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get feedbackTabSubmit;
+
+  /// No description provided for @feedbackTabHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get feedbackTabHistory;
+
+  /// No description provided for @feedbackTabDigests.
+  ///
+  /// In en, this message translates to:
+  /// **'Digests'**
+  String get feedbackTabDigests;
+
+  /// No description provided for @feedbackType.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback type'**
+  String get feedbackType;
+
+  /// No description provided for @feedbackTypeGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get feedbackTypeGeneral;
+
+  /// No description provided for @feedbackTypeBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug'**
+  String get feedbackTypeBug;
+
+  /// No description provided for @feedbackTypeFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature'**
+  String get feedbackTypeFeature;
+
+  /// No description provided for @feedbackRating.
+  ///
+  /// In en, this message translates to:
+  /// **'How was your experience?'**
+  String get feedbackRating;
+
+  /// No description provided for @feedbackPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get feedbackPositive;
+
+  /// No description provided for @feedbackNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get feedbackNeutral;
+
+  /// No description provided for @feedbackNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Poor'**
+  String get feedbackNegative;
+
+  /// No description provided for @feedbackMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feedback'**
+  String get feedbackMessage;
+
+  /// No description provided for @feedbackMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what happened or what you\'d like to see...'**
+  String get feedbackMessageHint;
+
+  /// No description provided for @feedbackMessageRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your feedback'**
+  String get feedbackMessageRequired;
+
+  /// No description provided for @feedbackSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Feedback'**
+  String get feedbackSubmit;
+
+  /// No description provided for @feedbackSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your feedback!'**
+  String get feedbackSubmitted;
+
+  /// No description provided for @feedbackError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit feedback'**
+  String get feedbackError;
+
+  /// No description provided for @feedbackNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No feedback submitted yet'**
+  String get feedbackNoHistory;
+
+  /// No description provided for @feedbackNoDigests.
+  ///
+  /// In en, this message translates to:
+  /// **'No weekly digests yet'**
+  String get feedbackNoDigests;
+
+  /// No description provided for @feedbackNoDigestsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Digests are generated weekly to summarise your household activity'**
+  String get feedbackNoDigestsHint;
+
+  /// No description provided for @feedbackDigestTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get feedbackDigestTasks;
+
+  /// No description provided for @feedbackDigestChecklists.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklists'**
+  String get feedbackDigestChecklists;
+
+  /// No description provided for @feedbackDigestPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get feedbackDigestPlans;
+
+  /// No description provided for @feedbackDigestInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get feedbackDigestInventory;
+
+  /// No description provided for @feedbackDigestManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get feedbackDigestManual;
+
+  /// No description provided for @feedbackDigestAI.
+  ///
+  /// In en, this message translates to:
+  /// **'AI chats'**
+  String get feedbackDigestAI;
 }
 
 class _AppLocalizationsDelegate

@@ -227,6 +227,7 @@ flutter clean && flutter pub get && flutter run
 - [ ] If the screen needs calendar integration, follow the `CalendarInventorySection` pattern (add to `calendar_screen.dart` stacked sections)
 - [ ] If the screen needs auto-task creation, follow `InventoryTaskService` pattern (duplicate detection, priority, due date)
 - [ ] If the screen needs barcode scanning, use `mobile_scanner` (v7+, Apple Vision framework) and `qr_flutter` for QR generation
+- [ ] If the new entity should be accessible via the AI Assistant, follow the `pacelli-ai-integration` skill to add the Cloud Function endpoints, MCP tool(s), and OpenAPI spec entry
 
 ## Common Pitfalls
 - **Forgetting the extensions import**: Without it, `context.l10n` won't resolve — causes build failure

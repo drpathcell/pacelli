@@ -202,7 +202,7 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
         ref.invalidate(inventoryStatsProvider(widget.householdId));
       },
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
           // Household card — taps into Inventory
           Card(
@@ -321,7 +321,11 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
                     color: AppColors.warning,
                   ),
                 ),
-                const SizedBox(width: 8),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
                 Expanded(
                   child: _StatCard(
                     icon: Icons.timer_off_outlined,
@@ -607,14 +611,12 @@ class _StatCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: context.textTheme.bodySmall,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-              ),
+            Text(
+              label,
+              style: context.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

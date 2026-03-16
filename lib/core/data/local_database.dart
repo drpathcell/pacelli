@@ -17,7 +17,7 @@ class LocalDatabase {
 
     _instance = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -321,6 +321,45 @@ class LocalDatabase {
         'CREATE INDEX idx_inventory_logs_item ON inventory_logs(item_id)');
     await db.execute(
         'CREATE INDEX idx_inventory_attachments_item ON inventory_attachments(item_id)');
+
+    // ── Manual Categories ──
+    await db.execute('''
+      CREATE TABLE manual_categories (
+        id           TEXT PRIMARY KEY,
+        household_id TEXT NOT NULL,
+        name         TEXT NOT NULL,
+        icon         TEXT NOT NULL DEFAULT 'menu_book',
+        color        TEXT NOT NULL DEFAULT '#7EA87E',
+        sort_order   INTEGER NOT NULL DEFAULT 0,
+        created_by   TEXT NOT NULL DEFAULT '',
+        created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    ''');
+
+    // ── Manual Entries ──
+    await db.execute('''
+      CREATE TABLE manual_entries (
+        id              TEXT PRIMARY KEY,
+        household_id    TEXT NOT NULL,
+        title           TEXT NOT NULL,
+        content         TEXT NOT NULL DEFAULT '',
+        category_id     TEXT REFERENCES manual_categories(id) ON DELETE SET NULL,
+        tags            TEXT NOT NULL DEFAULT '[]',
+        is_pinned       INTEGER NOT NULL DEFAULT 0,
+        created_by      TEXT NOT NULL DEFAULT '',
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        last_edited_by  TEXT
+      )
+    ''');
+
+    // Manual indices
+    await db.execute(
+        'CREATE INDEX idx_manual_entries_household ON manual_entries(household_id)');
+    await db.execute(
+        'CREATE INDEX idx_manual_entries_category ON manual_entries(category_id)');
+    await db.execute(
+        'CREATE INDEX idx_manual_categories_household ON manual_categories(household_id)');
   }
 
   static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -419,6 +458,42 @@ class LocalDatabase {
       await db.execute("ALTER TABLE checklist_items ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
       await db.execute("ALTER TABLE plan_entries ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
       await db.execute("ALTER TABLE plan_checklist_items ADD COLUMN household_id TEXT NOT NULL DEFAULT ''");
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE manual_categories (
+          id           TEXT PRIMARY KEY,
+          household_id TEXT NOT NULL,
+          name         TEXT NOT NULL,
+          icon         TEXT NOT NULL DEFAULT 'menu_book',
+          color        TEXT NOT NULL DEFAULT '#7EA87E',
+          sort_order   INTEGER NOT NULL DEFAULT 0,
+          created_by   TEXT NOT NULL DEFAULT '',
+          created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE manual_entries (
+          id              TEXT PRIMARY KEY,
+          household_id    TEXT NOT NULL,
+          title           TEXT NOT NULL,
+          content         TEXT NOT NULL DEFAULT '',
+          category_id     TEXT REFERENCES manual_categories(id) ON DELETE SET NULL,
+          tags            TEXT NOT NULL DEFAULT '[]',
+          is_pinned       INTEGER NOT NULL DEFAULT 0,
+          created_by      TEXT NOT NULL DEFAULT '',
+          created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
+          last_edited_by  TEXT
+        )
+      ''');
+      await db.execute(
+          'CREATE INDEX idx_manual_entries_household ON manual_entries(household_id)');
+      await db.execute(
+          'CREATE INDEX idx_manual_entries_category ON manual_entries(category_id)');
+      await db.execute(
+          'CREATE INDEX idx_manual_categories_household ON manual_categories(household_id)');
     }
   }
 }

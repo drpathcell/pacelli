@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../shared/widgets/pacelli_ai_icon.dart';
 import '../../../household/data/household_providers.dart';
 
 /// Settings screen — app preferences, account management, logout.
@@ -78,7 +79,7 @@ class SettingsScreen extends ConsumerWidget {
                     child: Text(
                       context.l10n.settingsBurnIrreversible,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: Colors.red.shade800,
                         fontWeight: FontWeight.w500,
                       ),
@@ -98,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
                   child: Text(
                     context.l10n.settingsBurnDriveWarningShort,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: Colors.orange.shade800,
                     ),
                   ),
@@ -241,6 +242,35 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () =>
                   context.push(AppRoutes.importExport, extra: householdId),
             ),
+          if (householdId != null)
+            _SettingsTile(
+              icon: Icons.menu_book_outlined,
+              title: context.l10n.settingsManual,
+              subtitle: context.l10n.settingsManualSubtitle,
+              onTap: () =>
+                  context.push(AppRoutes.manual, extra: householdId),
+            ),
+          _SettingsTile(
+            icon: Icons.explore_outlined,
+            title: context.l10n.settingsCapabilities,
+            subtitle: context.l10n.settingsCapabilitiesSubtitle,
+            onTap: () => context.push(AppRoutes.capabilities),
+          ),
+          _SettingsTile(
+            icon: Icons.rate_review_outlined,
+            title: context.l10n.settingsFeedback,
+            subtitle: context.l10n.settingsFeedbackSubtitle,
+            onTap: () => context.push(AppRoutes.feedback),
+          ),
+          _SettingsTile(
+            leadingWidget: PacelliAiIcon(
+              size: 24,
+              color: context.colorScheme.primary,
+            ),
+            title: context.l10n.settingsAiAssistant,
+            subtitle: context.l10n.settingsAiAssistantSubtitle,
+            onTap: () => context.push(AppRoutes.aiAssistant),
+          ),
           _SettingsTile(
             icon: Icons.info_outlined,
             title: context.l10n.settingsAbout,
@@ -352,13 +382,15 @@ class SettingsScreen extends ConsumerWidget {
 
 /// A reusable settings list tile.
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? leadingWidget;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _SettingsTile({
-    required this.icon,
+    this.icon,
+    this.leadingWidget,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -368,7 +400,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(icon, color: context.colorScheme.primary),
+        leading: leadingWidget ?? Icon(icon, color: context.colorScheme.primary),
         title: Text(title, style: context.textTheme.titleMedium),
         subtitle: Text(subtitle, style: context.textTheme.bodyMedium),
         trailing: const Icon(Icons.chevron_right_rounded),

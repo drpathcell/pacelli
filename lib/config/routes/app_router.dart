@@ -33,8 +33,17 @@ import '../../features/inventory/presentation/screens/batch_create_screen.dart';
 import '../../features/inventory/presentation/screens/virtual_barcode_view_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
+import '../../features/settings/presentation/screens/ai_assistant_screen.dart';
 import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/ai_chat/presentation/screens/chat_screen.dart';
+import '../../features/capabilities/presentation/screens/capabilities_screen.dart';
+import '../../features/manual/presentation/screens/manual_screen.dart';
+import '../../features/manual/presentation/screens/manual_entry_detail_screen.dart';
+import '../../features/manual/presentation/screens/create_manual_entry_screen.dart';
+import '../../features/manual/presentation/screens/edit_manual_entry_screen.dart';
+import '../../features/manual/presentation/screens/manage_manual_categories_screen.dart';
+import '../../features/feedback/presentation/screens/feedback_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 
 /// Route path constants — use these instead of hardcoded strings.
@@ -67,6 +76,12 @@ class AppRoutes {
   static const String barcodeScanner = '/inventory/scan';
   static const String batchCreate = '/inventory/batch-create';
   static const String virtualBarcodeView = '/inventory/qr-view';
+  static const String manual = '/manual';
+  static const String manualCategories = '/manual/categories';
+  static const String aiAssistant = '/ai-assistant';
+  static const String aiChat = '/ai-chat';
+  static const String capabilities = '/capabilities';
+  static const String feedback = '/feedback';
 }
 
 /// Key for the shell navigator (bottom nav tabs).
@@ -115,6 +130,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.privacyEncryption,
         builder: (context, state) => const PrivacyEncryptionScreen(),
+      ),
+
+      // AI Assistant settings
+      GoRoute(
+        path: AppRoutes.aiAssistant,
+        builder: (context, state) => const AiAssistantScreen(),
+      ),
+
+      // AI Chat (full-screen modal from center FAB)
+      GoRoute(
+        path: AppRoutes.aiChat,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          child: const ChatScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            );
+          },
+        ),
+      ),
+
+      // Capabilities — "What can Pacelli do?"
+      GoRoute(
+        path: AppRoutes.capabilities,
+        builder: (context, state) => const CapabilitiesScreen(),
+      ),
+
+      // Feedback & Insights
+      GoRoute(
+        path: AppRoutes.feedback,
+        builder: (context, state) => const FeedbackScreen(),
       ),
 
       // Notification settings
@@ -272,6 +325,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // ── House Manual (full-screen, no bottom nav) ────────────
+      GoRoute(
+        path: AppRoutes.manual,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return ManualScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutes.manual}/create',
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return CreateManualEntryScreen(householdId: householdId);
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutes.manual}/:entryId',
+        builder: (context, state) {
+          final entryId = state.pathParameters['entryId']!;
+          return ManualEntryDetailScreen(entryId: entryId);
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutes.manual}/:entryId/edit',
+        builder: (context, state) {
+          final entryId = state.pathParameters['entryId']!;
+          return EditManualEntryScreen(entryId: entryId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.manualCategories,
+        builder: (context, state) {
+          final householdId = state.extra as String;
+          return ManageManualCategoriesScreen(householdId: householdId);
+        },
+      ),
+
       // ── Scratch Plans (full-screen, no bottom nav) ────────────
       GoRoute(
         path: '/plans/create',
@@ -307,20 +397,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
-          // Determine the current tab index based on the route
+          // Map route → nav index. Index 2 is the center FAB (no tab).
+          // 0 = Home, 1 = Tasks, (2 = AI FAB gap), 3 = Calendar, 4 = Settings
           int currentIndex = 0;
           final location = state.uri.path;
           if (location == AppRoutes.tasks) {
             currentIndex = 1;
           } else if (location == AppRoutes.calendar) {
-            currentIndex = 2;
-          } else if (location == AppRoutes.settings) {
             currentIndex = 3;
+          } else if (location == AppRoutes.settings) {
+            currentIndex = 4;
           }
 
           return MainShell(
             currentIndex: currentIndex,
             onTabChanged: (index) {
+              // Skip index 2 (AI FAB dummy spacer)
               switch (index) {
                 case 0:
                   context.go(AppRoutes.home);
@@ -328,14 +420,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 case 1:
                   context.go(AppRoutes.tasks);
                   break;
-                case 2:
+                case 3:
                   context.go(AppRoutes.calendar);
                   break;
-                case 3:
+                case 4:
                   context.go(AppRoutes.settings);
                   break;
               }
             },
+            onAiChatPressed: () => context.push(AppRoutes.aiChat),
             child: child,
           );
         },

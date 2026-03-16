@@ -125,7 +125,7 @@ class PlanDayCard extends StatelessWidget {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
-                                  ?.copyWith(fontSize: 11),
+                                  ?.copyWith(fontSize: 13),
                             ),
                           ),
                         ],
@@ -138,7 +138,7 @@ class PlanDayCard extends StatelessWidget {
                   Text(
                     '+${entries.length - 2} more',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: AppColors.textSecondaryLight,
                         ),
                   ),

@@ -98,7 +98,7 @@ class CalendarPlansSection extends StatelessWidget {
                     ].join(' · '),
                     style: context.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondaryLight,
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right, size: 18),

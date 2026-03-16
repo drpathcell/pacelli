@@ -2125,4 +2125,611 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeInventorySummaryPlural(int count, int alert) {
     return '$count items · $alert alerts';
   }
+
+  @override
+  String get settingsAiAssistant => 'AI Assistant';
+
+  @override
+  String get settingsAiAssistantSubtitle =>
+      'Connect your AI assistant to your household';
+
+  @override
+  String get aiAssistantTitle => 'AI Assistant';
+
+  @override
+  String get aiAssistantHeroTitle => 'AI Integration';
+
+  @override
+  String get aiAssistantHeroSubtitle =>
+      'Connect your AI assistant to manage your household with natural language.';
+
+  @override
+  String get aiAssistantStep1Title => '1. Generate Auth Token';
+
+  @override
+  String get aiAssistantStep1Desc =>
+      'Generate a Firebase ID token that authenticates the MCP server with your Pacelli account. Tokens expire after 1 hour — regenerate as needed.';
+
+  @override
+  String get aiAssistantGenerateToken => 'Generate Token';
+
+  @override
+  String get aiAssistantRegenerateToken => 'Regenerate Token';
+
+  @override
+  String get aiAssistantTokenLabel => 'Auth Token';
+
+  @override
+  String get aiAssistantTokenWarning =>
+      'This token grants full access to your household data. Do not share it with anyone. It expires automatically after 1 hour.';
+
+  @override
+  String get aiAssistantTokenError =>
+      'Failed to generate token. Please try again.';
+
+  @override
+  String get aiAssistantStep2Title => '2. API Endpoint';
+
+  @override
+  String get aiAssistantStep2Desc =>
+      'The Cloud Functions URL that the MCP server connects to. This is pre-configured for your Pacelli instance.';
+
+  @override
+  String get aiAssistantApiUrlLabel => 'API URL';
+
+  @override
+  String get aiAssistantStep3Title => '3. Configure Your MCP Client';
+
+  @override
+  String get aiAssistantStep3Desc =>
+      'Add this to your MCP client\'s configuration file (e.g. Claude Desktop, Cursor, or any MCP-compatible app). Replace the path with your actual MCP server location.';
+
+  @override
+  String get aiAssistantConfig => 'Configuration';
+
+  @override
+  String get aiAssistantStep4Title => '4. Test Connection';
+
+  @override
+  String get aiAssistantStep4Desc =>
+      'Verify that your token is valid and the connection is ready.';
+
+  @override
+  String get aiAssistantTestConnection => 'Test Connection';
+
+  @override
+  String get aiAssistantStatusReady =>
+      'Ready! Your token is valid. Start your MCP client to connect.';
+
+  @override
+  String get aiAssistantStatusNoUser =>
+      'Not signed in. Please sign in to generate a token.';
+
+  @override
+  String get aiAssistantStatusError =>
+      'Connection test failed. Try regenerating your token.';
+
+  @override
+  String aiAssistantCopied(String label) {
+    return '$label copied to clipboard';
+  }
+
+  @override
+  String get aiAssistantConnectionMode => 'Connection Mode';
+
+  @override
+  String get aiAssistantModeLocal => 'Local';
+
+  @override
+  String get aiAssistantModeHosted => 'Hosted';
+
+  @override
+  String get aiAssistantModeLocalDesc =>
+      'Run the MCP server on your computer. Best for development and single-user setups.';
+
+  @override
+  String get aiAssistantModeHostedDesc =>
+      'Connect to a cloud-hosted MCP server. Best for always-on access from any device.';
+
+  @override
+  String get aiAssistantChooseProvider => 'Choose your AI provider';
+
+  @override
+  String get aiAssistantChooseProviderDesc =>
+      'Select which AI assistant you\'d like to connect to Pacelli.';
+
+  @override
+  String aiAssistantEnterApiKey(String provider) {
+    return 'Enter your $provider API key';
+  }
+
+  @override
+  String aiAssistantApiKeyDesc(String provider) {
+    return 'You can find your API key in your $provider account settings. It will be stored securely on your device.';
+  }
+
+  @override
+  String get aiAssistantApiKeySecure =>
+      'Your API key is encrypted and stored locally on your device. It never leaves your phone.';
+
+  @override
+  String get aiAssistantConnect => 'Connect';
+
+  @override
+  String get aiAssistantConnected => 'AI assistant connected successfully!';
+
+  @override
+  String get aiAssistantConnectError =>
+      'Failed to connect. Please check your API key and try again.';
+
+  @override
+  String get aiAssistantDisconnect => 'Disconnect';
+
+  @override
+  String get aiAssistantDisconnected => 'AI assistant disconnected.';
+
+  @override
+  String get aiAssistantStatusConnected => 'Connected';
+
+  @override
+  String aiAssistantConnectedTo(String provider) {
+    return 'Using $provider as your AI assistant.';
+  }
+
+  @override
+  String get aiAssistantAdvancedTitle => 'Advanced: MCP Configuration';
+
+  @override
+  String get aiAssistantAdvancedDesc =>
+      'For developers connecting external MCP clients (Claude Desktop, Cursor, etc.) directly to Pacelli\'s API.';
+
+  @override
+  String get aiAssistantTipsTitle => 'Tips';
+
+  @override
+  String get aiAssistantTip1 =>
+      'Tokens expire after 1 hour. Regenerate before each session.';
+
+  @override
+  String get aiAssistantTip2 =>
+      'All data is decrypted server-side — the AI sees plaintext but your Firestore stays encrypted.';
+
+  @override
+  String get aiAssistantTip3 =>
+      'Try asking: \"What tasks are due this week?\" or \"Create a shopping list for Saturday.\"';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get aiChatWelcomeTitle => 'How can I help?';
+
+  @override
+  String get aiChatWelcomeSubtitle =>
+      'Ask me anything about your household — tasks, plans, inventory, or just chat.';
+
+  @override
+  String get aiChatInputHint => 'Ask your assistant...';
+
+  @override
+  String get aiChatSuggestion1 => 'What tasks are due this week?';
+
+  @override
+  String get aiChatSuggestion2 => 'Summarise my shopping list';
+
+  @override
+  String get aiChatSuggestion3 => 'What\'s expiring soon?';
+
+  @override
+  String get settingsCapabilities => 'What Can Pacelli Do?';
+
+  @override
+  String get settingsCapabilitiesSubtitle =>
+      'Explore all features and capabilities';
+
+  @override
+  String get capScreenTitle => 'Capabilities';
+
+  @override
+  String get capGroupTasks => 'Tasks';
+
+  @override
+  String get capGroupTasksDesc =>
+      'Create, organise, and track household to-dos';
+
+  @override
+  String get capCreateTasks => 'Create & manage tasks';
+
+  @override
+  String get capCreateTasksDesc =>
+      'Add tasks with titles, descriptions, due dates, and priorities.';
+
+  @override
+  String get capRecurringTasks => 'Recurring tasks';
+
+  @override
+  String get capRecurringTasksDesc =>
+      'Set tasks to repeat daily, weekly, or monthly.';
+
+  @override
+  String get capTaskPriority => 'Priority levels';
+
+  @override
+  String get capTaskPriorityDesc =>
+      'Low, medium, high, and urgent priorities to stay on top of what matters.';
+
+  @override
+  String get capSharedTasks => 'Shared tasks';
+
+  @override
+  String get capSharedTasksDesc =>
+      'Assign tasks to household members and collaborate.';
+
+  @override
+  String get capSubtasks => 'Subtasks';
+
+  @override
+  String get capSubtasksDesc =>
+      'Break large tasks into smaller, trackable steps.';
+
+  @override
+  String get capGroupChecklists => 'Checklists';
+
+  @override
+  String get capGroupChecklistsDesc =>
+      'Shopping lists, packing lists, and more';
+
+  @override
+  String get capShoppingLists => 'Shopping & packing lists';
+
+  @override
+  String get capShoppingListsDesc =>
+      'Create reusable checklists with quantities and check-off items.';
+
+  @override
+  String get capPushAsTask => 'Push to task';
+
+  @override
+  String get capPushAsTaskDesc =>
+      'Convert any checklist item into a standalone task.';
+
+  @override
+  String get capGroupPlans => 'Plans';
+
+  @override
+  String get capGroupPlansDesc =>
+      'Multi-day trip plans, meal plans, and schedules';
+
+  @override
+  String get capTripPlans => 'Trip & event planning';
+
+  @override
+  String get capTripPlansDesc =>
+      'Create day-by-day plans with entries, checklists, and notes.';
+
+  @override
+  String get capPlanTemplates => 'Plan templates';
+
+  @override
+  String get capPlanTemplatesDesc =>
+      'Save plans as templates and reuse them for future trips.';
+
+  @override
+  String get capFinalisePlan => 'Finalise & convert';
+
+  @override
+  String get capFinalisePlanDesc =>
+      'Finalise a plan to convert entries into tasks or checklist items.';
+
+  @override
+  String get capGroupInventory => 'Inventory';
+
+  @override
+  String get capGroupInventoryDesc =>
+      'Track household items, stock levels, and expiry dates';
+
+  @override
+  String get capTrackItems => 'Item tracking';
+
+  @override
+  String get capTrackItemsDesc =>
+      'Record items with quantities, units, categories, and locations.';
+
+  @override
+  String get capExpiryAlerts => 'Expiry & low-stock alerts';
+
+  @override
+  String get capExpiryAlertsDesc =>
+      'Get notified when items are about to expire or run low.';
+
+  @override
+  String get capBarcodeScanning => 'Barcode scanning';
+
+  @override
+  String get capBarcodeScanningDesc =>
+      'Scan barcodes to quickly add or find items.';
+
+  @override
+  String get capLocations => 'Storage locations';
+
+  @override
+  String get capLocationsDesc =>
+      'Organise items by room, shelf, fridge, or custom locations.';
+
+  @override
+  String get capGroupCalendar => 'Calendar';
+
+  @override
+  String get capGroupCalendarDesc =>
+      'View tasks, plans, and expiry dates on a calendar';
+
+  @override
+  String get capCalendarView => 'Calendar view';
+
+  @override
+  String get capCalendarViewDesc =>
+      'See all due dates, plan entries, and expiring items at a glance.';
+
+  @override
+  String get capReminders => 'Reminders & notifications';
+
+  @override
+  String get capRemindersDesc =>
+      'Receive push notifications for deadlines and important events.';
+
+  @override
+  String get capGroupAi => 'AI Assistant';
+
+  @override
+  String get capGroupAiDesc => 'Natural-language control and automation';
+
+  @override
+  String get capNaturalLanguage => 'Chat with your household';
+
+  @override
+  String get capNaturalLanguageDesc =>
+      'Ask questions and give commands in plain English via the in-app chat.';
+
+  @override
+  String get capMcpIntegration => 'MCP integration';
+
+  @override
+  String get capMcpIntegrationDesc =>
+      'Connect external AI tools (Claude, Cursor, etc.) to your household data.';
+
+  @override
+  String get capGroupSecurity => 'Security & Privacy';
+
+  @override
+  String get capGroupSecurityDesc => 'End-to-end encryption and data control';
+
+  @override
+  String get capEncryption => 'End-to-end encryption';
+
+  @override
+  String get capEncryptionDesc =>
+      'All human-readable data is encrypted with AES-256 before leaving your device.';
+
+  @override
+  String get capBurnData => 'Burn all data';
+
+  @override
+  String get capBurnDataDesc =>
+      'Permanently delete all household data, keys, and credentials in one tap.';
+
+  @override
+  String get capBackupRestore => 'Backup & restore';
+
+  @override
+  String get capBackupRestoreDesc =>
+      'Export encrypted backups and restore them on any device.';
+
+  @override
+  String get capGroupFeedback => 'Feedback & Insights';
+
+  @override
+  String get capGroupFeedbackDesc =>
+      'Share feedback, track app health, and review weekly usage';
+
+  @override
+  String get capSubmitFeedback => 'Submit feedback';
+
+  @override
+  String get capSubmitFeedbackDesc =>
+      'Report bugs, request features, or share general feedback with the development team.';
+
+  @override
+  String get capAiChatFeedback => 'AI response rating';
+
+  @override
+  String get capAiChatFeedbackDesc =>
+      'Rate AI assistant responses with thumbs up or down to improve quality over time.';
+
+  @override
+  String get capWeeklyDigest => 'Weekly usage digest';
+
+  @override
+  String get capWeeklyDigestDesc =>
+      'Automatic weekly summary of tasks, plans, inventory changes, and app health metrics.';
+
+  @override
+  String get settingsManual => 'House Manual';
+
+  @override
+  String get settingsManualSubtitle => 'Guides, recipes, SOPs & how-tos';
+
+  @override
+  String get manualTitle => 'House Manual';
+
+  @override
+  String get manualSearchHint => 'Search guides…';
+
+  @override
+  String get manualEmpty => 'No entries yet';
+
+  @override
+  String get manualEmptyHint =>
+      'Tap + to add your first guide, recipe, or how-to';
+
+  @override
+  String get manualPinned => 'Pinned';
+
+  @override
+  String get manualManageCategories => 'Manage categories';
+
+  @override
+  String get manualCreateTitle => 'New Entry';
+
+  @override
+  String get manualEditTitle => 'Edit Entry';
+
+  @override
+  String get manualEntryTitle => 'Title';
+
+  @override
+  String get manualCategory => 'Category';
+
+  @override
+  String get manualNoCategory => 'No category';
+
+  @override
+  String get manualAddTag => 'Add tag';
+
+  @override
+  String get manualPinEntry => 'Pin to top';
+
+  @override
+  String get manualContent => 'Content';
+
+  @override
+  String get manualContentHint =>
+      'Write your guide, recipe, or instructions here…';
+
+  @override
+  String get manualTitleRequired => 'Title is required';
+
+  @override
+  String get manualDeleteTitle => 'Delete entry?';
+
+  @override
+  String get manualDeleteConfirm =>
+      'This will permanently remove this entry from the house manual.';
+
+  @override
+  String get manualNoContent => 'No content yet. Tap edit to add some.';
+
+  @override
+  String get manualLastEdited => 'Last edited';
+
+  @override
+  String get manualNoCategoriesYet => 'No categories yet';
+
+  @override
+  String get manualAddCategory => 'Add Category';
+
+  @override
+  String get manualCategoryName => 'Category name';
+
+  @override
+  String get manualDeleteCategoryTitle => 'Delete category?';
+
+  @override
+  String get manualDeleteCategoryConfirm =>
+      'Entries in this category will become uncategorised.';
+
+  @override
+  String get commonAll => 'All';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get settingsFeedback => 'Feedback & Insights';
+
+  @override
+  String get settingsFeedbackSubtitle =>
+      'Submit feedback, view diagnostics and weekly digests';
+
+  @override
+  String get feedbackTitle => 'Feedback & Insights';
+
+  @override
+  String get feedbackTabSubmit => 'Submit';
+
+  @override
+  String get feedbackTabHistory => 'History';
+
+  @override
+  String get feedbackTabDigests => 'Digests';
+
+  @override
+  String get feedbackType => 'Feedback type';
+
+  @override
+  String get feedbackTypeGeneral => 'General';
+
+  @override
+  String get feedbackTypeBug => 'Bug';
+
+  @override
+  String get feedbackTypeFeature => 'Feature';
+
+  @override
+  String get feedbackRating => 'How was your experience?';
+
+  @override
+  String get feedbackPositive => 'Good';
+
+  @override
+  String get feedbackNeutral => 'OK';
+
+  @override
+  String get feedbackNegative => 'Poor';
+
+  @override
+  String get feedbackMessage => 'Your feedback';
+
+  @override
+  String get feedbackMessageHint =>
+      'Tell us what happened or what you\'d like to see...';
+
+  @override
+  String get feedbackMessageRequired => 'Please enter your feedback';
+
+  @override
+  String get feedbackSubmit => 'Submit Feedback';
+
+  @override
+  String get feedbackSubmitted => 'Thank you for your feedback!';
+
+  @override
+  String get feedbackError => 'Failed to submit feedback';
+
+  @override
+  String get feedbackNoHistory => 'No feedback submitted yet';
+
+  @override
+  String get feedbackNoDigests => 'No weekly digests yet';
+
+  @override
+  String get feedbackNoDigestsHint =>
+      'Digests are generated weekly to summarise your household activity';
+
+  @override
+  String get feedbackDigestTasks => 'Tasks';
+
+  @override
+  String get feedbackDigestChecklists => 'Checklists';
+
+  @override
+  String get feedbackDigestPlans => 'Plans';
+
+  @override
+  String get feedbackDigestInventory => 'Inventory';
+
+  @override
+  String get feedbackDigestManual => 'Manual';
+
+  @override
+  String get feedbackDigestAI => 'AI chats';
 }

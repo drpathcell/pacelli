@@ -351,7 +351,7 @@ class _DataStorageCard extends ConsumerWidget {
                     context.l10n.settingsEndToEndEncrypted,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: AppColors.success,
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

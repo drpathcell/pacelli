@@ -85,7 +85,7 @@ class CalendarTasksSection extends StatelessWidget {
                           category['name'] as String,
                           style: context.textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondaryLight,
-                            fontSize: 12,
+                            fontSize: 13,
                           ),
                         )
                       : null,

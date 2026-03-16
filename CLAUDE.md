@@ -57,8 +57,9 @@ Both implement the `DataRepository` abstract interface (`lib/core/data/data_repo
 
 - **GoRouter** configured in `lib/config/routes/app_router.dart`
 - Route path constants live in `AppRoutes` class — use these instead of hardcoded strings
-- `ShellRoute` wraps the four main tabs (Home, Tasks, Calendar, Settings) with `MainShell` bottom nav
-- Full-screen routes (create task, task detail, plans, onboarding) sit outside the shell
+- `ShellRoute` wraps five nav destinations (Home, Tasks, AI Chat spacer, Calendar, Settings) with `MainShell` bottom nav
+- Center FAB (semicircle above nav bar) opens the AI Chat screen via `context.push(AppRoutes.aiChat)`
+- Full-screen routes (create task, task detail, plans, AI chat, onboarding) sit outside the shell
 
 ### Feature Structure
 
@@ -72,6 +73,67 @@ lib/features/<feature>/
 ```
 
 Domain entities: Tasks, Subtasks, Categories, Checklists, Plans (scratch plans with entries), Attachments (Google Drive), Inventory. Models live in `lib/core/models/` with a barrel export in `models.dart`.
+
+### In-App AI Chat
+
+The app includes a built-in AI chat accessible from every tab via a center FAB in the bottom nav:
+- **Feature directory**: `lib/features/ai_chat/` — data models, service, providers, screens, widgets
+- **Entry point**: Center semicircle FAB in `MainShell` → pushes `/ai-chat` route
+- **ChatService**: Calls the `aiChat` Cloud Function with Firebase ID tokens (auto-cached 55 min)
+- **State**: Riverpod `chatMessagesProvider` (StateNotifier), `chatServiceProvider`, `chatLoadingProvider`
+- **Cloud Function**: `aiChat` export in `functions/src/index.ts` — MVP uses keyword-based intent routing; future: LLM function-calling
+- **l10n keys**: `aiChat*` prefix across all 3 locales (EN/ES/IT)
+
+### AI Assistant Settings
+
+The Settings → AI Assistant screen lets users connect an external AI provider:
+- **Feature directory**: `lib/features/settings/` — `ai_assistant_screen.dart` + `ai_assistant_service.dart`
+- **Provider picker**: Card-based selection of Claude, Gemini, or ChatGPT (`AiProvider` enum in screen file)
+- **API key storage**: Encrypted via `FlutterSecureStorage`, provider name in `SharedPreferences`
+- **Service**: `AiAssistantService` — manages provider config, API key CRUD, Firebase token generation
+- **Advanced section**: Collapsible MCP configuration (token gen, API URL, connection mode, config JSON) for developers
+- **l10n keys**: `aiAssistant*` prefix across all 3 locales (EN/ES/IT)
+- **Route**: `/ai-assistant` via `AppRoutes.aiAssistant`
+
+### Capability Discovery
+
+The app includes a "What can Pacelli do?" discovery screen accessible from Settings:
+- **Feature directory**: `lib/features/capabilities/` — static data catalogue + presentation screen
+- **Data**: `capability_data.dart` — 8 `CapabilityGroup`s with 24 `Capability` entries, each with icon, l10n title/desc keys, and `aiSupported` flag
+- **Screen**: `capabilities_screen.dart` — expandable group cards via `ExpansionTile`, "AI" badge on AI-capable features
+- **MCP resource**: `pacelli://capabilities` registered in `mcp-server/src/index.ts` — static JSON for AI agent discovery
+- **Route**: `/capabilities` via `AppRoutes.capabilities`
+- **l10n keys**: `cap*` prefix (capScreenTitle, capGroup*, capTask*, capChecklist*, etc.) across all 3 locales
+
+### Feedback & Learning Loop
+
+User feedback collection, automated diagnostics, and weekly usage digests in `lib/features/feedback/`:
+- **3 models** (`lib/core/models/feedback_entry.dart`): `FeedbackEntry` (type, rating, message), `AppDiagnostic` (kind, summary, detail, source), `WeeklyDigest` (activity counts + AI summary)
+- **FeedbackService** (`lib/features/feedback/data/feedback_service.dart`): Firestore-direct service (not DataRepository) for submitting feedback, logging diagnostics, and fetching digests. Encrypts message/context fields.
+- **3 providers** in `feedback_providers.dart`: `feedbackServiceProvider`, `feedbackListProvider`, `diagnosticsProvider`, `weeklyDigestsProvider`
+- **1 screen**: `FeedbackScreen` with 3 tabs — Submit (form with type/rating/message), History (feedback cards), Digests (weekly summary cards with stat chips)
+- **AI chat feedback**: Thumbs up/down buttons on assistant chat bubbles in `ChatBubble` widget, tracked by `_ratedMessageIds` in `ChatScreen`
+- **3 Firestore collections**: `feedback`, `diagnostics`, `weekly_digests` — all with `household_id` membership rules
+- **5 Cloud Functions**: `feedbackList`, `diagnosticsList`, `diagnosticStatsGet`, `weeklyDigestGenerate`, `weeklyDigestList`
+- **Cloud Function logic**: `functions/src/functions/feedback.ts` — list/stats/digest generation with encrypted field handling
+- **4 MCP tools**: `list_feedback`, `get_diagnostic_stats`, `generate_weekly_digest`, `list_weekly_digests`
+- **1 MCP resource**: `pacelli://diagnostics` — live 7-day error/warning/feedback sentiment summary
+- **Route**: `/feedback` via `AppRoutes.feedback`
+- **l10n keys**: `feedback*` + `settingsFeedback*` prefix across all 3 locales (EN/ES/IT)
+
+### House Manual
+
+Knowledge base / reference guide feature in `lib/features/manual/`:
+- **2 models** (`lib/core/models/manual_entry.dart`): `ManualEntry` (Markdown content, tags, pin support, creator/editor tracking), `ManualCategory`
+- **5 screens**: manual list (with category filter chips + search), entry detail, create entry, edit entry, manage categories
+- **1 widget**: `ManualEntryCard` — card with title, content preview, category chip, tags, relative date
+- **5 providers** in `manual_providers.dart`: `manualEntriesProvider`, `manualEntriesByCategoryProvider`, `manualEntryProvider`, `manualCategoriesProvider`, `manualSearchProvider`
+- **2 Firestore collections**: `manual_entries`, `manual_categories` — both with `household_id` membership rules
+- **Encryption**: title, content, tags encrypted; category_id, is_pinned, timestamps unencrypted
+- **SQLite**: `manual_entries` + `manual_categories` tables (migration v3→v4), tags stored as JSON string
+- **Export/Import**: manual data included in v3 JSON backup format with category ID remapping on import
+- **Routes**: `/manual`, `/manual/create`, `/manual/:entryId`, `/manual/:entryId/edit`, `/manual/categories`
+- **l10n keys**: `manual*` prefix + `settingsManual*` across all 3 locales (EN/ES/IT)
 
 ### Inventory Feature
 
@@ -101,7 +163,9 @@ Full household inventory management in `lib/features/inventory/`:
 - Three colour schemes: `pacelli` (sage green), `claude` (purple), `gemini` (ocean blue) — defined in `lib/config/theme/color_schemes.dart`
 - Theme preferences (mode + scheme) persisted via `SharedPreferences`, managed by `ThemePreferencesNotifier`
 - `AppTheme.lightThemeFor(scheme)` / `darkThemeFor(scheme)` build complete `ThemeData`
+- **Minimum font size: 13px** — enforced via theme (`bodySmall: 13`, `labelSmall: 13`, `labelMedium: 13`) and explicit overrides. No text in the app should be below 13px.
 - Shared semantic colours (success, warning, error, info) in `SharedColors`
+- **AI icon**: Custom smiling robot SVG (`assets/icons/pacelli_ai.svg`) rendered via `PacelliAiIcon` widget (`lib/shared/widgets/pacelli_ai_icon.dart`). Uses `flutter_svg` with `ColorFilter` for tinting. Used in nav FAB, chat bubbles, settings, capabilities badges, feedback.
 - Use the `/pacelli-theme-colours` skill for theme/colour changes
 
 ### Firestore Security Rules

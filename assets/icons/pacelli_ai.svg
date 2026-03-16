@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!-- Head -->
+  <rect x="4" y="6" width="16" height="14" rx="3" fill="currentColor" opacity="0.15"/>
+  <rect x="4" y="6" width="16" height="14" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+  <!-- Antenna -->
+  <line x1="12" y1="6" x2="12" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="12" cy="2.2" r="1.4" fill="currentColor"/>
+  <!-- Left eye -->
+  <circle cx="9" cy="12.5" r="2" fill="currentColor" opacity="0.2"/>
+  <circle cx="9" cy="12.5" r="1.2" fill="currentColor"/>
+  <!-- Right eye -->
+  <circle cx="15" cy="12.5" r="2" fill="currentColor" opacity="0.2"/>
+  <circle cx="15" cy="12.5" r="1.2" fill="currentColor"/>
+  <!-- Smile -->
+  <path d="M8.5 16 Q12 19 15.5 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <!-- Ears -->
+  <rect x="1" y="10" width="2.5" height="5" rx="1.2" fill="currentColor" opacity="0.5"/>
+  <rect x="20.5" y="10" width="2.5" height="5" rx="1.2" fill="currentColor" opacity="0.5"/>
+</svg>

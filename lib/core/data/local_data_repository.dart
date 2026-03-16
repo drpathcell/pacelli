@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
@@ -1697,6 +1698,234 @@ class LocalDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  HOUSE MANUAL
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<ManualEntry> createManualEntry({
+    required String householdId,
+    required String title,
+    String content = '',
+    String? categoryId,
+    List<String> tags = const [],
+    bool isPinned = false,
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now().toIso8601String();
+
+    await _db.insert('manual_entries', {
+      'id': id,
+      'household_id': householdId,
+      'title': title,
+      'content': content,
+      'category_id': categoryId,
+      'tags': jsonEncode(tags),
+      'is_pinned': isPinned ? 1 : 0,
+      'created_by': _userId,
+      'created_at': now,
+      'updated_at': now,
+      'last_edited_by': _userId,
+    });
+
+    return getManualEntry(id);
+  }
+
+  @override
+  Future<List<ManualEntry>> getManualEntries({
+    required String householdId,
+    String? categoryId,
+    bool? pinnedOnly,
+    String? searchQuery,
+  }) async {
+    String where = 'household_id = ?';
+    final args = <dynamic>[householdId];
+
+    if (categoryId != null) {
+      where += ' AND category_id = ?';
+      args.add(categoryId);
+    }
+    if (pinnedOnly == true) {
+      where += ' AND is_pinned = 1';
+    }
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      where += ' AND (title LIKE ? OR content LIKE ?)';
+      final like = '%$searchQuery%';
+      args.addAll([like, like]);
+    }
+
+    final rows = await _db.query(
+      'manual_entries',
+      where: where,
+      whereArgs: args,
+      orderBy: 'updated_at DESC',
+      limit: 500,
+    );
+
+    // Bulk fetch categories.
+    final catIds = rows
+        .map((r) => r['category_id'] as String?)
+        .where((id) => id != null)
+        .toSet();
+    final categories = <String, ManualCategory>{};
+    for (final catId in catIds) {
+      final catRows = await _db.query('manual_categories',
+          where: 'id = ?', whereArgs: [catId]);
+      if (catRows.isNotEmpty) {
+        categories[catId!] = ManualCategory.fromMap(catRows.first.map(
+            (k, v) => MapEntry(k, k == 'created_at' ? v?.toString() ?? '' : v)));
+      }
+    }
+
+    return rows.map((r) {
+      final tagStr = r['tags'] as String? ?? '[]';
+      List<String> parsedTags;
+      try {
+        parsedTags = (jsonDecode(tagStr) as List<dynamic>).cast<String>();
+      } catch (_) {
+        parsedTags = [];
+      }
+      final catId = r['category_id'] as String?;
+      return ManualEntry(
+        id: r['id'] as String,
+        householdId: r['household_id'] as String,
+        title: r['title'] as String,
+        content: r['content'] as String? ?? '',
+        categoryId: catId,
+        tags: parsedTags,
+        isPinned: (r['is_pinned'] as int? ?? 0) == 1,
+        createdBy: r['created_by'] as String? ?? '',
+        createdAt: DateTime.parse(r['created_at'] as String),
+        updatedAt: DateTime.parse(r['updated_at'] as String),
+        lastEditedBy: r['last_edited_by'] as String?,
+        category: catId != null ? categories[catId] : null,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<ManualEntry> getManualEntry(String entryId) async {
+    final rows = await _db.query('manual_entries',
+        where: 'id = ?', whereArgs: [entryId]);
+    if (rows.isEmpty) throw Exception('Manual entry not found: $entryId');
+    final r = rows.first;
+
+    ManualCategory? category;
+    final catId = r['category_id'] as String?;
+    if (catId != null) {
+      final catRows = await _db.query('manual_categories',
+          where: 'id = ?', whereArgs: [catId]);
+      if (catRows.isNotEmpty) {
+        category = ManualCategory.fromMap(catRows.first.map(
+            (k, v) => MapEntry(k, k == 'created_at' ? v?.toString() ?? '' : v)));
+      }
+    }
+
+    final tagStr = r['tags'] as String? ?? '[]';
+    List<String> parsedTags;
+    try {
+      parsedTags = (jsonDecode(tagStr) as List<dynamic>).cast<String>();
+    } catch (_) {
+      parsedTags = [];
+    }
+
+    return ManualEntry(
+      id: r['id'] as String,
+      householdId: r['household_id'] as String,
+      title: r['title'] as String,
+      content: r['content'] as String? ?? '',
+      categoryId: catId,
+      tags: parsedTags,
+      isPinned: (r['is_pinned'] as int? ?? 0) == 1,
+      createdBy: r['created_by'] as String? ?? '',
+      createdAt: DateTime.parse(r['created_at'] as String),
+      updatedAt: DateTime.parse(r['updated_at'] as String),
+      lastEditedBy: r['last_edited_by'] as String?,
+      category: category,
+    );
+  }
+
+  @override
+  Future<void> updateManualEntry({
+    required String entryId,
+    String? title,
+    String? content,
+    String? categoryId,
+    List<String>? tags,
+    bool? isPinned,
+  }) async {
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+      'last_edited_by': _userId,
+    };
+
+    if (title != null) updates['title'] = title;
+    if (content != null) updates['content'] = content;
+    if (categoryId != null) updates['category_id'] = categoryId;
+    if (tags != null) updates['tags'] = jsonEncode(tags);
+    if (isPinned != null) updates['is_pinned'] = isPinned ? 1 : 0;
+
+    await _db.update('manual_entries', updates,
+        where: 'id = ?', whereArgs: [entryId]);
+  }
+
+  @override
+  Future<void> deleteManualEntry(String entryId) async {
+    await _db.delete('manual_entries', where: 'id = ?', whereArgs: [entryId]);
+  }
+
+  @override
+  Future<List<ManualCategory>> getManualCategories(String householdId) async {
+    final rows = await _db.query(
+      'manual_categories',
+      where: 'household_id = ?',
+      whereArgs: [householdId],
+      orderBy: 'sort_order ASC',
+    );
+
+    return rows.map((r) => ManualCategory.fromMap(r.map(
+        (k, v) => MapEntry(k, k == 'created_at' ? v?.toString() ?? '' : v)))).toList();
+  }
+
+  @override
+  Future<ManualCategory> createManualCategory({
+    required String householdId,
+    required String name,
+    String icon = 'menu_book',
+    String color = '#7EA87E',
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+
+    await _db.insert('manual_categories', {
+      'id': id,
+      'household_id': householdId,
+      'name': name,
+      'icon': icon,
+      'color': color,
+      'sort_order': 0,
+      'created_by': _userId,
+      'created_at': now.toIso8601String(),
+    });
+
+    return ManualCategory(
+      id: id,
+      householdId: householdId,
+      name: name,
+      icon: icon,
+      color: color,
+      sortOrder: 0,
+      createdBy: _userId,
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<void> deleteManualCategory(String categoryId) async {
+    await _db.delete('manual_categories',
+        where: 'id = ?', whereArgs: [categoryId]);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
   // ═══════════════════════════════════════════════════════════════════
 
@@ -1710,6 +1939,7 @@ class LocalDataRepository implements DataRepository {
       'plan',
       'attachment',
       'inventory',
+      'manual',
     ],
   }) async {
     final results = <SearchResult>[];
@@ -1891,6 +2121,30 @@ class LocalDataRepository implements DataRepository {
       }
     }
 
+    // ── Manual Entries ──
+    if (entityTypes.contains('manual')) {
+      final manualRows = await _db.query(
+        'manual_entries',
+        where:
+            "household_id = ? AND (title LIKE ? COLLATE NOCASE OR content LIKE ? COLLATE NOCASE)",
+        whereArgs: [householdId, like, like],
+        limit: 200,
+      );
+      for (final r in manualRows) {
+        final content = r['content'] as String? ?? '';
+        results.add(SearchResult(
+          id: r['id'] as String,
+          entityType: 'manual',
+          householdId: householdId,
+          title: r['title'] as String,
+          subtitle: content.length > 100
+              ? '${content.substring(0, 100)}…'
+              : content,
+          relevanceDate: DateTime.tryParse(r['updated_at'] as String? ?? ''),
+        ));
+      }
+    }
+
     return results;
   }
 
@@ -1903,6 +2157,8 @@ class LocalDataRepository implements DataRepository {
     // Wrap all deletes in a transaction so it's all-or-nothing.
     await _db.transaction((txn) async {
       // Order: children before parents to respect FK constraints.
+      await txn.delete('manual_entries');
+      await txn.delete('manual_categories');
       await txn.delete('inventory_attachments');
       await txn.delete('inventory_logs');
       await txn.delete('inventory_items');

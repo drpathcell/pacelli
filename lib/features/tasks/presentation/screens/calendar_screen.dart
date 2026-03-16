@@ -263,7 +263,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                       formatButtonTextStyle: const TextStyle(
                         color: AppColors.primaryLight,
-                        fontSize: 12,
+                        fontSize: 13,
                       ),
                     ),
                   ),

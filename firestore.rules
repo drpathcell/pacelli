@@ -164,6 +164,36 @@ service cloud.firestore {
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
+    // ── Manual Entries ─────────────────────────────────────────
+    match /manual_entries/{entryId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Manual Categories ────────────────────────────────────
+    match /manual_categories/{categoryId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Feedback ──────────────────────────────────────────────
+    match /feedback/{feedbackId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Diagnostics ─────────────────────────────────────────
+    match /diagnostics/{diagnosticId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
+    // ── Weekly Digests ──────────────────────────────────────
+    match /weekly_digests/{digestId} {
+      allow read: if isAuth() && isMember(resource.data.household_id);
+      allow create, update: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
     // ── Household Drive Config ─────────────────────────────────
     match /household_drive_config/{householdId} {
       allow read: if isMember(householdId);

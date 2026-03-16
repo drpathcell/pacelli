@@ -1,0 +1,23 @@
+{
+  "skill_name": "pacelli-ai-integration",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to add a new endpoint that lets Claude see household members — their display name, email, role, and when they joined. Add the Cloud Function, MCP tool, and OpenAPI entry. The data lives in the household_members Firestore collection and the display_name field is encrypted.",
+      "expected_output": "Creates a Cloud Function (e.g., householdMembersList) in functions/src/functions/ or index.ts, registers an MCP tool (e.g., list_household_members) in mcp-server/src/index.ts inside _registerTools(), adds an OpenAPI entry in openapi/pacelli-api.yaml. Correctly uses dec() for display_name and leaves email/role/joined_at unencrypted.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "The rate limiter is too aggressive for our household — we keep hitting 429s when Claude does a lot of reads. Can you bump the read limits to 200/min short window and 1000/hour long window? Also add a new stats endpoint that returns the current rate limit usage for the authenticated user so we can monitor it.",
+      "expected_output": "Updates READ_LIMITS in rate-limiter.ts to 200/min and 1000/hour. Creates a new Cloud Function endpoint (e.g., rateLimitStats) that reads the _rate_limits collection for the current user. Registers a corresponding MCP tool. Correctly classifies the new stats endpoint as a read operation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I need to add a reopen_task tool to the MCP server. We already have the tasksReopen Cloud Function endpoint — it takes a taskId and sets status back to pending. Just add the MCP tool and OpenAPI entry, no need to touch the Cloud Functions code.",
+      "expected_output": "Adds a new MCP tool (reopen_task) in _registerTools() that calls api.call('tasksReopen', { taskId }). Uses z.string() for taskId with .describe(). Adds the OpenAPI entry under /tasksReopen as a POST endpoint. Does NOT modify functions/src/index.ts.",
+      "files": []
+    }
+  ]
+}

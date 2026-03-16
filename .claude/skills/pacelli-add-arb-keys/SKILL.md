@@ -94,6 +94,7 @@ Follow the existing patterns:
 | Inventory (auto-tasks) | `inventory` | `inventoryCreateRestockTask`, `inventoryRestockTaskTitle`, `inventoryExpiryTaskTitle`, `inventoryRestockTaskCreated`, `inventoryExpiryTaskCreated` |
 | Inventory (calendar) | `inventory` | `inventoryCalendarExpiring`, `inventoryExpiryCalendarDot` |
 | Home (inventory) | `home` | `homeInventorySnapshot`, `homeInvTotal` |
+| AI Assistant | `aiAssistant` | `aiAssistantTitle`, `aiAssistantSend`, `aiAssistantHint`, `aiAssistantError` |
 
 ### 7. Using the new keys in Dart code
 In any widget that needs the new string:
@@ -121,4 +122,4 @@ flutter clean && flutter pub get && flutter run
 - **Missing `@key` metadata**: If a key uses placeholders but has no `@key` entry in `app_en.arb`, the generated code won't have typed parameters
 
 ## Quick Reference: Current Key Count
-As of March 2026: ~800 keys in EN, ~665 in ES/IT across 3 locales (~107 inventory keys). Note: EN has more keys due to `@key` metadata entries for parameterised strings (these are not counted as translation keys in ES/IT).
+As of March 2026: ~835 keys in EN, ~700 in ES/IT across 3 locales (~107 inventory keys, ~34 AI Assistant keys). Note: EN has more keys due to `@key` metadata entries for parameterised strings (these are not counted as translation keys in ES/IT).

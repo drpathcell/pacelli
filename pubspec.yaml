@@ -91,7 +91,5 @@ flutter:
   generate: true
   uses-material-design: true
 
-  # Assets will be added later when we have images and icons
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  assets:
+    - assets/icons/

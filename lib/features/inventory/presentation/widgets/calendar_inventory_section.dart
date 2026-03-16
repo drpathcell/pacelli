@@ -69,13 +69,13 @@ class CalendarInventorySection extends StatelessWidget {
                     ].join(' · '),
                     style: context.textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondaryLight,
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                   ),
                   trailing: Chip(
                     label: Text(
                       l10n.inventoryExpiringSoon,
-                      style: const TextStyle(fontSize: 10),
+                      style: const TextStyle(fontSize: 13),
                     ),
                     backgroundColor: Colors.orange.shade50,
                     side: BorderSide.none,

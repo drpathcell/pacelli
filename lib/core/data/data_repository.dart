@@ -447,6 +447,60 @@ abstract class DataRepository {
   Future<Map<String, int>> getInventoryStats(String householdId);
 
   // ═══════════════════════════════════════════════════════════════════
+  //  HOUSE MANUAL
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Creates a new manual entry. Returns the created entry.
+  Future<ManualEntry> createManualEntry({
+    required String householdId,
+    required String title,
+    String content = '',
+    String? categoryId,
+    List<String> tags = const [],
+    bool isPinned = false,
+  });
+
+  /// Fetches all manual entries for a household with optional filters.
+  Future<List<ManualEntry>> getManualEntries({
+    required String householdId,
+    String? categoryId,
+    bool? pinnedOnly,
+    String? searchQuery,
+  });
+
+  /// Fetches a single manual entry by ID.
+  Future<ManualEntry> getManualEntry(String entryId);
+
+  /// Updates manual entry fields. Only non-null fields are changed.
+  Future<void> updateManualEntry({
+    required String entryId,
+    String? title,
+    String? content,
+    String? categoryId,
+    List<String>? tags,
+    bool? isPinned,
+  });
+
+  /// Deletes a manual entry.
+  Future<void> deleteManualEntry(String entryId);
+
+  // ── Manual Categories ──
+
+  /// Gets all manual categories for a household.
+  Future<List<ManualCategory>> getManualCategories(String householdId);
+
+  /// Creates a new manual category. Returns the created category.
+  Future<ManualCategory> createManualCategory({
+    required String householdId,
+    required String name,
+    String icon = 'menu_book',
+    String color = '#7EA87E',
+  });
+
+  /// Deletes a manual category.
+  Future<void> deleteManualCategory(String categoryId);
+
+  // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
   // ═══════════════════════════════════════════════════════════════════
 
@@ -458,7 +512,7 @@ abstract class DataRepository {
   Future<List<SearchResult>> searchHousehold({
     required String householdId,
     required String query,
-    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment', 'inventory'],
+    List<String> entityTypes = const ['task', 'checklist', 'plan', 'attachment', 'inventory', 'manual'],
   });
 
   // ═══════════════════════════════════════════════════════════════════

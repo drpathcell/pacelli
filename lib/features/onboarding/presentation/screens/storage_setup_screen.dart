@@ -258,7 +258,7 @@ class _BackendOptionCard extends StatelessWidget {
                               child: Text(
                                 badge!,
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.success,
                                 ),

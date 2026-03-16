@@ -1943,6 +1943,275 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  HOUSE MANUAL
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<ManualEntry> createManualEntry({
+    required String householdId,
+    required String title,
+    String content = '',
+    String? categoryId,
+    List<String> tags = const [],
+    bool isPinned = false,
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final doc = {
+      'id': id,
+      'household_id': householdId,
+      'title': _enc(title),
+      'content': _enc(content),
+      'category_id': categoryId,
+      'tags': tags.map(_enc).toList(),
+      'is_pinned': isPinned,
+      'created_by': _uid,
+      'created_at': Timestamp.fromDate(now),
+      'updated_at': Timestamp.fromDate(now),
+      'last_edited_by': _uid,
+    };
+
+    await _db.collection('manual_entries').doc(id).set(doc);
+    return getManualEntry(id);
+  }
+
+  @override
+  Future<List<ManualEntry>> getManualEntries({
+    required String householdId,
+    String? categoryId,
+    bool? pinnedOnly,
+    String? searchQuery,
+  }) async {
+    Query<Map<String, dynamic>> query = _db
+        .collection('manual_entries')
+        .where('household_id', isEqualTo: householdId);
+
+    if (categoryId != null) {
+      query = query.where('category_id', isEqualTo: categoryId);
+    }
+    if (pinnedOnly == true) {
+      query = query.where('is_pinned', isEqualTo: true);
+    }
+
+    final snapshot = await query
+        .orderBy('updated_at', descending: true)
+        .limit(500)
+        .get();
+
+    if (snapshot.docs.isEmpty) return [];
+
+    // Bulk-fetch categories.
+    final catIds = <String>{};
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['category_id'] != null) {
+        catIds.add(data['category_id'] as String);
+      }
+    }
+
+    final categories = <String, ManualCategory>{};
+    if (catIds.isNotEmpty) {
+      final catDocs = await Future.wait(
+        catIds.map((catId) =>
+            _db.collection('manual_categories').doc(catId).get()),
+      );
+      for (final catDoc in catDocs) {
+        if (catDoc.exists) {
+          final cd = catDoc.data()!;
+          categories[catDoc.id] = ManualCategory(
+            id: cd['id'] as String? ?? catDoc.id,
+            householdId: cd['household_id'] as String? ?? '',
+            name: _dec(cd['name'] as String? ?? ''),
+            icon: cd['icon'] as String? ?? 'menu_book',
+            color: cd['color'] as String? ?? '#7EA87E',
+            sortOrder: (cd['sort_order'] as num?)?.toInt() ?? 0,
+            createdBy: cd['created_by'] as String? ?? '',
+            createdAt: _parseDate(cd['created_at']) ?? DateTime.now(),
+          );
+        }
+      }
+    }
+
+    final entries = snapshot.docs.map((doc) {
+      final d = doc.data();
+      final tagList = (d['tags'] as List<dynamic>? ?? [])
+          .cast<String>()
+          .map(_dec)
+          .toList();
+      return ManualEntry(
+        id: d['id'] as String,
+        householdId: d['household_id'] as String,
+        title: _dec(d['title'] as String? ?? ''),
+        content: _dec(d['content'] as String? ?? ''),
+        categoryId: d['category_id'] as String?,
+        tags: tagList,
+        isPinned: d['is_pinned'] as bool? ?? false,
+        createdBy: d['created_by'] as String? ?? '',
+        createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+        updatedAt: _parseDate(d['updated_at']) ?? DateTime.now(),
+        lastEditedBy: d['last_edited_by'] as String?,
+        category: d['category_id'] != null
+            ? categories[d['category_id'] as String]
+            : null,
+      );
+    }).toList();
+
+    // Client-side text search (encrypted data can't be queried server-side).
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final q = searchQuery.toLowerCase();
+      return entries.where((e) =>
+          e.title.toLowerCase().contains(q) ||
+          e.content.toLowerCase().contains(q) ||
+          e.tags.any((t) => t.toLowerCase().contains(q))).toList();
+    }
+
+    return entries;
+  }
+
+  @override
+  Future<ManualEntry> getManualEntry(String entryId) async {
+    final doc = await _db.collection('manual_entries').doc(entryId).get();
+    if (!doc.exists) throw Exception('Manual entry not found: $entryId');
+    final d = doc.data()!;
+
+    // Fetch category if present.
+    ManualCategory? category;
+    if (d['category_id'] != null) {
+      final catDoc = await _db
+          .collection('manual_categories')
+          .doc(d['category_id'] as String)
+          .get();
+      if (catDoc.exists) {
+        final cd = catDoc.data()!;
+        category = ManualCategory(
+          id: cd['id'] as String? ?? catDoc.id,
+          householdId: cd['household_id'] as String? ?? '',
+          name: _dec(cd['name'] as String? ?? ''),
+          icon: cd['icon'] as String? ?? 'menu_book',
+          color: cd['color'] as String? ?? '#7EA87E',
+          sortOrder: (cd['sort_order'] as num?)?.toInt() ?? 0,
+          createdBy: cd['created_by'] as String? ?? '',
+          createdAt: _parseDate(cd['created_at']) ?? DateTime.now(),
+        );
+      }
+    }
+
+    final tagList = (d['tags'] as List<dynamic>? ?? [])
+        .cast<String>()
+        .map(_dec)
+        .toList();
+
+    return ManualEntry(
+      id: d['id'] as String,
+      householdId: d['household_id'] as String,
+      title: _dec(d['title'] as String? ?? ''),
+      content: _dec(d['content'] as String? ?? ''),
+      categoryId: d['category_id'] as String?,
+      tags: tagList,
+      isPinned: d['is_pinned'] as bool? ?? false,
+      createdBy: d['created_by'] as String? ?? '',
+      createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+      updatedAt: _parseDate(d['updated_at']) ?? DateTime.now(),
+      lastEditedBy: d['last_edited_by'] as String?,
+      category: category,
+    );
+  }
+
+  @override
+  Future<void> updateManualEntry({
+    required String entryId,
+    String? title,
+    String? content,
+    String? categoryId,
+    List<String>? tags,
+    bool? isPinned,
+  }) async {
+    final updates = <String, dynamic>{
+      'updated_at': Timestamp.fromDate(DateTime.now()),
+      'last_edited_by': _uid,
+    };
+
+    if (title != null) updates['title'] = _enc(title);
+    if (content != null) updates['content'] = _enc(content);
+    if (categoryId != null) updates['category_id'] = categoryId;
+    if (tags != null) updates['tags'] = tags.map(_enc).toList();
+    if (isPinned != null) updates['is_pinned'] = isPinned;
+
+    await _db.collection('manual_entries').doc(entryId).update(updates);
+  }
+
+  @override
+  Future<void> deleteManualEntry(String entryId) async {
+    await _db.collection('manual_entries').doc(entryId).delete();
+  }
+
+  // ── Manual Categories ──
+
+  @override
+  Future<List<ManualCategory>> getManualCategories(String householdId) async {
+    final snapshot = await _db
+        .collection('manual_categories')
+        .where('household_id', isEqualTo: householdId)
+        .orderBy('sort_order')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final d = doc.data();
+      return ManualCategory(
+        id: d['id'] as String? ?? doc.id,
+        householdId: d['household_id'] as String? ?? '',
+        name: _dec(d['name'] as String? ?? ''),
+        icon: d['icon'] as String? ?? 'menu_book',
+        color: d['color'] as String? ?? '#7EA87E',
+        sortOrder: (d['sort_order'] as num?)?.toInt() ?? 0,
+        createdBy: d['created_by'] as String? ?? '',
+        createdAt: _parseDate(d['created_at']) ?? DateTime.now(),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<ManualCategory> createManualCategory({
+    required String householdId,
+    required String name,
+    String icon = 'menu_book',
+    String color = '#7EA87E',
+  }) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final doc = {
+      'id': id,
+      'household_id': householdId,
+      'name': _enc(name),
+      'icon': icon,
+      'color': color,
+      'sort_order': 0,
+      'created_by': _uid,
+      'created_at': Timestamp.fromDate(now),
+    };
+
+    await _db.collection('manual_categories').doc(id).set(doc);
+
+    return ManualCategory(
+      id: id,
+      householdId: householdId,
+      name: name,
+      icon: icon,
+      color: color,
+      sortOrder: 0,
+      createdBy: _uid ?? '',
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<void> deleteManualCategory(String categoryId) async {
+    await _db.collection('manual_categories').doc(categoryId).delete();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  SEARCH
   // ═══════════════════════════════════════════════════════════════════
 
@@ -2158,6 +2427,32 @@ class FirebaseDataRepository implements DataRepository {
       }
     }
 
+    // ── Manual Entries ──
+    if (entityTypes.contains('manual')) {
+      final manualSnap = await _db
+          .collection('manual_entries')
+          .where('household_id', isEqualTo: householdId)
+          .limit(200)
+          .get();
+      for (final doc in manualSnap.docs) {
+        final d = doc.data();
+        final title = _dec(d['title'] as String? ?? '');
+        final content = _dec(d['content'] as String? ?? '');
+        if (matches(title) || matches(content)) {
+          results.add(SearchResult(
+            id: doc.id,
+            entityType: 'manual',
+            householdId: householdId,
+            title: title,
+            subtitle: content.length > 100
+                ? '${content.substring(0, 100)}…'
+                : content,
+            relevanceDate: _parseDate(d['updated_at']),
+          ));
+        }
+      }
+    }
+
     // Sort by relevance date (most recent first), nulls last.
     results.sort((a, b) {
       if (a.relevanceDate == null && b.relevanceDate == null) return 0;
@@ -2269,6 +2564,8 @@ class FirebaseDataRepository implements DataRepository {
       'inventory_locations',
       'inventory_logs',
       'inventory_attachments',
+      'manual_entries',
+      'manual_categories',
     ]) {
       final snap = await _db
           .collection(col)

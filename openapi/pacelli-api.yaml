@@ -1,0 +1,1558 @@
+openapi: 3.1.0
+info:
+  title: Pacelli Household Management API
+  version: 1.0.0
+  description: |
+    REST API for the Pacelli household management app. All endpoints require
+    a Firebase ID token in the Authorization header (Bearer scheme).
+
+    Data is end-to-end encrypted with AES-256-CBC — the API decrypts on read
+    and encrypts on write, so consumers see plaintext.
+
+    Rate limits: 100 reads/min, 30 writes/min, 500 requests/hour per user.
+  contact:
+    name: Pacelli
+servers:
+  - url: https://us-central1-pacelli-app.cloudfunctions.net
+    description: Production (Firebase Cloud Functions)
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID Token
+      description: Firebase ID token obtained via FirebaseAuth.getIdToken()
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [pending, in_progress, completed] }
+        priority: { type: string, enum: [low, medium, high, urgent] }
+        categoryId: { type: string }
+        assignedTo: { type: string }
+        isShared: { type: boolean }
+        dueDate: { type: string, format: date }
+        startDate: { type: string, format: date }
+        recurrence: { type: string }
+        subtasks: { type: array, items: { $ref: '#/components/schemas/Subtask' } }
+        createdAt: { type: string, format: date-time }
+
+    Subtask:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        isCompleted: { type: boolean }
+        sortOrder: { type: integer }
+
+    TaskCategory:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        icon: { type: string }
+        color: { type: string }
+
+    Checklist:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        items: { type: array, items: { $ref: '#/components/schemas/ChecklistItem' } }
+        createdAt: { type: string, format: date-time }
+
+    ChecklistItem:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        quantity: { type: string }
+        isChecked: { type: boolean }
+
+    Plan:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        status: { type: string, enum: [draft, active, finalised, archived] }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        isTemplate: { type: boolean }
+        entries: { type: array, items: { $ref: '#/components/schemas/PlanEntry' } }
+        checklistItems: { type: array, items: { $ref: '#/components/schemas/PlanChecklistItem' } }
+
+    PlanEntry:
+      type: object
+      properties:
+        id: { type: string }
+        entryDate: { type: string, format: date }
+        title: { type: string }
+        label: { type: string }
+        description: { type: string }
+        sortOrder: { type: integer }
+
+    PlanChecklistItem:
+      type: object
+      properties:
+        id: { type: string }
+        entryId: { type: string }
+        title: { type: string }
+        quantity: { type: string }
+        isChecked: { type: boolean }
+
+    InventoryItem:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        quantity: { type: number }
+        unit: { type: string }
+        lowStockThreshold: { type: number }
+        barcode: { type: string }
+        barcodeType: { type: string }
+        expiryDate: { type: string, format: date }
+        purchaseDate: { type: string, format: date }
+        notes: { type: string }
+        categoryId: { type: string }
+        locationId: { type: string }
+
+    InventoryCategory:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        icon: { type: string }
+        color: { type: string }
+
+    InventoryLocation:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        icon: { type: string }
+
+    SearchResult:
+      type: object
+      properties:
+        type: { type: string, enum: [task, checklist, plan, inventory, attachment] }
+        id: { type: string }
+        title: { type: string }
+        subtitle: { type: string }
+        relevanceDate: { type: string, format: date-time }
+
+    FeedbackEntry:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [general, aiResponse, bug, featureRequest] }
+        rating: { type: string, enum: [positive, negative, neutral] }
+        message: { type: string }
+        context: { type: string, nullable: true }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    AppDiagnostic:
+      type: object
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [error, warning, performance, usage] }
+        summary: { type: string }
+        detail: { type: string, nullable: true }
+        source: { type: string }
+        userId: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    DiagnosticStats:
+      type: object
+      properties:
+        period: { type: string }
+        errors: { type: integer }
+        warnings: { type: integer }
+        totalFeedback: { type: integer }
+        positiveFeedback: { type: integer }
+        negativeFeedback: { type: integer }
+        feedbackSentiment: { type: integer, nullable: true, description: Percentage of positive feedback }
+
+    WeeklyDigest:
+      type: object
+      properties:
+        id: { type: string }
+        weekStarting: { type: string, format: date-time }
+        weekEnding: { type: string, format: date-time }
+        tasksCreated: { type: integer }
+        tasksCompleted: { type: integer }
+        checklistItemsChecked: { type: integer }
+        plansCreated: { type: integer }
+        inventoryItemsAdded: { type: integer }
+        manualEntriesCreated: { type: integer }
+        aiChatMessages: { type: integer }
+        feedbackSubmitted: { type: integer }
+        errorsLogged: { type: integer }
+        summary: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+paths:
+  # ── Tasks ──────────────────────────────────────────────────────
+
+  /tasksList:
+    post:
+      operationId: listTasks
+      summary: List household tasks
+      tags: [Tasks]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [pending, in_progress, completed] }
+                categoryId: { type: string }
+                priority: { type: string, enum: [low, medium, high, urgent] }
+                assignedTo: { type: string }
+                isShared: { type: boolean }
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Task' }
+
+  /tasksGet:
+    post:
+      operationId: getTask
+      summary: Get task by ID
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Task' }
+
+  /tasksCreate:
+    post:
+      operationId: createTask
+      summary: Create a new task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                priority: { type: string, enum: [low, medium, high, urgent] }
+                dueDate: { type: string, format: date }
+                startDate: { type: string, format: date }
+                assignedTo: { type: string }
+                isShared: { type: boolean }
+                recurrence: { type: string }
+                subtaskTitles: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Created task
+
+  /tasksUpdate:
+    post:
+      operationId: updateTask
+      summary: Update an existing task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+                title: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                priority: { type: string }
+                status: { type: string }
+                dueDate: { type: string, format: date }
+                startDate: { type: string, format: date }
+                assignedTo: { type: string }
+                isShared: { type: boolean }
+                recurrence: { type: string }
+      responses:
+        '200':
+          description: Updated task
+
+  /tasksComplete:
+    post:
+      operationId: completeTask
+      summary: Mark task as completed
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: Task completed
+
+  /tasksReopen:
+    post:
+      operationId: reopenTask
+      summary: Reopen a completed task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: Task reopened
+
+  /tasksDelete:
+    post:
+      operationId: deleteTask
+      summary: Delete a task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: Task deleted
+
+  /tasksStats:
+    post:
+      operationId: getTaskStats
+      summary: Get task statistics
+      tags: [Tasks]
+      responses:
+        '200':
+          description: Task statistics
+
+  # ── Subtasks ─────────────────────────────────────────────────
+
+  /subtasksAdd:
+    post:
+      operationId: addSubtask
+      summary: Add a subtask to a task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId, title]
+              properties:
+                taskId: { type: string }
+                title: { type: string }
+                sortOrder: { type: integer }
+      responses:
+        '200':
+          description: Subtask added
+
+  /subtasksToggle:
+    post:
+      operationId: toggleSubtask
+      summary: Toggle subtask completion
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subtaskId, isCompleted]
+              properties:
+                subtaskId: { type: string }
+                isCompleted: { type: boolean }
+      responses:
+        '200':
+          description: Subtask toggled
+
+  /subtasksDelete:
+    post:
+      operationId: deleteSubtask
+      summary: Delete a subtask
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subtaskId]
+              properties:
+                subtaskId: { type: string }
+      responses:
+        '200':
+          description: Subtask deleted
+
+  # ── Categories ─────────────────────────────────────────────────
+
+  /categoriesList:
+    post:
+      operationId: listCategories
+      summary: List task categories
+      tags: [Categories]
+      responses:
+        '200':
+          description: List of categories
+
+  /categoriesCreate:
+    post:
+      operationId: createCategory
+      summary: Create a task category
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                icon: { type: string }
+                color: { type: string }
+      responses:
+        '200':
+          description: Category created
+
+  /categoriesDelete:
+    post:
+      operationId: deleteCategory
+      summary: Delete a task category
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId]
+              properties:
+                categoryId: { type: string }
+      responses:
+        '200':
+          description: Category deleted
+
+  # ── Checklists ─────────────────────────────────────────────────
+
+  /checklistsList:
+    post:
+      operationId: listChecklists
+      summary: List all checklists
+      tags: [Checklists]
+      responses:
+        '200':
+          description: List of checklists
+
+  /checklistsGet:
+    post:
+      operationId: getChecklist
+      summary: Get checklist by ID
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checklistId]
+              properties:
+                checklistId: { type: string }
+      responses:
+        '200':
+          description: Checklist details
+
+  /checklistsCreate:
+    post:
+      operationId: createChecklist
+      summary: Create a new checklist
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+      responses:
+        '200':
+          description: Checklist created
+
+  /checklistsUpdate:
+    post:
+      operationId: updateChecklist
+      summary: Update checklist title
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checklistId, title]
+              properties:
+                checklistId: { type: string }
+                title: { type: string }
+      responses:
+        '200':
+          description: Checklist updated
+
+  /checklistsDelete:
+    post:
+      operationId: deleteChecklist
+      summary: Delete a checklist
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checklistId]
+              properties:
+                checklistId: { type: string }
+      responses:
+        '200':
+          description: Checklist deleted
+
+  /checklistItemsAdd:
+    post:
+      operationId: addChecklistItem
+      summary: Add an item to a checklist
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checklistId, title]
+              properties:
+                checklistId: { type: string }
+                title: { type: string }
+                quantity: { type: string }
+      responses:
+        '200':
+          description: Item added
+
+  /checklistItemsToggle:
+    post:
+      operationId: toggleChecklistItem
+      summary: Toggle checklist item
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, isChecked]
+              properties:
+                itemId: { type: string }
+                isChecked: { type: boolean }
+      responses:
+        '200':
+          description: Item toggled
+
+  /checklistItemsDelete:
+    post:
+      operationId: deleteChecklistItem
+      summary: Delete checklist item
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '200':
+          description: Item deleted
+
+  /checklistItemsPushAsTask:
+    post:
+      operationId: pushChecklistItemAsTask
+      summary: Convert checklist item to a task
+      tags: [Checklists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, itemTitle]
+              properties:
+                itemId: { type: string }
+                itemTitle: { type: string }
+      responses:
+        '200':
+          description: Task created from checklist item
+
+  # ── Plans ──────────────────────────────────────────────────────
+
+  /plansList:
+    post:
+      operationId: listPlans
+      summary: List all plans
+      tags: [Plans]
+      responses:
+        '200':
+          description: List of plans
+
+  /plansGet:
+    post:
+      operationId: getPlan
+      summary: Get plan by ID with entries and checklist items
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId: { type: string }
+      responses:
+        '200':
+          description: Plan details
+
+  /plansCreate:
+    post:
+      operationId: createPlan
+      summary: Create a new plan
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, startDate, endDate]
+              properties:
+                title: { type: string }
+                type: { type: string }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+                isTemplate: { type: boolean }
+                templateName: { type: string }
+      responses:
+        '200':
+          description: Plan created
+
+  /plansDelete:
+    post:
+      operationId: deletePlan
+      summary: Delete a plan
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId: { type: string }
+      responses:
+        '200':
+          description: Plan deleted
+
+  /plansUpdateStatus:
+    post:
+      operationId: updatePlanStatus
+      summary: Update plan status
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, status]
+              properties:
+                planId: { type: string }
+                status: { type: string, enum: [draft, active, finalised, archived] }
+      responses:
+        '200':
+          description: Status updated
+
+  /plansFinalise:
+    post:
+      operationId: finalisePlan
+      summary: Finalise a plan — create tasks from entries
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, entryActions]
+              properties:
+                planId: { type: string }
+                entryActions:
+                  type: object
+                  additionalProperties: { type: string, enum: [create_task, skip] }
+      responses:
+        '200':
+          description: Plan finalised
+
+  /planEntriesAdd:
+    post:
+      operationId: addPlanEntry
+      summary: Add an entry to a plan
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, entryDate, title]
+              properties:
+                planId: { type: string }
+                entryDate: { type: string, format: date }
+                title: { type: string }
+                label: { type: string }
+                description: { type: string }
+                sortOrder: { type: integer }
+      responses:
+        '200':
+          description: Entry added
+
+  /planEntriesUpdate:
+    post:
+      operationId: updatePlanEntry
+      summary: Update a plan entry
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entryId]
+              properties:
+                entryId: { type: string }
+                title: { type: string }
+                label: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Entry updated
+
+  /planEntriesDelete:
+    post:
+      operationId: deletePlanEntry
+      summary: Delete a plan entry
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entryId]
+              properties:
+                entryId: { type: string }
+      responses:
+        '200':
+          description: Entry deleted
+
+  /planChecklistItemsAdd:
+    post:
+      operationId: addPlanChecklistItem
+      summary: Add a checklist item to a plan
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, title]
+              properties:
+                planId: { type: string }
+                entryId: { type: string }
+                title: { type: string }
+                quantity: { type: string }
+      responses:
+        '200':
+          description: Item added
+
+  /planChecklistItemsToggle:
+    post:
+      operationId: togglePlanChecklistItem
+      summary: Toggle plan checklist item
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, isChecked]
+              properties:
+                itemId: { type: string }
+                isChecked: { type: boolean }
+      responses:
+        '200':
+          description: Item toggled
+
+  /planChecklistItemsDelete:
+    post:
+      operationId: deletePlanChecklistItem
+      summary: Delete plan checklist item
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '200':
+          description: Item deleted
+
+  /planChecklistItemsPushAsTask:
+    post:
+      operationId: pushPlanChecklistItemAsTask
+      summary: Convert plan checklist item to a task
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, itemTitle]
+              properties:
+                itemId: { type: string }
+                itemTitle: { type: string }
+      responses:
+        '200':
+          description: Task created from plan checklist item
+
+  /planTemplatesList:
+    post:
+      operationId: listTemplates
+      summary: List plan templates
+      tags: [Plans]
+      responses:
+        '200':
+          description: List of templates
+
+  /planTemplatesSave:
+    post:
+      operationId: savePlanAsTemplate
+      summary: Save a plan as a reusable template
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, templateName]
+              properties:
+                planId: { type: string }
+                templateName: { type: string }
+      responses:
+        '200':
+          description: Template saved
+
+  /planTemplatesCreate:
+    post:
+      operationId: createFromTemplate
+      summary: Create a plan from a template
+      tags: [Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [templateId, title, startDate, endDate]
+              properties:
+                templateId: { type: string }
+                title: { type: string }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+      responses:
+        '200':
+          description: Plan created from template
+
+  # ── Inventory ──────────────────────────────────────────────────
+
+  /inventoryList:
+    post:
+      operationId: listInventory
+      summary: List inventory items
+      tags: [Inventory]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categoryId: { type: string }
+                locationId: { type: string }
+                lowStockOnly: { type: boolean }
+                expiringOnly: { type: boolean }
+      responses:
+        '200':
+          description: List of inventory items
+
+  /inventoryGet:
+    post:
+      operationId: getInventoryItem
+      summary: Get inventory item by ID
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '200':
+          description: Item details
+
+  /inventoryCreate:
+    post:
+      operationId: createInventoryItem
+      summary: Create an inventory item
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                locationId: { type: string }
+                quantity: { type: number }
+                unit: { type: string }
+                lowStockThreshold: { type: number }
+                barcode: { type: string }
+                barcodeType: { type: string }
+                expiryDate: { type: string, format: date }
+                purchaseDate: { type: string, format: date }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Item created
+
+  /inventoryUpdate:
+    post:
+      operationId: updateInventoryItem
+      summary: Update an inventory item
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+                name: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                locationId: { type: string }
+                quantity: { type: number }
+                unit: { type: string }
+                lowStockThreshold: { type: number }
+                barcode: { type: string }
+                barcodeType: { type: string }
+                expiryDate: { type: string, format: date }
+                purchaseDate: { type: string, format: date }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Item updated
+
+  /inventoryDelete:
+    post:
+      operationId: deleteInventoryItem
+      summary: Delete an inventory item
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '200':
+          description: Item deleted
+
+  /inventoryStats:
+    post:
+      operationId: getInventoryStats
+      summary: Get inventory statistics
+      tags: [Inventory]
+      responses:
+        '200':
+          description: Inventory statistics
+
+  /inventoryCategoriesList:
+    post:
+      operationId: listInventoryCategories
+      summary: List inventory categories
+      tags: [Inventory]
+      responses:
+        '200':
+          description: List of categories
+
+  /inventoryCategoriesCreate:
+    post:
+      operationId: createInventoryCategory
+      summary: Create an inventory category
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                icon: { type: string }
+                color: { type: string }
+      responses:
+        '200':
+          description: Category created
+
+  /inventoryCategoriesDelete:
+    post:
+      operationId: deleteInventoryCategory
+      summary: Delete an inventory category
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId]
+              properties:
+                categoryId: { type: string }
+      responses:
+        '200':
+          description: Category deleted
+
+  /inventoryLocationsList:
+    post:
+      operationId: listInventoryLocations
+      summary: List inventory locations
+      tags: [Inventory]
+      responses:
+        '200':
+          description: List of locations
+
+  /inventoryLocationsCreate:
+    post:
+      operationId: createInventoryLocation
+      summary: Create an inventory location
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                icon: { type: string }
+      responses:
+        '200':
+          description: Location created
+
+  /inventoryLocationsDelete:
+    post:
+      operationId: deleteInventoryLocation
+      summary: Delete an inventory location
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [locationId]
+              properties:
+                locationId: { type: string }
+      responses:
+        '200':
+          description: Location deleted
+
+  /inventoryLogsCreate:
+    post:
+      operationId: logInventoryAction
+      summary: Log an inventory action (add, remove, adjust)
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, action, quantityChange, quantityAfter]
+              properties:
+                itemId: { type: string }
+                action: { type: string, enum: [add, remove, adjust, create, update] }
+                quantityChange: { type: number }
+                quantityAfter: { type: number }
+                note: { type: string }
+      responses:
+        '200':
+          description: Action logged
+
+  /inventoryLogsList:
+    post:
+      operationId: getInventoryLogs
+      summary: Get inventory logs for an item
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+                limit: { type: integer }
+      responses:
+        '200':
+          description: List of logs
+
+  # ── Attachments ────────────────────────────────────────────────
+
+  /taskAttachmentsCreate:
+    post:
+      operationId: createTaskAttachment
+      summary: Attach a Google Drive file to a task
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId, driveFileId, fileName, mimeType, fileSizeBytes, webViewLink]
+              properties:
+                taskId: { type: string }
+                driveFileId: { type: string }
+                fileName: { type: string }
+                mimeType: { type: string }
+                fileSizeBytes: { type: integer }
+                thumbnailUrl: { type: string }
+                webViewLink: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Attachment created
+
+  /taskAttachmentsList:
+    post:
+      operationId: listTaskAttachments
+      summary: List task attachments
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskId]
+              properties:
+                taskId: { type: string }
+      responses:
+        '200':
+          description: List of attachments
+
+  /taskAttachmentsDelete:
+    post:
+      operationId: deleteTaskAttachment
+      summary: Delete a task attachment
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachmentId]
+              properties:
+                attachmentId: { type: string }
+      responses:
+        '200':
+          description: Attachment deleted
+
+  /planAttachmentsCreate:
+    post:
+      operationId: createPlanAttachment
+      summary: Attach a Google Drive file to a plan entry
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, entryId, driveFileId, fileName, mimeType, fileSizeBytes, webViewLink]
+              properties:
+                planId: { type: string }
+                entryId: { type: string }
+                driveFileId: { type: string }
+                fileName: { type: string }
+                mimeType: { type: string }
+                fileSizeBytes: { type: integer }
+                thumbnailUrl: { type: string }
+                webViewLink: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Attachment created
+
+  /planAttachmentsListByEntry:
+    post:
+      operationId: listPlanEntryAttachments
+      summary: List attachments for a plan entry
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entryId]
+              properties:
+                entryId: { type: string }
+      responses:
+        '200':
+          description: List of attachments
+
+  /planAttachmentsListByPlan:
+    post:
+      operationId: listPlanAttachments
+      summary: List all attachments for a plan
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId: { type: string }
+      responses:
+        '200':
+          description: List of attachments
+
+  /planAttachmentsDelete:
+    post:
+      operationId: deletePlanAttachment
+      summary: Delete a plan attachment
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachmentId]
+              properties:
+                attachmentId: { type: string }
+      responses:
+        '200':
+          description: Attachment deleted
+
+  /inventoryAttachmentsCreate:
+    post:
+      operationId: createInventoryAttachment
+      summary: Attach a file to an inventory item
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, driveFileId, fileName, mimeType, fileSizeBytes, webViewLink]
+              properties:
+                itemId: { type: string }
+                driveFileId: { type: string }
+                fileName: { type: string }
+                mimeType: { type: string }
+                fileSizeBytes: { type: integer }
+                thumbnailUrl: { type: string }
+                webViewLink: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Attachment created
+
+  /inventoryAttachmentsList:
+    post:
+      operationId: listInventoryAttachments
+      summary: List inventory item attachments
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '200':
+          description: List of attachments
+
+  /inventoryAttachmentsDelete:
+    post:
+      operationId: deleteInventoryAttachment
+      summary: Delete an inventory attachment
+      tags: [Attachments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachmentId]
+              properties:
+                attachmentId: { type: string }
+      responses:
+        '200':
+          description: Attachment deleted
+
+  # ── Search ─────────────────────────────────────────────────────
+
+  /searchAll:
+    post:
+      operationId: searchHousehold
+      summary: Search across all household data
+      tags: [Search]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+                entityTypes:
+                  type: array
+                  items: { type: string, enum: [task, checklist, plan, inventory, attachment] }
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/SearchResult' }
+
+  # ── Feedback & Diagnostics ────────────────────────────────────
+
+  /feedbackList:
+    post:
+      operationId: listFeedback
+      summary: List feedback entries
+      tags: [Feedback]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit: { type: integer, default: 50 }
+                type: { type: string, enum: [general, aiResponse, bug, featureRequest] }
+      responses:
+        '200':
+          description: List of feedback entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/FeedbackEntry' }
+
+  /diagnosticsList:
+    post:
+      operationId: listDiagnostics
+      summary: List diagnostic events
+      tags: [Feedback]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit: { type: integer, default: 100 }
+                kind: { type: string, enum: [error, warning, performance, usage] }
+      responses:
+        '200':
+          description: List of diagnostic events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AppDiagnostic' }
+
+  /diagnosticStatsGet:
+    post:
+      operationId: getDiagnosticStats
+      summary: Get 7-day diagnostic statistics
+      tags: [Feedback]
+      responses:
+        '200':
+          description: Diagnostic statistics for the last 7 days
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data: { $ref: '#/components/schemas/DiagnosticStats' }
+
+  /weeklyDigestGenerate:
+    post:
+      operationId: generateWeeklyDigest
+      summary: Generate a weekly usage digest
+      tags: [Feedback]
+      responses:
+        '200':
+          description: Generated weekly digest
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data: { $ref: '#/components/schemas/WeeklyDigest' }
+
+  /weeklyDigestList:
+    post:
+      operationId: listWeeklyDigests
+      summary: List weekly usage digests
+      tags: [Feedback]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit: { type: integer, default: 12 }
+      responses:
+        '200':
+          description: List of weekly digests
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/WeeklyDigest' }

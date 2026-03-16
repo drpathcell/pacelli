@@ -68,6 +68,7 @@ Check these screens for correct translations:
 - **Manage Inventory Categories / Locations**: list with add/delete, icon/colour picker
 - **Calendar → Expiring Items**: collapsible section showing inventory items expiring on selected day
 - **Home Screen → Inventory Snapshot**: stat cards for total/low stock/expired/expiring soon
+- **AI Assistant Screen**: title, input hint, send button, error messages, welcome text
 - **Bottom Nav Bar**: Home/Tasks/Calendar/Settings labels
 - **Dialogs & Alerts**: delete confirmations, error messages, coming-soon messages
 
@@ -98,4 +99,5 @@ As of March 2026, `app_en.arb` contains approximately 665 translation keys (800 
 - Priority labels (~5 keys)
 - Recurrence labels (~5 keys)
 - Navigation (~4 keys)
+- AI Assistant (~34 keys)
 - Error/loading states (~remaining)

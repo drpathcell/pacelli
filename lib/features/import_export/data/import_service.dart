@@ -78,6 +78,8 @@ class ImportService {
     final invCategories = data['inventory_categories'] as List? ?? [];
     final invLocations = data['inventory_locations'] as List? ?? [];
     final invItems = data['inventory_items'] as List? ?? [];
+    final manualCategories = data['manual_categories'] as List? ?? [];
+    final manualEntries = data['manual_entries'] as List? ?? [];
 
     final totalItems = categories.length +
         tasks.length +
@@ -85,7 +87,9 @@ class ImportService {
         plans.length +
         invCategories.length +
         invLocations.length +
-        invItems.length;
+        invItems.length +
+        manualCategories.length +
+        manualEntries.length;
     int processed = 0;
 
     void report(String status) {
@@ -391,6 +395,75 @@ class ImportService {
         ));
       }
       report('Inventory Items');
+    }
+
+    // ── 8. Manual Categories ──
+    final manualCategoryIdMap = <String, String>{};
+    final existingManualCategories =
+        await _repo.getManualCategories(householdId);
+    final existingManualCatNames =
+        existingManualCategories.map((c) => c.name).toSet();
+
+    for (final cat in manualCategories) {
+      final m = Map<String, dynamic>.from(cat as Map);
+      final catName = m['name'] as String? ?? 'Imported';
+      if (existingManualCatNames.contains(catName)) {
+        skipped++;
+        final existing =
+            existingManualCategories.firstWhere((c) => c.name == catName);
+        manualCategoryIdMap[m['id'] as String] = existing.id;
+        report('Manual Categories');
+        continue;
+      }
+      try {
+        final newCat = await _repo.createManualCategory(
+          householdId: householdId,
+          name: catName,
+          icon: m['icon'] as String? ?? 'menu_book',
+          color: m['color'] as String? ?? '#7EA87E',
+        );
+        manualCategoryIdMap[m['id'] as String] = newCat.id;
+        existingManualCatNames.add(catName);
+        created++;
+      } catch (e) {
+        debugPrint('[ImportService] Skip manual category: $e');
+        skipped++;
+        errors.add(ImportError(
+          entityType: 'Manual Category',
+          entityName: catName,
+          message: e.toString(),
+        ));
+      }
+      report('Manual Categories');
+    }
+
+    // ── 9. Manual Entries ──
+    for (final entry in manualEntries) {
+      final m = Map<String, dynamic>.from(entry as Map);
+      final oldCatId = m['category_id'] as String?;
+      final newCatId =
+          oldCatId != null ? manualCategoryIdMap[oldCatId] : null;
+      final tagList = (m['tags'] as List?)?.cast<String>() ?? [];
+      try {
+        await _repo.createManualEntry(
+          householdId: householdId,
+          title: m['title'] as String? ?? 'Imported',
+          content: m['content'] as String? ?? '',
+          categoryId: newCatId,
+          tags: tagList,
+          isPinned: m['is_pinned'] as bool? ?? false,
+        );
+        created++;
+      } catch (e) {
+        debugPrint('[ImportService] Skip manual entry: $e');
+        skipped++;
+        errors.add(ImportError(
+          entityType: 'Manual Entry',
+          entityName: m['title'] as String? ?? 'Unknown',
+          message: e.toString(),
+        ));
+      }
+      report('Manual Entries');
     }
 
     return ImportResult(created: created, skipped: skipped, errors: errors);
