@@ -2574,7 +2574,7 @@ class FirebaseDataRepository implements DataRepository {
       } catch (_) {}
 
       // Now wipe all household data (including the member doc itself).
-      await _wipeHouseholdData(hid);
+      await _wipeHouseholdData(hid, userId: userId);
     }
 
     // Delete user's profile.
@@ -2594,7 +2594,7 @@ class FirebaseDataRepository implements DataRepository {
   ///
   /// Collects child doc IDs BEFORE deleting parents (Firestore doesn't
   /// cascade deletes). Respects 500-operation batch limit by chunking.
-  Future<void> _wipeHouseholdData(String householdId) async {
+  Future<void> _wipeHouseholdData(String householdId, {required String userId}) async {
     // ── Step 1: Collect parent IDs needed for child lookups ──
 
     final taskSnap = await _db
@@ -2618,6 +2618,12 @@ class FirebaseDataRepository implements DataRepository {
     );
 
     // ── Step 2: Collect all documents to delete ──
+    // The user's own member doc and the household doc are kept separate
+    // and deleted LAST — isMember() must pass for all prior batches.
+
+    final userMemberDocId = '${userId}_$householdId';
+    final userMemberRef = _db.collection('household_members').doc(userMemberDocId);
+    final householdRef = _db.collection('households').doc(householdId);
 
     final allDocs = <DocumentReference>[
       ...taskSnap.docs.map((d) => d.reference),
@@ -2667,53 +2673,74 @@ class FirebaseDataRepository implements DataRepository {
       allDocs.addAll(snap.docs.map((d) => d.reference));
     }
 
-    // Household members.
+    // Household members — exclude the current user's own member doc
+    // (it must survive until the final batch so isMember() keeps passing).
     final memberSnap = await _db
         .collection('household_members')
         .where('household_id', isEqualTo: householdId)
         .get();
     debugPrint('[BURN] Found ${memberSnap.docs.length} household_members');
-    allDocs.addAll(memberSnap.docs.map((d) => d.reference));
-
-    // The household document itself.
-    allDocs.add(_db.collection('households').doc(householdId));
+    for (final doc in memberSnap.docs) {
+      if (doc.id != userMemberDocId) {
+        allDocs.add(doc.reference);
+      }
+    }
 
     // ── Step 3: Batch-delete in chunks of 400 (under 500-op limit) ──
 
     final chunks = _chunk(allDocs, 400);
-    debugPrint('[BURN] Deleting ${allDocs.length} total docs in ${chunks.length} batches');
+    debugPrint('[BURN] Deleting ${allDocs.length} docs in ${chunks.length} batches, '
+        'then final batch for member + household doc');
     var deleted = 0;
     const maxRetries = 3;
 
     for (var i = 0; i < chunks.length; i++) {
       final chunk = chunks[i];
-      var retries = 0;
-
-      while (retries < maxRetries) {
-        try {
-          final batch = _db.batch();
-          for (final ref in chunk) {
-            batch.delete(ref);
-          }
-          await batch.commit();
-          deleted += chunk.length;
-          debugPrint('[BURN] ✓ Batch ${i + 1}/${chunks.length} committed ($deleted total)');
-          break;
-        } catch (e) {
-          retries++;
-          if (retries >= maxRetries) {
-            debugPrint('[BURN] ✗ Batch ${i + 1} failed after $maxRetries retries: $e');
-            break;
-          }
-          debugPrint('[BURN] Batch ${i + 1} attempt $retries failed, retrying in ${retries * 2}s...');
-          await Future.delayed(Duration(seconds: retries * 2));
-        }
-      }
+      await _commitBatchWithRetry(chunk, i + 1, chunks.length, maxRetries);
+      deleted += chunk.length;
+      debugPrint('[BURN] ✓ Batch ${i + 1}/${chunks.length} committed ($deleted total)');
     }
 
-    debugPrint(
-      '[BURN] ✓ Household $householdId: deleted ${allDocs.length} docs',
+    // ── Step 4: Final batch — delete user's member doc + household doc ──
+    // This is the last operation so isMember() was valid for all prior batches.
+    await _commitBatchWithRetry(
+      [userMemberRef, householdRef],
+      chunks.length + 1,
+      chunks.length + 1,
+      maxRetries,
     );
+
+    debugPrint(
+      '[BURN] ✓ Household $householdId: deleted ${allDocs.length + 2} docs',
+    );
+  }
+
+  /// Commits a batch delete with retries. Throws on exhausted retries.
+  Future<void> _commitBatchWithRetry(
+    List<DocumentReference> docs,
+    int batchNum,
+    int totalBatches,
+    int maxRetries,
+  ) async {
+    for (var attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        final batch = _db.batch();
+        for (final ref in docs) {
+          batch.delete(ref);
+        }
+        await batch.commit();
+        return;
+      } catch (e) {
+        if (attempt >= maxRetries) {
+          debugPrint('[BURN] ✗ Batch $batchNum/$totalBatches failed after $maxRetries retries: $e');
+          throw Exception(
+            'Firestore batch $batchNum/$totalBatches failed after $maxRetries retries: $e',
+          );
+        }
+        debugPrint('[BURN] Batch $batchNum attempt $attempt failed, retrying in ${attempt * 2}s...');
+        await Future.delayed(Duration(seconds: attempt * 2));
+      }
+    }
   }
 
   /// Splits a list into chunks of the given size.
