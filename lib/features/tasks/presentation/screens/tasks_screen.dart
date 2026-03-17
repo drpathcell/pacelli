@@ -167,11 +167,14 @@ class _TasksBodyState extends ConsumerState<_TasksBody> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('${AppRoutes.tasks}/create',
-            extra: widget.householdId),
-        backgroundColor: context.colorScheme.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => context.push('${AppRoutes.tasks}/create',
+              extra: widget.householdId),
+          backgroundColor: context.colorScheme.primary,
+          child: const Icon(Icons.add_rounded, color: Colors.white),
+        ),
       ),
       body: Column(
         children: [
@@ -365,7 +368,7 @@ class _TaskList extends ConsumerWidget {
         ref.invalidate(taskStatsProvider(householdId));
       },
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
