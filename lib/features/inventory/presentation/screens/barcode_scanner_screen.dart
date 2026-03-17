@@ -22,6 +22,7 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
   final MobileScannerController _controller = MobileScannerController();
   bool _processing = false;
   String? _lastScanned;
+  DateTime? _lastScannedAt;
 
   @override
   void dispose() {
@@ -94,14 +95,36 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
 
     final code = barcodes.first.rawValue;
     if (code == null || code.isEmpty) return;
-    if (code == _lastScanned) return; // Avoid duplicate scans
+
+    // Debounce: ignore duplicate detections within 2 seconds.
+    final now = DateTime.now();
+    if (code == _lastScanned &&
+        _lastScannedAt != null &&
+        now.difference(_lastScannedAt!).inSeconds < 2) {
+      return;
+    }
 
     setState(() {
       _processing = true;
       _lastScanned = code;
+      _lastScannedAt = now;
     });
 
     try {
+      // Show confirmation before acting on the scan.
+      final confirmed = await _showConfirmationSheet(code);
+      if (confirmed != true) {
+        // User chose to rescan — reset and allow new detections.
+        if (mounted) {
+          setState(() {
+            _processing = false;
+            _lastScanned = null;
+            _lastScannedAt = null;
+          });
+        }
+        return;
+      }
+
       final repo = ref.read(dataRepositoryProvider);
       final items =
           await repo.getInventoryItems(householdId: widget.householdId);
@@ -140,6 +163,51 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
         setState(() => _processing = false);
       }
     }
+  }
+
+  Future<bool?> _showConfirmationSheet(String code) {
+    final l10n = context.l10n;
+    return showModalBottomSheet<bool>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.qr_code_scanner, size: 48),
+              const SizedBox(height: 16),
+              Text(l10n.inventoryScanConfirmTitle,
+                  style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(code,
+                  style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.w600,
+                      )),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => ctx.pop(false),
+                      child: Text(l10n.inventoryScanRescan),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => ctx.pop(true),
+                      child: Text(l10n.inventoryScanConfirm),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<bool?> _showNotFoundDialog(String code) {

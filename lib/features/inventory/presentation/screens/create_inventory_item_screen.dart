@@ -88,42 +88,66 @@ class _CreateInventoryItemScreenState
             const SizedBox(height: 16),
 
             // Category dropdown.
-            categoriesAsync.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (cats) => DropdownButtonFormField<String>(
-                initialValue: _categoryId,
-                decoration:
-                    InputDecoration(labelText: l10n.inventoryCategory),
-                items: [
-                  DropdownMenuItem<String>(
-                      value: null,
-                      child: Text(l10n.inventoryUncategorised)),
-                  ...cats.map((c) => DropdownMenuItem(
-                      value: c.id, child: Text(c.name))),
-                ],
-                onChanged: (v) => setState(() => _categoryId = v),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: categoriesAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (cats) => DropdownButtonFormField<String>(
+                      initialValue: _categoryId,
+                      decoration:
+                          InputDecoration(labelText: l10n.inventoryCategory),
+                      items: [
+                        DropdownMenuItem<String>(
+                            value: null,
+                            child: Text(l10n.inventoryUncategorised)),
+                        ...cats.map((c) => DropdownMenuItem(
+                            value: c.id, child: Text(c.name))),
+                      ],
+                      onChanged: (v) => setState(() => _categoryId = v),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  tooltip: l10n.inventoryAddCategory,
+                  onPressed: () => _showAddCategoryDialog(),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
             // Location dropdown.
-            locationsAsync.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (locs) => DropdownButtonFormField<String>(
-                initialValue: _locationId,
-                decoration:
-                    InputDecoration(labelText: l10n.inventoryLocation),
-                items: [
-                  DropdownMenuItem<String>(
-                      value: null,
-                      child: Text(l10n.inventoryNoLocation)),
-                  ...locs.map((l) => DropdownMenuItem(
-                      value: l.id, child: Text(l.name))),
-                ],
-                onChanged: (v) => setState(() => _locationId = v),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: locationsAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (locs) => DropdownButtonFormField<String>(
+                      initialValue: _locationId,
+                      decoration:
+                          InputDecoration(labelText: l10n.inventoryLocation),
+                      items: [
+                        DropdownMenuItem<String>(
+                            value: null,
+                            child: Text(l10n.inventoryNoLocation)),
+                        ...locs.map((l) => DropdownMenuItem(
+                            value: l.id, child: Text(l.name))),
+                      ],
+                      onChanged: (v) => setState(() => _locationId = v),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  tooltip: l10n.inventoryAddLocation,
+                  onPressed: () => _showAddLocationDialog(),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -274,34 +298,83 @@ class _CreateInventoryItemScreenState
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : Text(l10n.inventorySave),
             ),
-            const SizedBox(height: 12),
-            // Batch create.
-            OutlinedButton.icon(
-              onPressed: _saving || _nameCtrl.text.trim().isEmpty
-                  ? null
-                  : () {
-                      context.push(AppRoutes.batchCreate, extra: {
-                        'householdId': widget.householdId,
-                        'baseName': _nameCtrl.text.trim(),
-                        'categoryId': _categoryId,
-                        'locationId': _locationId,
-                        'unit': _unitCtrl.text.trim().isEmpty
-                            ? 'pieces'
-                            : _unitCtrl.text.trim(),
-                        'expiryDate': _expiryDate,
-                        'purchaseDate': _purchaseDate,
-                        'notes': _notesCtrl.text.trim().isEmpty
-                            ? null
-                            : _notesCtrl.text.trim(),
-                      });
-                    },
-              icon: const Icon(Icons.copy_all),
-              label: Text(l10n.inventoryBatchCreate),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final l10n = context.l10n;
+    final nameCtrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.inventoryAddCategory),
+        content: TextField(
+          controller: nameCtrl,
+          decoration: InputDecoration(labelText: l10n.inventoryCategoryName),
+          textCapitalization: TextCapitalization.sentences,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => ctx.pop(true),
+            child: Text(l10n.commonSave),
+          ),
+        ],
+      ),
+    );
+    if (result == true && nameCtrl.text.trim().isNotEmpty) {
+      final cat = await ref.read(dataRepositoryProvider).createInventoryCategory(
+        householdId: widget.householdId,
+        name: nameCtrl.text.trim(),
+        icon: 'inventory_2',
+        color: '#A5B4A5',
+      );
+      ref.invalidate(inventoryCategoriesProvider);
+      setState(() => _categoryId = cat.id);
+    }
+  }
+
+  Future<void> _showAddLocationDialog() async {
+    final l10n = context.l10n;
+    final nameCtrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.inventoryAddLocation),
+        content: TextField(
+          controller: nameCtrl,
+          decoration: InputDecoration(labelText: l10n.inventoryLocation),
+          textCapitalization: TextCapitalization.sentences,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => ctx.pop(true),
+            child: Text(l10n.commonSave),
+          ),
+        ],
+      ),
+    );
+    if (result == true && nameCtrl.text.trim().isNotEmpty) {
+      final loc = await ref.read(dataRepositoryProvider).createInventoryLocation(
+        householdId: widget.householdId,
+        name: nameCtrl.text.trim(),
+        icon: 'place',
+      );
+      ref.invalidate(inventoryLocationsProvider);
+      setState(() => _locationId = loc.id);
+    }
   }
 
   Future<void> _pickDate(ValueChanged<DateTime> onPicked) async {

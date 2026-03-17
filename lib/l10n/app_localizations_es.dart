@@ -2014,6 +2014,15 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get inventoryScanConfirmTitle => '¿Usar este código?';
+
+  @override
+  String get inventoryScanConfirm => 'Confirmar';
+
+  @override
+  String get inventoryScanRescan => 'Reescanear';
+
+  @override
   String get inventoryBarcodeTypeLabel => 'Tipo de código';
 
   @override
@@ -2040,29 +2049,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get inventoryQrCodeSubtitle =>
       'Escanea este código QR para encontrar este artículo';
-
-  @override
-  String get inventoryBatchCreate => 'Creación en Lote';
-
-  @override
-  String get inventoryBatchTitle => 'Crear Artículos en Lote';
-
-  @override
-  String get inventoryBatchPortions => 'Número de porciones';
-
-  @override
-  String get inventoryBatchPortionsHint =>
-      'Cuántos artículos crear a partir de este';
-
-  @override
-  String inventoryBatchNamePattern(String name, int index, int total) {
-    return '$name ($index/$total)';
-  }
-
-  @override
-  String inventoryBatchCreated(int count) {
-    return '¡$count artículos creados!';
-  }
 
   @override
   String get inventoryCameraPermissionDenied =>

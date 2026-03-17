@@ -3694,6 +3694,24 @@ abstract class AppLocalizations {
   /// **'Found: {name}'**
   String inventoryScanFoundItem(String name);
 
+  /// No description provided for @inventoryScanConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this barcode?'**
+  String get inventoryScanConfirmTitle;
+
+  /// No description provided for @inventoryScanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get inventoryScanConfirm;
+
+  /// No description provided for @inventoryScanRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan'**
+  String get inventoryScanRescan;
+
   /// No description provided for @inventoryBarcodeTypeLabel.
   ///
   /// In en, this message translates to:
@@ -3747,42 +3765,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scan this QR code to find this item'**
   String get inventoryQrCodeSubtitle;
-
-  /// No description provided for @inventoryBatchCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'Batch Create'**
-  String get inventoryBatchCreate;
-
-  /// No description provided for @inventoryBatchTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Batch Create Items'**
-  String get inventoryBatchTitle;
-
-  /// No description provided for @inventoryBatchPortions.
-  ///
-  /// In en, this message translates to:
-  /// **'Number of portions'**
-  String get inventoryBatchPortions;
-
-  /// No description provided for @inventoryBatchPortionsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'How many items to create from this one'**
-  String get inventoryBatchPortionsHint;
-
-  /// No description provided for @inventoryBatchNamePattern.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} ({index}/{total})'**
-  String inventoryBatchNamePattern(String name, int index, int total);
-
-  /// No description provided for @inventoryBatchCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} items created!'**
-  String inventoryBatchCreated(int count);
 
   /// No description provided for @inventoryCameraPermissionDenied.
   ///

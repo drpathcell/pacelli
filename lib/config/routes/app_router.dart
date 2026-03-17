@@ -29,7 +29,6 @@ import '../../features/inventory/presentation/screens/edit_inventory_item_screen
 import '../../features/inventory/presentation/screens/manage_inventory_categories_screen.dart';
 import '../../features/inventory/presentation/screens/manage_inventory_locations_screen.dart';
 import '../../features/inventory/presentation/screens/barcode_scanner_screen.dart';
-import '../../features/inventory/presentation/screens/batch_create_screen.dart';
 import '../../features/inventory/presentation/screens/virtual_barcode_view_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
@@ -74,7 +73,6 @@ class AppRoutes {
   static const String inventoryCategories = '/inventory/categories';
   static const String inventoryLocations = '/inventory/locations';
   static const String barcodeScanner = '/inventory/scan';
-  static const String batchCreate = '/inventory/batch-create';
   static const String virtualBarcodeView = '/inventory/qr-view';
   static const String manual = '/manual';
   static const String manualCategories = '/manual/categories';
@@ -296,22 +294,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final householdId = state.extra as String;
           return BarcodeScannerScreen(householdId: householdId);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.batchCreate,
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          return BatchCreateScreen(
-            householdId: extra['householdId'] as String,
-            baseName: extra['baseName'] as String,
-            categoryId: extra['categoryId'] as String?,
-            locationId: extra['locationId'] as String?,
-            unit: extra['unit'] as String,
-            expiryDate: extra['expiryDate'] as DateTime?,
-            purchaseDate: extra['purchaseDate'] as DateTime?,
-            notes: extra['notes'] as String?,
-          );
         },
       ),
       GoRoute(

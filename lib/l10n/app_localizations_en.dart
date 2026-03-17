@@ -1996,6 +1996,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get inventoryScanConfirmTitle => 'Use this barcode?';
+
+  @override
+  String get inventoryScanConfirm => 'Confirm';
+
+  @override
+  String get inventoryScanRescan => 'Rescan';
+
+  @override
   String get inventoryBarcodeTypeLabel => 'Barcode type';
 
   @override
@@ -2021,29 +2030,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inventoryQrCodeSubtitle => 'Scan this QR code to find this item';
-
-  @override
-  String get inventoryBatchCreate => 'Batch Create';
-
-  @override
-  String get inventoryBatchTitle => 'Batch Create Items';
-
-  @override
-  String get inventoryBatchPortions => 'Number of portions';
-
-  @override
-  String get inventoryBatchPortionsHint =>
-      'How many items to create from this one';
-
-  @override
-  String inventoryBatchNamePattern(String name, int index, int total) {
-    return '$name ($index/$total)';
-  }
-
-  @override
-  String inventoryBatchCreated(int count) {
-    return '$count items created!';
-  }
 
   @override
   String get inventoryCameraPermissionDenied =>
