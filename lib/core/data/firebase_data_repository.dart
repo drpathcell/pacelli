@@ -49,7 +49,7 @@ class FirebaseDataRepository implements DataRepository {
   /// If decryption fails (e.g. the value is already plaintext), returns the
   /// original string rather than a placeholder.
   String _dec(String ciphertext) {
-    if (_key == null) return ciphertext;
+    if (_key == null || ciphertext.isEmpty) return ciphertext;
     try {
       return EncryptionService.decrypt(ciphertext, _key!);
     } catch (e) {

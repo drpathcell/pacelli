@@ -32,10 +32,6 @@ class HouseholdService {
   static String _dec(String ciphertext) =>
       _key != null ? EncryptionService.decrypt(ciphertext, _key!) : ciphertext;
 
-  static String? _decN(String? ciphertext) => _key != null
-      ? EncryptionService.decryptNullable(ciphertext, _key!)
-      : ciphertext;
-
   // ═══════════════════════════════════════════════════════════════════
   //  CREATE HOUSEHOLD
   // ═══════════════════════════════════════════════════════════════════
@@ -181,11 +177,13 @@ class HouseholdService {
       if (profileDoc.exists) {
         final pData = profileDoc.data()!;
         final rawName = pData['full_name'] as String?;
-        // Decrypt using the now-loaded key (falls back to _decN which uses
-        // the static _key getter — after loadHouseholdKey it should be set).
+        // Decrypt using the key we just loaded — don't rely on the static
+        // _key getter which may be null if keyManager was not set.
         profile = {
           'id': userId,
-          'full_name': _decN(rawName),
+          'full_name': (km.householdKey != null && rawName != null && rawName.isNotEmpty)
+              ? EncryptionService.decryptNullable(rawName, km.householdKey!)
+              : rawName,
           'avatar_url': pData['avatar_url'] as String?,
         };
       }

@@ -146,7 +146,12 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
             currentUser.providerData.map((p) => p.providerId).toSet();
         if (!providerIds.contains('google.com')) {
           emailPassword = await _promptForPassword();
-          if (emailPassword == null || !mounted) return; // User cancelled.
+          if (emailPassword == null) {
+            // User cancelled — go back to settings.
+            if (mounted) context.go(AppRoutes.settings);
+            return;
+          }
+          if (!mounted) return;
         }
       }
 
