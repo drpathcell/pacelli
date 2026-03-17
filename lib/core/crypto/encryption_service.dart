@@ -42,6 +42,13 @@ class EncryptionService {
     final keyBytes = _keyFromString(key);
     final combined = base64Decode(ciphertext);
 
+    // 16 bytes IV + at least 1 byte ciphertext required.
+    if (combined.length < 17) {
+      throw const FormatException(
+        'Ciphertext too short: must be at least 17 bytes (16 IV + 1 data)',
+      );
+    }
+
     // First 16 bytes = IV, rest = ciphertext
     final iv = enc.IV(Uint8List.fromList(combined.sublist(0, 16)));
     final encryptedBytes = combined.sublist(16);

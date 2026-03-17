@@ -59,7 +59,9 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   String? _encN(String? plaintext) =>
-      _key != null ? EncryptionService.encryptNullable(plaintext, _key!) : plaintext;
+      _key != null && plaintext != null && plaintext.isNotEmpty
+          ? EncryptionService.encrypt(plaintext, _key!)
+          : plaintext;
 
   /// Decrypts a nullable ciphertext.
   ///
