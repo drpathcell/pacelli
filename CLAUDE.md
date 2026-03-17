@@ -172,8 +172,11 @@ Full household inventory management in `lib/features/inventory/`:
 
 - `firestore.rules` uses deterministic doc IDs for membership: `{userId}_{householdId}`
 - `isMember()` helper checks membership via `exists()` on the deterministic doc path
-- Parent-level collections (tasks, categories, checklists, plans) verify household membership
-- Child collections (subtasks, checklist items, plan entries) allow any authenticated user (membership checked at app level)
+- **ALL collections** (parent and child) enforce `isMember(resource.data.household_id)` for read/write rules
+- `household_id` is denormalized onto every document in every collection (including subtasks, checklist_items, plan_entries, plan_checklist_items, all attachment and inventory child collections)
+- **CRITICAL**: Every Firestore list/query on a child collection MUST include `.where('household_id', isEqualTo: ...)` — the security rules require it. Queries without this filter will get `permission-denied`. Single document reads (`.doc(id).get()`) are fine without it since rules evaluate against the document data.
+- When a query needs both `household_id` and a parent ID (e.g. `task_id`), query by `household_id` and filter client-side, or use both filters with a composite index
+- Composite indexes for `household_id` + parent ID combinations are defined in `firestore.indexes.json`
 
 ### Household Service
 

@@ -189,6 +189,27 @@ Every collection must have `household_id` on every document so rules can verify 
 
 Verify in code that `addSubtask()`, `addChecklistItem()`, `addPlanEntry()`, `addPlanChecklistItem()` all pass `householdId` to Firestore.
 
+#### 3.1b Query compliance (CRITICAL)
+Every Firestore list/query on a child collection MUST include `.where('household_id', isEqualTo: ...)`. Without it, security rules return `permission-denied`. Single document reads (`.doc(id).get()`) are fine without it since rules evaluate against the document data.
+
+Audit pattern:
+```bash
+# Find all child-collection queries and verify household_id is on the same query chain
+grep -n "\.where('task_id'\|\.where('checklist_id'\|\.where('plan_id'\|\.where('entry_id'\|\.where('item_id'" lib/core/data/firebase_data_repository.dart
+```
+- [ ] Every query on `subtasks` includes `household_id` filter
+- [ ] Every query on `checklist_items` includes `household_id` filter
+- [ ] Every query on `plan_entries` includes `household_id` filter
+- [ ] Every query on `plan_checklist_items` includes `household_id` filter
+- [ ] Every query on `task_attachments` includes `household_id` filter
+- [ ] Every query on `plan_attachments` includes `household_id` filter
+- [ ] Every query on `inventory_logs` includes `household_id` filter
+- [ ] Every query on `inventory_attachments` includes `household_id` filter
+- [ ] No fallback queries without `household_id` (these are dead code — will always fail against rules)
+- [ ] When `household_id` is unavailable (parent doc fetch fails), method returns empty/early rather than attempting a doomed query
+- [ ] Search methods (`searchHousehold`) query child collections by `household_id` and filter client-side, not by `whereIn` on parent IDs
+- [ ] Burn wipe (`_wipeHouseholdData`) queries all child collections directly by `household_id`
+
 #### 3.2 isMember() enforcement
 - [ ] `isMember(householdId)` helper checks `exists(/databases/$(database)/documents/household_members/$(request.auth.uid)_$(householdId))`
 - [ ] ALL parent collections use `isMember(resource.data.household_id)` for read/write rules
