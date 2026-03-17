@@ -92,7 +92,11 @@ Pacelli lives at the user's local path (typically `~/Developer/pacelli`). In Cow
 - [ ] Local cache uses `FlutterSecureStorage` (Keychain on iOS, EncryptedSharedPreferences on Android)
 - [ ] Firestore `household_keys` collection stores only encrypted keys
 - [ ] Each user doc has: `household_id`, `user_id`, `encrypted_key`, `created_at`
+- [ ] **Static vs singleton key access pitfall**: `HouseholdService` has a static `keyManager` field (often `null`) and uses `keyManager ?? KeyManager.instance` to get the singleton. The static `_key` getter (`keyManager?.householdKey`) returns `null` when `keyManager` is `null`, even if `KeyManager.instance` has the key loaded. Methods like `getHouseholdMembers()` must use the local `km` variable (from `keyManager ?? KeyManager.instance`) and call `km.householdKey` directly — never rely on the static `_key` getter for decryption.
 - [ ] Decryption failure returns `'[encrypted]'` placeholder, never leaks ciphertext to UI
+- [ ] **Empty string guard**: `_enc()` must check `plaintext.isNotEmpty` before encrypting — AES-256-CBC throws `RangeError (start): -16` on empty strings. Template-created entries (e.g. Weekly Dinner Planner with `title: ''`) trigger this.
+- [ ] **Empty string guard**: `_dec()` must check `ciphertext.isEmpty` before decrypting — empty plan entry titles stored as `''` cause `FormatException` / `RangeError` noise in logs.
+- [ ] **Short ciphertext guard**: `EncryptionService.decrypt()` should check `combined.length < 17` after base64 decode and throw `FormatException` rather than `RangeError`.
 
 ### Phase 2: Field Encryption Completeness
 
@@ -263,10 +267,11 @@ The privacy screen makes user-facing claims. Every claim must match the code.
 #### 5.2 Pre-burn authentication
 - [ ] For email/password users: password prompt dialog shown BEFORE burn starts
 - [ ] Dialog uses `barrierDismissible: false` — user cannot tap outside to dismiss
-- [ ] Cancel button returns `null` → burn is aborted, user returns to settings
+- [ ] Cancel button returns `null` → burn is aborted, navigates back to settings via `context.go(AppRoutes.settings)` — must NOT leave user stuck on burn animation screen
 - [ ] Password stored in memory only (`emailPassword` variable) — never persisted
 - [ ] TextEditingController disposed after dialog animation finishes via `addPostFrameCallback`
 - [ ] `_burnEverything()` deferred with `addPostFrameCallback` to prevent dialog dismissal during `didChangeDependencies`
+- [ ] Dialog content wrapped in `SingleChildScrollView` to prevent overflow on small screens
 
 #### 5.3 Burn sequence (`burn_data_screen.dart`)
 Verify each step actually runs and succeeds:
@@ -281,7 +286,8 @@ Verify each step actually runs and succeeds:
   - profiles, household_keys (encryption keys)
   - Granular `debugPrint` logging for each collection's doc count
   - Batch deletes in chunks of 400 (under Firestore 500-op limit)
-  - Retry up to 3 times with exponential backoff per batch on failure
+  - **CRITICAL: Batch ordering** — the user's own `household_members` doc (`{uid}_{householdId}`) and the `households` doc MUST be excluded from the main batch loop and deleted in a dedicated FINAL batch. If deleted earlier, `isMember()` fails for all subsequent batch deletes, causing `permission-denied` errors that silently lose data.
+  - `_commitBatchWithRetry()` retries up to 3 times with exponential backoff per batch — and **MUST throw** after exhausting retries (not silently `break`). The burn screen checks `_hasFailed` to decide whether wipe succeeded; silent failure causes false success.
   - Empty households case: graceful return (no throw), logs warning
 - [ ] **Step 2**: `LocalDatabase.deleteDatabase()` — deletes local SQLite file
 - [ ] **Step 3**: `FlutterSecureStorage().deleteAll()` — clears encryption keys AND locally-stored profile names from secure storage
@@ -317,6 +323,8 @@ Verify each step actually runs and succeeds:
 - [ ] Wrong password during burn → shows error → allows retry
 - [ ] Fatal error during burn → shows error message with Retry/Cancel
 - [ ] `mounted` checks before `setState` and navigation
+- [ ] Profile names in `getHouseholdMembers()` decrypted using `km.householdKey` (local variable) after `km.loadHouseholdKey()` — not via static `_key` getter which may be null
+- [ ] Profile name decryption guarded: `rawName != null && rawName.isNotEmpty` before attempting `EncryptionService.decryptNullable()`
 
 ### Phase 6: Export & Import Security
 

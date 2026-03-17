@@ -45,6 +45,9 @@ Both implement the `DataRepository` abstract interface (`lib/core/data/data_repo
 - `KeyManager` (`lib/core/crypto/key_manager.dart`) handles key lifecycle: generation, per-user wrapping (encrypted with a key derived from Firebase UID), Firestore storage in `household_keys`, local caching via `flutter_secure_storage`
 - When a new member joins, the existing member's device re-encrypts the household key for the new member's UID
 - The local SQLite backend does not encrypt data (it stays on-device)
+- **Empty string guard**: `_enc()` checks `plaintext.isNotEmpty` before encrypting — AES-256-CBC crashes on empty strings (`RangeError`). `_dec()` checks `ciphertext.isEmpty` before decrypting.
+- **Static vs singleton pitfall in HouseholdService**: The static `keyManager` field is often `null`. Always use `final km = keyManager ?? KeyManager.instance` and reference `km.householdKey` directly — the static `_key` getter returns `null` when `keyManager` is `null` even if the singleton has the key loaded.
+- **Burn flow batch ordering**: When wiping household data, the user's own `household_members` doc and the `households` doc must be deleted in the LAST batch. Earlier deletion breaks `isMember()` for remaining batches. Batch retry must throw on failure, not silently break.
 
 ### State Management & DI
 
