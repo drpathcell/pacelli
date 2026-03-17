@@ -297,8 +297,10 @@ Verify each step actually runs and succeeds:
   - `user.delete()` — permanently deletes the Firebase Auth account
   - Wrong password: catches `wrong-password`/`invalid-credential`, shows localised error, sets `_hasFailed = true`
   - Other auth errors: caught silently (account stays but data is gone)
+- [ ] **Step 1b (post-burn verification)**: After `wipeAllData`, re-query `household_members` by `user_id` to confirm 0 docs remain. Throws if any survive — prevents proceeding with incomplete deletion.
 - [ ] **Step 5a**: `FirebaseAuth.instance.signOut()` — Firebase sign-out
 - [ ] **Step 5b**: `GoogleSignIn().signOut()` + `disconnect()` — Google sign-out + token revocation
+- [ ] **Step 5c (CRITICAL)**: `FirebaseFirestore.instance.terminate()` then `clearPersistence()` — wipes the Firestore SDK's local disk cache. **Without this, the SDK serves stale data on re-login, bypassing security rules entirely.** This was the root cause of household data surviving burn + re-login (Mar 2026 incident). Must run AFTER sign-out (no active listeners) and BEFORE SharedPreferences clear.
 - [ ] **Step 6**: `SharedPreferences.clear()` — clears all app preferences
 - [ ] **Step 7**: Navigates to login screen after completion
 
