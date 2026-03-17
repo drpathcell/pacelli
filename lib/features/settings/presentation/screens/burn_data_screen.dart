@@ -89,21 +89,23 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
           color: Colors.red.shade600,
         ),
         title: Text(l10n.burnPasswordTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.burnPasswordMessage),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              obscureText: true,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: l10n.burnPasswordHint,
-                border: const OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.burnPasswordMessage),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: l10n.burnPasswordHint,
+                  border: const OutlineInputBorder(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(

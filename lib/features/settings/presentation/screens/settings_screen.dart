@@ -168,7 +168,7 @@ class SettingsScreen extends ConsumerWidget {
         title: Text(context.l10n.settingsTitle),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
           // Profile section
           Card(

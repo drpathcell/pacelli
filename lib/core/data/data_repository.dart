@@ -249,12 +249,14 @@ abstract class DataRepository {
   /// For SQLite: returns a StreamController-backed subscription.
   dynamic subscribeToEntries(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   });
 
   /// Subscribes to checklist changes for a plan.
   dynamic subscribeToChecklist(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   });
 

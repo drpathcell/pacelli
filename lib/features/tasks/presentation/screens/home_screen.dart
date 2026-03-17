@@ -262,7 +262,7 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
                   color: AppColors.success,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: _StatCard(
                   icon: Icons.pending_outlined,
@@ -271,7 +271,11 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
                   color: AppColors.warning,
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: _StatCard(
                   icon: Icons.warning_amber_outlined,
@@ -280,6 +284,8 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
                   color: AppColors.error,
                 ),
               ),
+              const SizedBox(width: 8),
+              const Expanded(child: SizedBox()),
             ],
           ),
           const SizedBox(height: 24),

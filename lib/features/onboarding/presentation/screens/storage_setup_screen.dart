@@ -240,10 +240,13 @@ class _BackendOptionCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            title,
-                            style: context.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: context.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (badge != null) ...[

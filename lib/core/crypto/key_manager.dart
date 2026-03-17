@@ -115,11 +115,19 @@ class KeyManager {
         EncryptionService.decrypt(encryptedKey, v2Key);
       } catch (_) {
         // v1 was used — migrate to v2 wrapping.
-        debugPrint('[KeyManager] Migrating key wrapping from v1 to v2 HKDF');
-        final newWrapped = EncryptionService.encryptKeyForUser(decryptedKey, uid);
-        await snapshot.docs.first.reference.update({
-          'encrypted_key': newWrapped,
-        });
+        try {
+          debugPrint('[KeyManager] Migrating key wrapping from v1 to v2 HKDF');
+          final v2UserKey = EncryptionService.deriveUserKey(uid);
+          final newWrapped =
+              EncryptionService.encryptKeyForUser(decryptedKey, v2UserKey);
+          await snapshot.docs.first.reference.update({
+            'encrypted_key': newWrapped,
+          });
+          debugPrint('[KeyManager] ✓ Migrated key to v2 wrapping');
+        } catch (migrationError) {
+          debugPrint('[KeyManager] ⚠ v2 migration failed: $migrationError');
+          // Non-fatal — the key was still loaded successfully.
+        }
       }
 
       // Cache in memory + secure storage.

@@ -895,6 +895,7 @@ class LocalDataRepository implements DataRepository {
   @override
   dynamic subscribeToEntries(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   }) {
     final controller = StreamController<dynamic>.broadcast();
@@ -906,6 +907,7 @@ class LocalDataRepository implements DataRepository {
   @override
   dynamic subscribeToChecklist(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   }) {
     final controller = StreamController<dynamic>.broadcast();

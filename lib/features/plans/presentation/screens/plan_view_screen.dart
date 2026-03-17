@@ -24,18 +24,16 @@ class PlanViewScreen extends ConsumerStatefulWidget {
 class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
   dynamic _entriesChannel;
   dynamic _checklistChannel;
+  bool _realtimeSetUp = false;
   final _checklistItemController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _setupRealtime();
-  }
-
-  void _setupRealtime() {
+  void _setupRealtime(String householdId) {
+    if (_realtimeSetUp) return;
+    _realtimeSetUp = true;
     final repo = ref.read(dataRepositoryProvider);
     _entriesChannel = repo.subscribeToEntries(
       widget.planId,
+      householdId: householdId,
       onEvent: (_) {
         if (!mounted) return;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,6 +43,7 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
     );
     _checklistChannel = repo.subscribeToChecklist(
       widget.planId,
+      householdId: householdId,
       onEvent: (_) {
         if (!mounted) return;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -173,6 +172,10 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
         ),
       ),
       data: (plan) {
+        // Set up realtime listeners once we have the householdId.
+        final householdId = plan['household_id'] as String? ?? '';
+        _setupRealtime(householdId);
+
         final startDateStr = plan['start_date'] as String?;
         final endDateStr = plan['end_date'] as String?;
         if (startDateStr == null || endDateStr == null) {

@@ -196,7 +196,7 @@ class FirebaseDataRepository implements DataRepository {
       // try-catch so a single failure doesn't crash the whole task list.
       Map<String, List<Subtask>> allSubtasks;
       try {
-        allSubtasks = await _getSubtasksForTasks(taskIds);
+        allSubtasks = await _getSubtasksForTasks(taskIds, householdId: householdId);
       } catch (e) {
         debugPrint('[FirebaseDataRepository] getTasks: subtask fetch failed: $e');
         allSubtasks = {};
@@ -213,7 +213,7 @@ class FirebaseDataRepository implements DataRepository {
 
       Map<String, TaskCategory> categories;
       try {
-        categories = await _getCategoriesByIds(categoryIds);
+        categories = await _getCategoriesByIds(categoryIds, householdId: householdId);
       } catch (e) {
         debugPrint('[FirebaseDataRepository] getTasks: category fetch failed: $e');
         categories = {};
@@ -243,10 +243,11 @@ class FirebaseDataRepository implements DataRepository {
     if (!doc.exists) throw StateError('Task $taskId not found');
     final data = doc.data()!;
 
+    final taskHouseholdId = data['household_id'] as String;
     final subtaskSnap = await _db
         .collection('subtasks')
+        .where('household_id', isEqualTo: taskHouseholdId)
         .where('task_id', isEqualTo: taskId)
-        .orderBy('sort_order')
         .get();
     final subtasks = subtaskSnap.docs
         .map((d) => _subtaskFromFirestore(d.data()))
@@ -344,9 +345,20 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<void> deleteTask(String taskId) async {
+    // Get the task's household_id for the subtask query (required by rules).
+    final taskDoc = await _db.collection('tasks').doc(taskId).get();
+    final taskHouseholdId = taskDoc.data()?['household_id'] as String?;
+
     // Delete subtasks first, then the task.
+    // household_id is required by Firestore security rules for list queries.
+    if (taskHouseholdId == null) {
+      // Can't query subtasks without household_id — just delete the task itself.
+      await _db.collection('tasks').doc(taskId).delete();
+      return;
+    }
     final subtasks = await _db
         .collection('subtasks')
+        .where('household_id', isEqualTo: taskHouseholdId)
         .where('task_id', isEqualTo: taskId)
         .get();
     final batch = _db.batch();
@@ -521,7 +533,7 @@ class FirebaseDataRepository implements DataRepository {
 
     // Get all checklist items for these checklists.
     final checklistIds = snapshot.docs.map((d) => d.id).toList();
-    final itemsMap = await _getChecklistItemsByChecklistIds(checklistIds);
+    final itemsMap = await _getChecklistItemsByChecklistIds(checklistIds, householdId: householdId);
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -548,9 +560,18 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<void> deleteChecklist(String checklistId) async {
-    // Delete items first.
+    // Get the checklist's household_id for the items query (required by rules).
+    final clDoc = await _db.collection('checklists').doc(checklistId).get();
+    final clHouseholdId = clDoc.data()?['household_id'] as String?;
+
+    // Delete items first. household_id required by Firestore rules.
+    if (clHouseholdId == null) {
+      await _db.collection('checklists').doc(checklistId).delete();
+      return;
+    }
     final items = await _db
         .collection('checklist_items')
+        .where('household_id', isEqualTo: clHouseholdId)
         .where('checklist_id', isEqualTo: checklistId)
         .get();
     final batch = _db.batch();
@@ -698,8 +719,8 @@ class FirebaseDataRepository implements DataRepository {
     if (snapshot.docs.isEmpty) return [];
 
     final planIds = snapshot.docs.map((d) => d.id).toList();
-    final entriesMap = await _getEntriesByPlanIds(planIds);
-    final checklistMap = await _getPlanChecklistByPlanIds(planIds);
+    final entriesMap = await _getEntriesByPlanIds(planIds, householdId: householdId);
+    final checklistMap = await _getPlanChecklistByPlanIds(planIds, householdId: householdId);
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -713,17 +734,19 @@ class FirebaseDataRepository implements DataRepository {
     final doc = await _db.collection('scratch_plans').doc(planId).get();
     if (!doc.exists) throw StateError('Plan $planId not found');
     final data = doc.data()!;
+    final planHouseholdId = data['household_id'] as String;
 
     final entriesSnap = await _db
         .collection('plan_entries')
+        .where('household_id', isEqualTo: planHouseholdId)
         .where('plan_id', isEqualTo: planId)
-        .orderBy('sort_order')
         .get();
     final entries =
         entriesSnap.docs.map((d) => _entryFromFirestore(d.data())).toList();
 
     final checklistSnap = await _db
         .collection('plan_checklist_items')
+        .where('household_id', isEqualTo: planHouseholdId)
         .where('plan_id', isEqualTo: planId)
         .get();
     final checklistItems = checklistSnap.docs
@@ -735,11 +758,20 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<void> deletePlan(String planId) async {
+    // Get the plan's household_id for child queries (required by rules).
+    final planDoc = await _db.collection('scratch_plans').doc(planId).get();
+    final planHouseholdId = planDoc.data()?['household_id'] as String?;
+    // household_id required by Firestore rules for list queries.
+    if (planHouseholdId == null) {
+      await _db.collection('scratch_plans').doc(planId).delete();
+      return;
+    }
     final batch = _db.batch();
 
     // Delete entries.
     final entries = await _db
         .collection('plan_entries')
+        .where('household_id', isEqualTo: planHouseholdId)
         .where('plan_id', isEqualTo: planId)
         .get();
     for (final doc in entries.docs) {
@@ -749,6 +781,7 @@ class FirebaseDataRepository implements DataRepository {
     // Delete checklist items.
     final items = await _db
         .collection('plan_checklist_items')
+        .where('household_id', isEqualTo: planHouseholdId)
         .where('plan_id', isEqualTo: planId)
         .get();
     for (final doc in items.docs) {
@@ -895,7 +928,7 @@ class FirebaseDataRepository implements DataRepository {
     if (snapshot.docs.isEmpty) return [];
 
     final planIds = snapshot.docs.map((d) => d.id).toList();
-    final entriesMap = await _getEntriesByPlanIds(planIds);
+    final entriesMap = await _getEntriesByPlanIds(planIds, householdId: householdId);
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -978,10 +1011,12 @@ class FirebaseDataRepository implements DataRepository {
   @override
   dynamic subscribeToEntries(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   }) {
     return _db
         .collection('plan_entries')
+        .where('household_id', isEqualTo: householdId)
         .where('plan_id', isEqualTo: planId)
         .snapshots()
         .listen((snapshot) {
@@ -997,10 +1032,12 @@ class FirebaseDataRepository implements DataRepository {
   @override
   dynamic subscribeToChecklist(
     String planId, {
+    required String householdId,
     required void Function(dynamic payload) onEvent,
   }) {
     return _db
         .collection('plan_checklist_items')
+        .where('household_id', isEqualTo: householdId)
         .where('plan_id', isEqualTo: planId)
         .snapshots()
         .listen((snapshot) {
@@ -1103,8 +1140,17 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<List<TaskAttachment>> getTaskAttachments(String taskId) async {
+    // Fetch the task to get its household_id for the security-rule-compliant query.
+    String? householdId;
+    try {
+      final taskDoc = await _db.collection('tasks').doc(taskId).get();
+      householdId = taskDoc.data()?['household_id'] as String?;
+    } catch (_) {}
+
+    if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
         .collection('task_attachments')
+        .where('household_id', isEqualTo: householdId)
         .where('task_id', isEqualTo: taskId)
         .orderBy('uploaded_at')
         .get();
@@ -1190,8 +1236,17 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<List<PlanAttachment>> getPlanEntryAttachments(String entryId) async {
+    // Fetch the entry to get household_id for security-rule-compliant query.
+    String? householdId;
+    try {
+      final entryDoc = await _db.collection('plan_entries').doc(entryId).get();
+      householdId = entryDoc.data()?['household_id'] as String?;
+    } catch (_) {}
+
+    if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
         .collection('plan_attachments')
+        .where('household_id', isEqualTo: householdId)
         .where('entry_id', isEqualTo: entryId)
         .orderBy('uploaded_at')
         .get();
@@ -1201,8 +1256,17 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<List<PlanAttachment>> getPlanAttachments(String planId) async {
+    // Fetch the plan to get household_id for security-rule-compliant query.
+    String? householdId;
+    try {
+      final planDoc = await _db.collection('scratch_plans').doc(planId).get();
+      householdId = planDoc.data()?['household_id'] as String?;
+    } catch (_) {}
+
+    if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
         .collection('plan_attachments')
+        .where('household_id', isEqualTo: householdId)
         .where('plan_id', isEqualTo: planId)
         .orderBy('uploaded_at')
         .get();
@@ -1473,8 +1537,10 @@ class FirebaseDataRepository implements DataRepository {
     }
 
     // Join attachments.
+    final itemHouseholdId = d['household_id'] as String? ?? '';
     final attSnap = await _db
         .collection('inventory_attachments')
+        .where('household_id', isEqualTo: itemHouseholdId)
         .where('item_id', isEqualTo: itemId)
         .orderBy('uploaded_at')
         .get();
@@ -1563,13 +1629,23 @@ class FirebaseDataRepository implements DataRepository {
 
   @override
   Future<void> deleteInventoryItem(String itemId) async {
+    // Get household_id for security-rule-compliant queries on child collections.
+    final itemDoc = await _db.collection('inventory_items').doc(itemId).get();
+    final itemHouseholdId = itemDoc.data()?['household_id'] as String?;
+    if (itemHouseholdId == null) {
+      await _db.collection('inventory_items').doc(itemId).delete();
+      return;
+    }
+
     // Collect related logs and attachments, then batch-delete everything.
     final logSnap = await _db
         .collection('inventory_logs')
+        .where('household_id', isEqualTo: itemHouseholdId)
         .where('item_id', isEqualTo: itemId)
         .get();
     final attSnap = await _db
         .collection('inventory_attachments')
+        .where('household_id', isEqualTo: itemHouseholdId)
         .where('item_id', isEqualTo: itemId)
         .get();
 
@@ -2276,11 +2352,11 @@ class FirebaseDataRepository implements DataRepository {
         }
       }
 
-      // Search checklist items.
+      // Search checklist items — query by household_id, filter client-side.
       if (clNames.isNotEmpty) {
         final itemSnap = await _db
             .collection('checklist_items')
-            .where('checklist_id', whereIn: clNames.keys.take(10).toList())
+            .where('household_id', isEqualTo: householdId)
             .limit(500)
             .get();
         for (final doc in itemSnap.docs) {
@@ -2326,11 +2402,11 @@ class FirebaseDataRepository implements DataRepository {
         }
       }
 
-      // Search plan entries.
+      // Search plan entries — query by household_id, filter client-side.
       if (planNames.isNotEmpty) {
         final entrySnap = await _db
             .collection('plan_entries')
-            .where('plan_id', whereIn: planNames.keys.take(10).toList())
+            .where('household_id', isEqualTo: householdId)
             .limit(500)
             .get();
         for (final doc in entrySnap.docs) {
@@ -2525,19 +2601,15 @@ class FirebaseDataRepository implements DataRepository {
         .collection('tasks')
         .where('household_id', isEqualTo: householdId)
         .get();
-    final taskIds = taskSnap.docs.map((d) => d.id).toList();
-
     final checklistSnap = await _db
         .collection('checklists')
         .where('household_id', isEqualTo: householdId)
         .get();
-    final checklistIds = checklistSnap.docs.map((d) => d.id).toList();
 
     final planSnap = await _db
         .collection('scratch_plans')
         .where('household_id', isEqualTo: householdId)
         .get();
-    final planIds = planSnap.docs.map((d) => d.id).toList();
 
     debugPrint(
       '[BURN] Found ${taskSnap.docs.length} tasks, '
@@ -2575,41 +2647,21 @@ class FirebaseDataRepository implements DataRepository {
       allDocs.addAll(snap.docs.map((d) => d.reference));
     }
 
-    // Subtasks (child of tasks).
-    for (final chunk in _chunk(taskIds, 30)) {
+    // Subtasks, checklist items, plan entries, plan checklist items —
+    // all have household_id denormalized, so query directly by household_id
+    // (required by Firestore security rules).
+    for (final col in [
+      'subtasks',
+      'checklist_items',
+      'plan_entries',
+      'plan_checklist_items',
+    ]) {
       final snap = await _db
-          .collection('subtasks')
-          .where('task_id', whereIn: chunk)
+          .collection(col)
+          .where('household_id', isEqualTo: householdId)
           .get();
-      debugPrint('[BURN] Found ${snap.docs.length} subtasks (chunk of ${chunk.length} tasks)');
+      debugPrint('[BURN] Found ${snap.docs.length} docs in $col');
       allDocs.addAll(snap.docs.map((d) => d.reference));
-    }
-
-    // Checklist items (child of checklists).
-    for (final chunk in _chunk(checklistIds, 30)) {
-      final snap = await _db
-          .collection('checklist_items')
-          .where('checklist_id', whereIn: chunk)
-          .get();
-      debugPrint('[BURN] Found ${snap.docs.length} checklist_items (chunk of ${chunk.length} checklists)');
-      allDocs.addAll(snap.docs.map((d) => d.reference));
-    }
-
-    // Plan entries and plan checklist items (child of plans).
-    for (final chunk in _chunk(planIds, 30)) {
-      final entrySnap = await _db
-          .collection('plan_entries')
-          .where('plan_id', whereIn: chunk)
-          .get();
-      debugPrint('[BURN] Found ${entrySnap.docs.length} plan_entries (chunk of ${chunk.length} plans)');
-      allDocs.addAll(entrySnap.docs.map((d) => d.reference));
-
-      final pciSnap = await _db
-          .collection('plan_checklist_items')
-          .where('plan_id', whereIn: chunk)
-          .get();
-      debugPrint('[BURN] Found ${pciSnap.docs.length} plan_checklist_items (chunk of ${chunk.length} plans)');
-      allDocs.addAll(pciSnap.docs.map((d) => d.reference));
     }
 
     // Household members.
@@ -2675,41 +2727,41 @@ class FirebaseDataRepository implements DataRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   /// Fetches subtasks for a list of task IDs, grouped by task_id.
+  ///
+  /// Uses household_id filter (required by Firestore security rules) and
+  /// then filters client-side by task_id for grouping.
   Future<Map<String, List<Subtask>>> _getSubtasksForTasks(
-      List<String> taskIds) async {
+      List<String> taskIds,
+      {required String householdId}) async {
     if (taskIds.isEmpty) return {};
-    // Firestore 'whereIn' is limited to 30 items per query.
+    final taskIdSet = taskIds.toSet();
+    final snap = await _db
+        .collection('subtasks')
+        .where('household_id', isEqualTo: householdId)
+        .get();
     final result = <String, List<Subtask>>{};
-    for (var i = 0; i < taskIds.length; i += 30) {
-      final chunk = taskIds.sublist(
-          i, i + 30 > taskIds.length ? taskIds.length : i + 30);
-      final snap = await _db
-          .collection('subtasks')
-          .where('task_id', whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        final st = _subtaskFromFirestore(doc.data());
+    for (final doc in snap.docs) {
+      final st = _subtaskFromFirestore(doc.data());
+      if (taskIdSet.contains(st.taskId)) {
         result.putIfAbsent(st.taskId, () => []).add(st);
       }
     }
     return result;
   }
 
-  /// Fetches categories by IDs.
+  /// Fetches categories by IDs using household_id (required by security rules).
   Future<Map<String, TaskCategory>> _getCategoriesByIds(
-      Set<String> ids) async {
+      Set<String> ids,
+      {required String householdId}) async {
     if (ids.isEmpty) return {};
+    final snap = await _db
+        .collection('task_categories')
+        .where('household_id', isEqualTo: householdId)
+        .get();
     final result = <String, TaskCategory>{};
-    final idList = ids.toList();
-    for (var i = 0; i < idList.length; i += 30) {
-      final chunk = idList.sublist(
-          i, i + 30 > idList.length ? idList.length : i + 30);
-      final snap = await _db
-          .collection('task_categories')
-          .where('id', whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        final cat = _categoryFromFirestore(doc.data());
+    for (final doc in snap.docs) {
+      final cat = _categoryFromFirestore(doc.data());
+      if (ids.contains(cat.id)) {
         result[cat.id] = cat;
       }
     }
@@ -2753,19 +2805,20 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   /// Fetches checklist items grouped by checklist_id.
+  /// Uses household_id filter (required by Firestore security rules).
   Future<Map<String, List<ChecklistItem>>> _getChecklistItemsByChecklistIds(
-      List<String> checklistIds) async {
+      List<String> checklistIds,
+      {required String householdId}) async {
     if (checklistIds.isEmpty) return {};
+    final idSet = checklistIds.toSet();
+    final snap = await _db
+        .collection('checklist_items')
+        .where('household_id', isEqualTo: householdId)
+        .get();
     final result = <String, List<ChecklistItem>>{};
-    for (var i = 0; i < checklistIds.length; i += 30) {
-      final chunk = checklistIds.sublist(
-          i, i + 30 > checklistIds.length ? checklistIds.length : i + 30);
-      final snap = await _db
-          .collection('checklist_items')
-          .where('checklist_id', whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        final item = _checklistItemFromFirestore(doc.data());
+    for (final doc in snap.docs) {
+      final item = _checklistItemFromFirestore(doc.data());
+      if (idSet.contains(item.checklistId)) {
         result.putIfAbsent(item.checklistId, () => []).add(item);
       }
     }
@@ -2773,19 +2826,20 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   /// Fetches plan entries grouped by plan_id.
+  /// Uses household_id filter (required by Firestore security rules).
   Future<Map<String, List<PlanEntry>>> _getEntriesByPlanIds(
-      List<String> planIds) async {
+      List<String> planIds,
+      {required String householdId}) async {
     if (planIds.isEmpty) return {};
+    final idSet = planIds.toSet();
+    final snap = await _db
+        .collection('plan_entries')
+        .where('household_id', isEqualTo: householdId)
+        .get();
     final result = <String, List<PlanEntry>>{};
-    for (var i = 0; i < planIds.length; i += 30) {
-      final chunk =
-          planIds.sublist(i, i + 30 > planIds.length ? planIds.length : i + 30);
-      final snap = await _db
-          .collection('plan_entries')
-          .where('plan_id', whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        final entry = _entryFromFirestore(doc.data());
+    for (final doc in snap.docs) {
+      final entry = _entryFromFirestore(doc.data());
+      if (idSet.contains(entry.planId)) {
         result.putIfAbsent(entry.planId, () => []).add(entry);
       }
     }
@@ -2793,19 +2847,20 @@ class FirebaseDataRepository implements DataRepository {
   }
 
   /// Fetches plan checklist items grouped by plan_id.
+  /// Uses household_id filter (required by Firestore security rules).
   Future<Map<String, List<PlanChecklistItem>>> _getPlanChecklistByPlanIds(
-      List<String> planIds) async {
+      List<String> planIds,
+      {required String householdId}) async {
     if (planIds.isEmpty) return {};
+    final idSet = planIds.toSet();
+    final snap = await _db
+        .collection('plan_checklist_items')
+        .where('household_id', isEqualTo: householdId)
+        .get();
     final result = <String, List<PlanChecklistItem>>{};
-    for (var i = 0; i < planIds.length; i += 30) {
-      final chunk =
-          planIds.sublist(i, i + 30 > planIds.length ? planIds.length : i + 30);
-      final snap = await _db
-          .collection('plan_checklist_items')
-          .where('plan_id', whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        final item = _planChecklistFromFirestore(doc.data());
+    for (final doc in snap.docs) {
+      final item = _planChecklistFromFirestore(doc.data());
+      if (idSet.contains(item.planId)) {
         result.putIfAbsent(item.planId, () => []).add(item);
       }
     }
