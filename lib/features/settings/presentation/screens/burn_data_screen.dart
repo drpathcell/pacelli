@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,6 +174,22 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
         try {
           await repo.wipeAllData(userId);
           debugPrint('[BURN] ✓ wipeAllData completed');
+
+          // Verify burn — re-query household_members to confirm deletion.
+          try {
+            final verify = await FirebaseFirestore.instance
+                .collection('household_members')
+                .where('user_id', isEqualTo: userId)
+                .get();
+            if (verify.docs.isNotEmpty) {
+              debugPrint('[BURN] ✗ VERIFICATION FAILED: ${verify.docs.length} household_members still exist!');
+              throw Exception('Burn verification failed: household docs still exist');
+            }
+            debugPrint('[BURN] ✓ Verification passed: 0 household_members remain');
+          } catch (e) {
+            if (e.toString().contains('verification failed')) rethrow;
+            debugPrint('[BURN] Verification query error: $e');
+          }
         } catch (e) {
           debugPrint('[BURN] ✗ wipeAllData failed: $e');
           _updateStatus(l10n.burnStatusError);
@@ -266,7 +283,18 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
         debugPrint('[BURN] Google sign-out: $e');
       }
 
-      // ── Step 5: Clear SharedPreferences (belt & suspenders) ──
+      // ── Step 5b: Clear Firestore offline persistence cache ──
+      // CRITICAL: Without this, the Firestore SDK serves stale data from its
+      // local disk cache when the user logs back in, bypassing security rules.
+      try {
+        await FirebaseFirestore.instance.terminate();
+        await FirebaseFirestore.instance.clearPersistence();
+        debugPrint('[BURN] ✓ Firestore persistence cache cleared');
+      } catch (e) {
+        debugPrint('[BURN] Firestore cache clear: $e');
+      }
+
+      // ── Step 6: Clear SharedPreferences (belt & suspenders) ──
       // Catches any leftover tokens, backend choice, and all other app
       // preferences.
       _updateStatus(l10n.burnStatusRemovingSettings);

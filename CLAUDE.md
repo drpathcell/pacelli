@@ -48,6 +48,7 @@ Both implement the `DataRepository` abstract interface (`lib/core/data/data_repo
 - **Empty string guard**: `_enc()` checks `plaintext.isNotEmpty` before encrypting — AES-256-CBC crashes on empty strings (`RangeError`). `_dec()` checks `ciphertext.isEmpty` before decrypting.
 - **Static vs singleton pitfall in HouseholdService**: The static `keyManager` field is often `null`. Always use `final km = keyManager ?? KeyManager.instance` and reference `km.householdKey` directly — the static `_key` getter returns `null` when `keyManager` is `null` even if the singleton has the key loaded.
 - **Burn flow batch ordering**: When wiping household data, the user's own `household_members` doc and the `households` doc must be deleted in the LAST batch. Earlier deletion breaks `isMember()` for remaining batches. Batch retry must throw on failure, not silently break.
+- **Firestore offline cache**: After burn, must call `FirebaseFirestore.instance.terminate()` then `clearPersistence()` to wipe the local disk cache. Without this, the SDK serves stale data on re-login, bypassing security rules.
 
 ### State Management & DI
 
