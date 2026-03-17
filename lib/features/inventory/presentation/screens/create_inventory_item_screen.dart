@@ -333,25 +333,33 @@ class _CreateInventoryItemScreenState
         ),
         actions: [
           TextButton(
-            onPressed: () => ctx.pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(l10n.commonCancel),
           ),
           FilledButton(
-            onPressed: () => ctx.pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(l10n.commonSave),
           ),
         ],
       ),
     );
     if (result == true && nameCtrl.text.trim().isNotEmpty) {
-      final cat = await ref.read(dataRepositoryProvider).createInventoryCategory(
-        householdId: widget.householdId,
-        name: nameCtrl.text.trim(),
-        icon: 'inventory_2',
-        color: '#A5B4A5',
-      );
-      ref.invalidate(inventoryCategoriesProvider);
-      setState(() => _categoryId = cat.id);
+      try {
+        final cat = await ref.read(dataRepositoryProvider).createInventoryCategory(
+          householdId: widget.householdId,
+          name: nameCtrl.text.trim(),
+          icon: 'inventory_2',
+          color: '#A5B4A5',
+        );
+        ref.invalidate(inventoryCategoriesProvider);
+        setState(() => _categoryId = cat.id);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.commonError(e.toString()))),
+          );
+        }
+      }
     }
   }
 
@@ -370,24 +378,32 @@ class _CreateInventoryItemScreenState
         ),
         actions: [
           TextButton(
-            onPressed: () => ctx.pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(l10n.commonCancel),
           ),
           FilledButton(
-            onPressed: () => ctx.pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(l10n.commonSave),
           ),
         ],
       ),
     );
     if (result == true && nameCtrl.text.trim().isNotEmpty) {
-      final loc = await ref.read(dataRepositoryProvider).createInventoryLocation(
-        householdId: widget.householdId,
-        name: nameCtrl.text.trim(),
-        icon: 'place',
-      );
-      ref.invalidate(inventoryLocationsProvider);
-      setState(() => _locationId = loc.id);
+      try {
+        final loc = await ref.read(dataRepositoryProvider).createInventoryLocation(
+          householdId: widget.householdId,
+          name: nameCtrl.text.trim(),
+          icon: 'place',
+        );
+        ref.invalidate(inventoryLocationsProvider);
+        setState(() => _locationId = loc.id);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.commonError(e.toString()))),
+          );
+        }
+      }
     }
   }
 

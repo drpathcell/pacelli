@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/data/data_repository_provider.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/inventory_providers.dart';
@@ -98,9 +96,9 @@ class ManageInventoryCategoriesScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => ctx.pop(false), child: Text(l10n.commonCancel)),
+              onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.commonCancel)),
           FilledButton(
-              onPressed: () => ctx.pop(true), child: Text(l10n.commonSave)),
+              onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.commonSave)),
         ],
       ),
     );
@@ -130,9 +128,9 @@ class ManageInventoryCategoriesScreen extends ConsumerWidget {
         content: Text('Delete "$name"?'),
         actions: [
           TextButton(
-              onPressed: () => ctx.pop(false), child: Text(l10n.commonCancel)),
+              onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.commonCancel)),
           TextButton(
-              onPressed: () => ctx.pop(true), child: Text(l10n.commonDelete)),
+              onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.commonDelete)),
         ],
       ),
     );
