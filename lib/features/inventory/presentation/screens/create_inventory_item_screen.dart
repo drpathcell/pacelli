@@ -12,8 +12,13 @@ import '../../data/inventory_providers.dart';
 /// Screen to create a new inventory item.
 class CreateInventoryItemScreen extends ConsumerStatefulWidget {
   final String householdId;
+  final String? barcode;
 
-  const CreateInventoryItemScreen({super.key, required this.householdId});
+  const CreateInventoryItemScreen({
+    super.key,
+    required this.householdId,
+    this.barcode,
+  });
 
   @override
   ConsumerState<CreateInventoryItemScreen> createState() =>
@@ -35,8 +40,17 @@ class _CreateInventoryItemScreenState
   String? _locationId;
   String _barcodeType = 'none';
   DateTime? _expiryDate;
-  DateTime? _purchaseDate;
+  DateTime? _purchaseDate = DateTime.now();
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.barcode != null) {
+      _barcodeType = 'real';
+      _barcodeCtrl.text = widget.barcode!;
+    }
+  }
 
   @override
   void dispose() {

@@ -52,7 +52,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               if (code != null && mounted) {
                 // Barcode returned from scanner — navigate to create with it
                 await nav.push(AppRoutes.createInventoryItem,
-                    extra: widget.householdId);
+                    extra: {
+                      'householdId': widget.householdId,
+                      'barcode': code,
+                    });
                 ref.invalidate(inventoryItemsProvider);
                 ref.invalidate(inventoryStatsProvider);
               }

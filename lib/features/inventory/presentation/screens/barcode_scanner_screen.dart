@@ -133,12 +133,12 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
       if (!mounted) return;
 
       if (match.isNotEmpty) {
-        // Found — navigate to item detail
+        // Found — navigate to item detail with stock info
         final item = match.first;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text(context.l10n.inventoryScanFoundItem(item.name))),
+              content: Text(
+                  '${context.l10n.inventoryScanFoundItem(item.name)} — ${item.quantity} ${item.unit}')),
         );
         context.pop(); // Close scanner
         context.push(AppRoutes.inventoryItem, extra: {

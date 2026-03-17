@@ -261,8 +261,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.createInventoryItem,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return CreateInventoryItemScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is Map<String, dynamic>) {
+            return CreateInventoryItemScreen(
+              householdId: extra['householdId'] as String,
+              barcode: extra['barcode'] as String?,
+            );
+          }
+          return CreateInventoryItemScreen(householdId: extra as String);
         },
       ),
       GoRoute(
