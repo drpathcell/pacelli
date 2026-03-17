@@ -160,6 +160,10 @@ class HouseholdService {
   /// Fetches all members of a household with their profile info.
   static Future<List<Map<String, dynamic>>> getHouseholdMembers(
       String householdId) async {
+    // Ensure the household key is loaded so profile names can be decrypted.
+    final km = keyManager ?? KeyManager.instance;
+    await km.loadHouseholdKey(householdId);
+
     final memberSnap = await _db
         .collection('household_members')
         .where('household_id', isEqualTo: householdId)
@@ -176,9 +180,12 @@ class HouseholdService {
       final profileDoc = await _db.collection('profiles').doc(userId).get();
       if (profileDoc.exists) {
         final pData = profileDoc.data()!;
+        final rawName = pData['full_name'] as String?;
+        // Decrypt using the now-loaded key (falls back to _decN which uses
+        // the static _key getter — after loadHouseholdKey it should be set).
         profile = {
           'id': userId,
-          'full_name': _decN(pData['full_name'] as String?),
+          'full_name': _decN(rawName),
           'avatar_url': pData['avatar_url'] as String?,
         };
       }

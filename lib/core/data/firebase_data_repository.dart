@@ -40,7 +40,9 @@ class FirebaseDataRepository implements DataRepository {
   // ── Encryption helpers ──
 
   String _enc(String plaintext) =>
-      _key != null ? EncryptionService.encrypt(plaintext, _key!) : plaintext;
+      _key != null && plaintext.isNotEmpty
+          ? EncryptionService.encrypt(plaintext, _key!)
+          : plaintext;
 
   /// Decrypts a non-null ciphertext.
   ///
