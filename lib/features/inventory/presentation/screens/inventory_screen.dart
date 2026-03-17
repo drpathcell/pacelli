@@ -223,11 +223,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     // Default categories.
     const defaultCategories = [
-      ('Pantry', 'kitchen', '#A5B4A5'),
-      ('Fridge', 'kitchen', '#81D4FA'),
-      ('Freezer', 'ac_unit', '#B3E5FC'),
-      ('Cleaning', 'cleaning_services', '#FFD54F'),
+      ('Food & Drinks', 'restaurant', '#A5B4A5'),
+      ('Cleaning', 'cleaning_services', '#81D4FA'),
       ('Personal Care', 'face', '#F48FB1'),
+      ('Medicine', 'medical_services', '#EF9A9A'),
+      ('Pet Supplies', 'pets', '#FFD54F'),
       ('Other', 'inventory_2', '#B0BEC5'),
     ];
     for (final (name, icon, color) in defaultCategories) {
@@ -238,9 +238,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     // Default locations.
     const defaultLocations = [
       ('Kitchen', 'kitchen'),
+      ('Pantry', 'shelves'),
+      ('Fridge', 'kitchen'),
+      ('Freezer', 'ac_unit'),
       ('Bathroom', 'bathroom'),
       ('Garage', 'garage'),
-      ('Garden', 'yard'),
       ('Storage Room', 'warehouse'),
     ];
     for (final (name, icon) in defaultLocations) {

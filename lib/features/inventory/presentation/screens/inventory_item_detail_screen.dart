@@ -103,23 +103,11 @@ class InventoryItemDetailScreen extends ConsumerWidget {
                       spacing: 8,
                       children: [
                         if (item.isExpired)
-                          Chip(
-                            label: Text(l10n.inventoryExpired),
-                            backgroundColor: Colors.red.shade50,
-                            side: BorderSide.none,
-                          ),
+                          _statusChip(context, l10n.inventoryExpired, Colors.red),
                         if (item.isExpiringSoon && !item.isExpired)
-                          Chip(
-                            label: Text(l10n.inventoryExpiringSoon),
-                            backgroundColor: Colors.orange.shade50,
-                            side: BorderSide.none,
-                          ),
+                          _statusChip(context, l10n.inventoryExpiringSoon, Colors.orange),
                         if (item.isLowStock)
-                          Chip(
-                            label: Text(l10n.inventoryLowStock),
-                            backgroundColor: Colors.amber.shade50,
-                            side: BorderSide.none,
-                          ),
+                          _statusChip(context, l10n.inventoryLowStock, Colors.amber),
                       ],
                     ),
                   ),
@@ -224,6 +212,18 @@ class InventoryItemDetailScreen extends ConsumerWidget {
     );
   }
 
+  static Widget _statusChip(BuildContext context, String label, MaterialColor color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Chip(
+      label: Text(
+        label,
+        style: TextStyle(color: isDark ? color.shade100 : color.shade900),
+      ),
+      backgroundColor: isDark ? color.shade900 : color.shade50,
+      side: BorderSide.none,
+    );
+  }
+
   Future<void> _adjustQuantity(
     BuildContext context,
     WidgetRef ref,
@@ -275,6 +275,7 @@ class InventoryItemDetailScreen extends ConsumerWidget {
       // Offer to create restock task
       if (context.mounted) {
         final l10n = context.l10n;
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.inventoryLowStockAlert),
@@ -282,7 +283,7 @@ class InventoryItemDetailScreen extends ConsumerWidget {
               label: l10n.inventoryAutoCreateTask,
               onPressed: () => _createLowStockTask(context, ref, item, newQty),
             ),
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
