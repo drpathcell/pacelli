@@ -82,6 +82,33 @@
       ]
     },
     {
+      "collectionGroup": "task_attachments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "task_id", "order": "ASCENDING" },
+        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "plan_attachments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "entry_id", "order": "ASCENDING" },
+        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "plan_attachments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "household_id", "order": "ASCENDING" },
+        { "fieldPath": "plan_id", "order": "ASCENDING" },
+        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "inventory_items",
       "queryScope": "COLLECTION",
       "fields": [

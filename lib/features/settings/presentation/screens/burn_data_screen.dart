@@ -83,13 +83,15 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         icon: Icon(
           Icons.lock_outline_rounded,
           size: 40,
           color: Colors.red.shade600,
         ),
         title: Text(l10n.burnPasswordTitle),
-        content: SingleChildScrollView(
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 300),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

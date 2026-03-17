@@ -371,7 +371,28 @@ class _HouseholdDashboardState extends ConsumerState<_HouseholdDashboard> {
             skipLoadingOnRefresh: true,
             skipLoadingOnReload: true,
             loading: () => const RecentTaskListSkeleton(),
-            error: (_, __) => Text(context.l10n.homeFailedToLoadTasks),
+            error: (_, __) => Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(
+                          context.l10n.homeFailedToLoadTasks,
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => ref.invalidate(
+                              householdTasksProvider(widget.householdId)),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(context.l10n.homeTryAgain),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             data: (tasks) {
               final recentTasks = tasks
                   .where((t) => t['status'] != 'completed')

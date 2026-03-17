@@ -2638,6 +2638,9 @@ class FirebaseDataRepository implements DataRepository {
       'inventory_attachments',
       'manual_entries',
       'manual_categories',
+      'feedback',
+      'diagnostics',
+      'weekly_digests',
     ]) {
       final snap = await _db
           .collection(col)
