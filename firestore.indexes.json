@@ -137,7 +137,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "ASCENDING" }
+        { "fieldPath": "sort_order", "order": "DESCENDING" }
       ]
     },
     {
@@ -145,7 +145,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "ASCENDING" }
+        { "fieldPath": "sort_order", "order": "DESCENDING" }
       ]
     },
     {
