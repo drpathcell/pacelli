@@ -69,20 +69,31 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
 
-    // Ask for optional passphrase.
-    final passphrase = await _askPassphrase(
-      title: l10n.ieExportPassphrase,
-      hint: l10n.ieExportPassphraseHint,
-    );
-    // null means the dialog was cancelled.
-    if (passphrase == null) return;
+    // Ask for required passphrase.
+    String? passphrase;
+    while (passphrase == null || passphrase.isEmpty) {
+      passphrase = await _askPassphrase(
+        title: l10n.ieExportPassphrase,
+        hint: l10n.ieExportPassphraseHint,
+      );
+      // null means the dialog was cancelled.
+      if (passphrase == null) return;
+
+      if (passphrase.isEmpty) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.ieExportPassphraseRequired)),
+        );
+        passphrase = null;
+      }
+    }
 
     setState(() => _busy = true);
     try {
       final service = ref.read(exportServiceProvider);
       final file = await service.exportAsJson(
         widget.householdId,
-        passphrase: passphrase.isNotEmpty ? passphrase : null,
+        passphrase: passphrase,
       );
       await service.shareFile(file);
       // Auto-delete export file after 5 minutes.

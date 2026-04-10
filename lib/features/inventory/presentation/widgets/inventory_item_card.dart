@@ -53,19 +53,19 @@ class InventoryItemCard extends StatelessWidget {
   Widget? _buildTrailingBadges(BuildContext context, dynamic l10n) {
     if (item.isExpired) {
       return _Badge(
-        label: l10n.inventoryExpired,
+        label: l10n.inventoryExpired as String,
         color: Colors.red,
       );
     }
     if (item.isExpiringSoon) {
       return _Badge(
-        label: l10n.inventoryExpiringSoon,
+        label: l10n.inventoryExpiringSoon as String,
         color: Colors.orange,
       );
     }
     if (item.isLowStock) {
       return _Badge(
-        label: l10n.inventoryLowStock,
+        label: l10n.inventoryLowStock as String,
         color: Colors.amber.shade700,
       );
     }

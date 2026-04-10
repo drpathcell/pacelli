@@ -91,14 +91,6 @@ class FirebaseDataRepository implements DataRepository {
     return null;
   }
 
-  // ignore: unused_element
-  static String? _tsToIso(dynamic value) {
-    if (value == null) return null;
-    if (value is Timestamp) return value.toDate().toIso8601String();
-    if (value is String) return value;
-    return null;
-  }
-
   // ═══════════════════════════════════════════════════════════════════
   //  TASKS
   // ═══════════════════════════════════════════════════════════════════
@@ -210,9 +202,9 @@ class FirebaseDataRepository implements DataRepository {
       final profileIds = <String>{};
       for (final doc in snapshot.docs) {
         final data = doc.data();
-        if (data['category_id'] != null) categoryIds.add(data['category_id']);
-        if (data['assigned_to'] != null) profileIds.add(data['assigned_to']);
-        if (data['created_by'] != null) profileIds.add(data['created_by']);
+        if (data['category_id'] != null) categoryIds.add(data['category_id'] as String);
+        if (data['assigned_to'] != null) profileIds.add(data['assigned_to'] as String);
+        if (data['created_by'] != null) profileIds.add(data['created_by'] as String);
       }
 
       Map<String, TaskCategory> categories;
@@ -261,18 +253,18 @@ class FirebaseDataRepository implements DataRepository {
     if (data['category_id'] != null) {
       final catDoc = await _db
           .collection('task_categories')
-          .doc(data['category_id'])
+          .doc(data['category_id'] as String)
           .get();
       if (catDoc.exists) category = _categoryFromFirestore(catDoc.data()!);
     }
 
     ProfileRef? assignedProfile;
     if (data['assigned_to'] != null) {
-      assignedProfile = await _getProfile(data['assigned_to']);
+      assignedProfile = await _getProfile(data['assigned_to'] as String);
     }
     ProfileRef? creatorProfile;
     if (data['created_by'] != null) {
-      creatorProfile = await _getProfile(data['created_by']);
+      creatorProfile = await _getProfile(data['created_by'] as String);
     }
 
     return Task(
@@ -1149,7 +1141,9 @@ class FirebaseDataRepository implements DataRepository {
     try {
       final taskDoc = await _db.collection('tasks').doc(taskId).get();
       householdId = taskDoc.data()?['household_id'] as String?;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[Pacelli] Silent catch in getTaskAttachments: $e');
+    }
 
     if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
@@ -1245,7 +1239,9 @@ class FirebaseDataRepository implements DataRepository {
     try {
       final entryDoc = await _db.collection('plan_entries').doc(entryId).get();
       householdId = entryDoc.data()?['household_id'] as String?;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[Pacelli] Silent catch in getPlanEntryAttachments: $e');
+    }
 
     if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
@@ -1265,7 +1261,9 @@ class FirebaseDataRepository implements DataRepository {
     try {
       final planDoc = await _db.collection('scratch_plans').doc(planId).get();
       householdId = planDoc.data()?['household_id'] as String?;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[Pacelli] Silent catch in getPlanAttachments: $e');
+    }
 
     if (householdId == null) return []; // Can't query without household_id.
     final snap = await _db
@@ -2575,7 +2573,9 @@ class FirebaseDataRepository implements DataRepository {
       // member doc to still exist.
       try {
         await _db.collection('household_drive_config').doc(hid).delete();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[Pacelli] Silent catch in burnAllData (drive config): $e');
+      }
 
       // Now wipe all household data (including the member doc itself).
       await _wipeHouseholdData(hid, userId: userId);

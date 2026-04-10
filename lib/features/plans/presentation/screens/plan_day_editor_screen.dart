@@ -72,8 +72,8 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
       final planModel = await ref.read(dataRepositoryProvider).getPlan(widget.planId);
       if (!mounted) return;
       final plan = planModel.toDisplayMap();
-      final allEntries =
-          List<Map<String, dynamic>>.from(plan['plan_entries'] ?? []);
+      final allEntries = List<Map<String, dynamic>>.from(
+          (plan['plan_entries'] as Iterable?) ?? []);
 
       // Collect any custom labels already used in this plan
       for (final e in allEntries) {
@@ -102,8 +102,11 @@ class _PlanDayEditorScreenState extends ConsumerState<PlanDayEditorScreen> {
   List<Map<String, dynamic>> _entriesForDay(
       List<Map<String, dynamic>> allEntries) {
     return allEntries
-        .where(
-            (e) => (e['entry_date'] as String).substring(0, 10) == _dateKey)
+        .where((e) {
+          final dateStr = e['entry_date'] as String?;
+          if (dateStr == null || dateStr.length < 10) return false;
+          return dateStr.substring(0, 10) == _dateKey;
+        })
         .toList()
       ..sort((a, b) => ((a['sort_order'] as int?) ?? 0)
           .compareTo((b['sort_order'] as int?) ?? 0));

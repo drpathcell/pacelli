@@ -74,6 +74,8 @@ class AppRoutes {
   static const String inventoryLocations = '/inventory/locations';
   static const String barcodeScanner = '/inventory/scan';
   static const String virtualBarcodeView = '/inventory/qr-view';
+  static const String plans = '/plans';
+  static const String createPlan = '/plans/create';
   static const String manual = '/manual';
   static const String manualCategories = '/manual/categories';
   static const String aiAssistant = '/ai-assistant';
@@ -178,8 +180,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.importExport,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return ImportExportScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Import/Export',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return ImportExportScreen(householdId: extra);
         },
       ),
 
@@ -187,8 +199,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.search,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return SearchScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Search',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return SearchScreen(householdId: extra);
         },
       ),
 
@@ -202,8 +224,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.driveSetup,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return DriveSetupScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Drive Setup',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return DriveSetupScreen(householdId: extra);
         },
       ),
 
@@ -217,8 +249,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '${AppRoutes.tasks}/create',
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return CreateTaskScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Create Task',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return CreateTaskScreen(householdId: extra);
         },
       ),
 
@@ -244,17 +286,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.inventory,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return InventoryScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Inventory',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return InventoryScreen(householdId: extra);
         },
       ),
       GoRoute(
         path: AppRoutes.inventoryItem,
         builder: (context, state) {
-          final extra = state.extra as Map<String, String>;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic> ||
+              extra['householdId'] is! String ||
+              extra['itemId'] is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Inventory Item',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
           return InventoryItemDetailScreen(
-            householdId: extra['householdId']!,
-            itemId: extra['itemId']!,
+            householdId: extra['householdId'] as String,
+            itemId: extra['itemId'] as String,
           );
         },
       ),
@@ -274,41 +338,95 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.editInventoryItem,
         builder: (context, state) {
-          final extra = state.extra as Map<String, String>;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic> ||
+              extra['householdId'] is! String ||
+              extra['itemId'] is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Edit Inventory Item',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
           return EditInventoryItemScreen(
-            householdId: extra['householdId']!,
-            itemId: extra['itemId']!,
+            householdId: extra['householdId'] as String,
+            itemId: extra['itemId'] as String,
           );
         },
       ),
       GoRoute(
         path: AppRoutes.inventoryCategories,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return ManageInventoryCategoriesScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Inventory Categories',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return ManageInventoryCategoriesScreen(householdId: extra);
         },
       ),
       GoRoute(
         path: AppRoutes.inventoryLocations,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return ManageInventoryLocationsScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Inventory Locations',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return ManageInventoryLocationsScreen(householdId: extra);
         },
       ),
       GoRoute(
         path: AppRoutes.barcodeScanner,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return BarcodeScannerScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Barcode Scanner',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return BarcodeScannerScreen(householdId: extra);
         },
       ),
       GoRoute(
         path: AppRoutes.virtualBarcodeView,
         builder: (context, state) {
-          final extra = state.extra as Map<String, String>;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic> ||
+              extra['itemName'] is! String ||
+              extra['barcode'] is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Virtual Barcode View',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
           return VirtualBarcodeViewScreen(
-            itemName: extra['itemName']!,
-            barcode: extra['barcode']!,
+            itemName: extra['itemName'] as String,
+            barcode: extra['barcode'] as String,
           );
         },
       ),
@@ -317,15 +435,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.manual,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return ManualScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Manual',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return ManualScreen(householdId: extra);
         },
       ),
       GoRoute(
         path: '${AppRoutes.manual}/create',
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return CreateManualEntryScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Create Manual Entry',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return CreateManualEntryScreen(householdId: extra);
         },
       ),
       GoRoute(
@@ -345,8 +483,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.manualCategories,
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return ManageManualCategoriesScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Manual Categories',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return ManageManualCategoriesScreen(householdId: extra);
         },
       ),
 
@@ -354,8 +502,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/plans/create',
         builder: (context, state) {
-          final householdId = state.extra as String;
-          return CreatePlanScreen(householdId: householdId);
+          final extra = state.extra;
+          if (extra is! String) {
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Invalid route arguments for Create Plan',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          }
+          return CreatePlanScreen(householdId: extra);
         },
       ),
       GoRoute(

@@ -59,9 +59,9 @@ class CalendarPlansSection extends StatelessWidget {
               ]
             : draftPlans.map((plan) {
                 final entries = List<Map<String, dynamic>>.from(
-                    plan['plan_entries'] ?? []);
+                    (plan['plan_entries'] as Iterable?) ?? []);
                 final checklist = List<Map<String, dynamic>>.from(
-                    plan['plan_checklist_items'] ?? []);
+                    (plan['plan_checklist_items'] as Iterable?) ?? []);
                 final startDate = plan['start_date'] as String? ?? '';
                 final endDate = plan['end_date'] as String? ?? '';
 

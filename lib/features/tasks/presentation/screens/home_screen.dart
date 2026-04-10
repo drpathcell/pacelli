@@ -88,7 +88,7 @@ class HomeScreen extends ConsumerWidget {
           final household = data['household'] as Map<String, dynamic>;
           return _HouseholdDashboard(
             householdId: household['id'] as String,
-            householdName: household['name'] ?? context.l10n.homeMyHousehold,
+            householdName: (household['name'] as String?) ?? context.l10n.homeMyHousehold,
           );
         },
       ),

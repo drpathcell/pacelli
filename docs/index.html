@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pacelli — A household management app for families.">
+    <title>Pacelli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --pacelli-green: #6B8F6B;
+            --pacelli-green-light: #8BA38B;
+            --pacelli-green-dark: #556055;
+            --bg-light: #FFFFFF;
+            --text-light: #1F2937;
+            --text-light-secondary: #6B7280;
+            --border-light: #E5E7EB;
+            --bg-dark: #111827;
+            --text-dark: #F3F4F6;
+            --text-dark-secondary: #D1D5DB;
+            --border-dark: #374151;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: var(--bg-dark);
+                --text-primary: var(--text-dark);
+                --text-secondary: var(--text-dark-secondary);
+                --border: var(--border-dark);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: var(--bg-light);
+                --text-primary: var(--text-light);
+                --text-secondary: var(--text-light-secondary);
+                --border: var(--border-light);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--pacelli-green) 0%, var(--pacelli-green-light) 100%);
+            color: white;
+            padding: 4rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 0;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .intro-section {
+            background-color: var(--border);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .intro-section h2 {
+            color: var(--pacelli-green);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .intro-section p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+            line-height: 1.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--pacelli-green);
+            box-shadow: 0 4px 12px rgba(107, 143, 107, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-card h3 {
+            color: var(--pacelli-green);
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .links-section {
+            background: linear-gradient(135deg, rgba(107, 143, 107, 0.1) 0%, rgba(107, 143, 107, 0.05) 100%);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .links-section h2 {
+            color: var(--pacelli-green);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .link-button {
+            display: inline-block;
+            padding: 1rem 1.5rem;
+            background-color: var(--pacelli-green);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid var(--pacelli-green);
+        }
+
+        .link-button:hover {
+            background-color: var(--pacelli-green-dark);
+            border-color: var(--pacelli-green-dark);
+        }
+
+        .link-button.secondary {
+            background-color: transparent;
+            color: var(--pacelli-green);
+        }
+
+        .link-button.secondary:hover {
+            background-color: var(--pacelli-green);
+            color: white;
+        }
+
+        footer {
+            background-color: var(--border);
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 4rem;
+            font-size: 0.9rem;
+        }
+
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        a {
+            color: var(--pacelli-green);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1.1rem;
+            }
+
+            main {
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+
+            .features {
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Pacelli</h1>
+        <p>Household Management Made Simple</p>
+    </header>
+
+    <main>
+        <section class="intro-section">
+            <h2>Welcome to Pacelli</h2>
+            <p>
+                Pacelli is a household management app designed to help families organize tasks, checklists, plans, calendar events, inventory, and a shared house manual — all in one secure, easy-to-use app.
+            </p>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <h3>📋 Tasks & Checklists</h3>
+                <p>Organize household tasks and checklists with due dates, subtasks, and categories.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🗓️ Calendar</h3>
+                <p>Plan family events, appointments, and important dates in a shared calendar.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📦 Inventory</h3>
+                <p>Track household supplies, groceries, and items with expiry dates and low-stock alerts.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📖 House Manual</h3>
+                <p>Create a shared knowledge base with household procedures, tips, and important information.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔐 End-to-End Encrypted</h3>
+                <p>Your household data is encrypted before leaving your device — even we can't read it.</p>
+            </div>
+            <div class="feature-card">
+                <h3>👥 Family Sharing</h3>
+                <p>Invite family members to your household and stay synchronized across all devices.</p>
+            </div>
+        </section>
+
+        <section class="links-section">
+            <h2>Important Links</h2>
+            <div class="link-grid">
+                <a href="privacy.html" class="link-button">Privacy Policy</a>
+                <a href="mailto:juancarlos.celis92@gmail.com" class="link-button secondary">Contact Support</a>
+            </div>
+        </section>
+
+        <section style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="color: var(--pacelli-green); font-size: 1.5rem; margin-bottom: 1rem;">Privacy & Security First</h2>
+            <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.8;">
+                Your household data is yours. We don't sell your information, run ads, or track you. All user-generated content is encrypted end-to-end, and you can delete all your data at any time using the "Burn All Data" feature.
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p><strong>Pacelli</strong> — Household Management App</p>
+        <p>Developed by Juan Carlos Celis Pinto</p>
+        <p><a href="privacy.html">Privacy Policy</a> | <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a></p>
+        <p style="margin-top: 1rem; font-size: 0.85rem;">© 2026 Pacelli. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for Pacelli — A household management app for families.">
+    <title>Privacy Policy — Pacelli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Sage green branding */
+            --pacelli-green: #6B8F6B;
+            --pacelli-green-light: #8BA38B;
+            --pacelli-green-dark: #556055;
+
+            /* Light mode */
+            --bg-light: #FFFFFF;
+            --text-light: #1F2937;
+            --text-light-secondary: #6B7280;
+            --border-light: #E5E7EB;
+
+            /* Dark mode */
+            --bg-dark: #111827;
+            --text-dark: #F3F4F6;
+            --text-dark-secondary: #D1D5DB;
+            --border-dark: #374151;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: var(--bg-dark);
+                --text-primary: var(--text-dark);
+                --text-secondary: var(--text-dark-secondary);
+                --border: var(--border-dark);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: var(--bg-light);
+                --text-primary: var(--text-light);
+                --text-secondary: var(--text-light-secondary);
+                --border: var(--border-light);
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--pacelli-green) 0%, var(--pacelli-green-light) 100%);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* Navigation & TOC */
+        nav {
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        nav ul {
+            list-style: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        nav a {
+            color: var(--pacelli-green);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 2px;
+        }
+
+        nav a:hover {
+            color: var(--pacelli-green-dark);
+            border-bottom-color: var(--pacelli-green);
+        }
+
+        /* Main content */
+        main {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--pacelli-green);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        a {
+            color: var(--pacelli-green);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: var(--pacelli-green-light);
+            text-decoration: underline;
+        }
+
+        /* Highlights */
+        .highlight {
+            background-color: var(--pacelli-green);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--pacelli-green-dark);
+        }
+
+        .highlight p {
+            color: white;
+            margin-bottom: 0;
+        }
+
+        .highlight strong {
+            color: white;
+        }
+
+        /* Metadata */
+        .metadata {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .metadata-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .metadata-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .metadata-value {
+            color: var(--text-primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--border);
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 4rem;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--pacelli-green);
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+
+            nav ul {
+                gap: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            nav a {
+                padding: 0.5rem;
+            }
+
+            .metadata {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            header {
+                background: white;
+                color: var(--text-primary);
+                border-bottom: 2px solid var(--pacelli-green);
+            }
+
+            nav {
+                display: none;
+            }
+
+            a {
+                color: var(--pacelli-green);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Pacelli Privacy Policy</h1>
+        <p>How we protect your household data</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#introduction">Introduction</a></li>
+            <li><a href="#information-collect">Information We Collect</a></li>
+            <li><a href="#how-we-use">How We Use</a></li>
+            <li><a href="#data-security">Security</a></li>
+            <li><a href="#third-party">Third Parties</a></li>
+            <li><a href="#your-rights">Your Rights</a></li>
+            <li><a href="#children">Children</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="metadata">
+            <div class="metadata-item">
+                <span class="metadata-label">Last Updated</span>
+                <span class="metadata-value">April 2026</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Effective Date</span>
+                <span class="metadata-value">April 2026</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">App Version</span>
+                <span class="metadata-value">1.0+</span>
+            </div>
+        </div>
+
+        <!-- Introduction -->
+        <section id="introduction">
+            <h2>Introduction</h2>
+            <p>
+                <strong>Pacelli</strong> is a household management app designed to help families organize tasks, checklists, plans, calendar events, inventory, and a shared house manual. This privacy policy explains how <strong>Juan Carlos Celis Pinto</strong> (the developer) collects, uses, and protects your personal data when you use the Pacelli app.
+            </p>
+            <p>
+                We take your privacy seriously. This policy describes our practices in clear, straightforward language. If you are in the European Union or other jurisdictions with similar privacy laws (such as Ireland, where the developer is based), your data is protected under GDPR and equivalent regulations.
+            </p>
+            <div class="highlight">
+                <p><strong>Key Principle:</strong> We do not sell your data, run advertisements, or track you for marketing purposes. Your household data belongs to you.</p>
+            </div>
+        </section>
+
+        <!-- Information We Collect -->
+        <section id="information-collect">
+            <h2>Information We Collect</h2>
+
+            <h3>1. Authentication Data</h3>
+            <p>
+                Pacelli uses <strong>Google Sign-In</strong> for authentication. When you sign in, Google provides us with:
+            </p>
+            <ul>
+                <li>Your Google account email address</li>
+                <li>A unique Google ID</li>
+                <li>Your name (if provided in your Google account)</li>
+                <li>Your profile picture (if you choose to display it in-app)</li>
+            </ul>
+            <p>
+                <strong>Important:</strong> We do not receive your Google password. Google's authentication flow is secure and handled directly by Google. Google's Privacy Policy applies to how Google processes this authentication data. We only receive and store the tokens and information necessary to keep you signed in.
+            </p>
+
+            <h3>2. Household Content & User-Generated Data</h3>
+            <p>
+                When you create tasks, checklists, plans, calendar events, inventory items, or house manual entries, you create household data. This includes:
+            </p>
+            <ul>
+                <li>Task titles, descriptions, due dates, status, and subtasks</li>
+                <li>Checklist titles, items, and completion status</li>
+                <li>Plans, plan entries, and associated metadata</li>
+                <li>Inventory items (name, category, location, quantity, expiry date, barcode)</li>
+                <li>House manual entries (title, content, tags, categories)</li>
+                <li>Calendar events and notes</li>
+                <li>Photos attached to inventory items</li>
+                <li>Feedback and ratings you provide within the app</li>
+            </ul>
+
+            <h3>3. Camera & Photo Access</h3>
+            <p>
+                Pacelli requests camera and photo library access for:
+            </p>
+            <ul>
+                <li><strong>Camera:</strong> Scanning barcodes or QR codes of inventory items for quick lookup</li>
+                <li><strong>Photo Library:</strong> Attaching photos to inventory items (e.g., pictures of products, supplies, or items in storage)</li>
+            </ul>
+            <p>
+                <strong>No images are stored on our servers or transmitted anywhere</strong> except photos you explicitly attach to inventory items, which are stored in Firebase Storage (Google Cloud). We do not access, store, or transmit camera streams or images from your camera roll for any other purpose.
+            </p>
+
+            <h3>4. Device & Crash Data</h3>
+            <p>
+                To diagnose and fix app crashes and performance issues, we use <strong>Firebase Crashlytics</strong> (part of Google Cloud). This may collect:
+            </p>
+            <ul>
+                <li>Crash logs and stack traces</li>
+                <li>Device model and operating system version</li>
+                <li>App version number</li>
+                <li>Timestamp of the crash</li>
+            </ul>
+            <p>
+                <strong>No personal identifiers or user content are included in crash reports.</strong> You can disable crash reporting in app settings, but we recommend leaving it enabled to help us improve stability.
+            </p>
+
+            <h3>5. Local Notifications Metadata</h3>
+            <p>
+                The app sends you local notifications for:
+            </p>
+            <ul>
+                <li>Expiry reminders for inventory items</li>
+                <li>Low-stock alerts for tracked items</li>
+            </ul>
+            <p>
+                These notifications are generated entirely on your device and do not leave your phone. No notification content is sent to our servers or any third party.
+            </p>
+
+            <h3>6. Usage & Diagnostic Data</h3>
+            <p>
+                We collect minimal diagnostic data to understand how the app is used and identify issues:
+            </p>
+            <ul>
+                <li>Which features are used and how often</li>
+                <li>Errors or warnings encountered in the app</li>
+                <li>Session duration and device information</li>
+            </ul>
+            <p>
+                This data is collected by Firebase Analytics and is completely anonymous — it cannot be traced back to your identity.
+            </p>
+
+            <h3>7. Information You Don't Provide</h3>
+            <p>
+                Pacelli <strong>does not collect:</strong>
+            </p>
+            <ul>
+                <li>Location data (GPS or WiFi-based)</li>
+                <li>Microphone audio</li>
+                <li>Contacts or calendars from your device</li>
+                <li>Browsing history or app activity outside Pacelli</li>
+                <li>Biometric data (fingerprints, face recognition)</li>
+                <li>Health data</li>
+            </ul>
+        </section>
+
+        <!-- How We Use Your Information -->
+        <section id="how-we-use">
+            <h2>How We Use Your Information</h2>
+
+            <h3>Authentication & Account Management</h3>
+            <p>
+                We use your Google authentication data to:
+            </p>
+            <ul>
+                <li>Sign you in securely</li>
+                <li>Keep your session active</li>
+                <li>Allow you to be recognized as a member of your household</li>
+                <li>Display your name and picture in the app</li>
+            </ul>
+
+            <h3>Providing the App's Core Features</h3>
+            <p>
+                Your household data (tasks, inventory, etc.) is stored and synchronized across your devices so you can manage your household from anywhere. This data is:
+            </p>
+            <ul>
+                <li>Stored in your household's secure database in Firebase Firestore</li>
+                <li>End-to-end encrypted (see Data Security below)</li>
+                <li>Shared only with household members you invite</li>
+                <li>Never sold, rented, or used for marketing</li>
+            </ul>
+
+            <h3>Improving the App</h3>
+            <p>
+                We use crash reports and usage statistics to:
+            </p>
+            <ul>
+                <li>Fix bugs and improve stability</li>
+                <li>Understand which features are most valuable to users</li>
+                <li>Optimize app performance</li>
+                <li>Develop new features that meet real needs</li>
+            </ul>
+
+            <h3>Sending Notifications</h3>
+            <p>
+                Local notifications are triggered on your device (no server involved) for:
+            </p>
+            <ul>
+                <li>Reminding you of expiring inventory items</li>
+                <li>Alerting you to low-stock items you're tracking</li>
+            </ul>
+
+            <h3>Legal & Safety</h3>
+            <p>
+                We may use your information if required by law or to:
+            </p>
+            <ul>
+                <li>Respond to valid legal requests from authorities</li>
+                <li>Protect against fraud or security threats</li>
+                <li>Enforce our terms of service</li>
+            </ul>
+
+            <h3>What We Do NOT Do</h3>
+            <ul>
+                <li>We do NOT use your data for targeted advertising</li>
+                <li>We do NOT sell or share your data with marketing partners</li>
+                <li>We do NOT use your household data to build profiles for third parties</li>
+                <li>We do NOT analyze your content for purposes other than crash diagnosis</li>
+                <li>We do NOT share your data with affiliates for commercial purposes</li>
+            </ul>
+        </section>
+
+        <!-- Data Storage & Security -->
+        <section id="data-security">
+            <h2>Data Storage & Security</h2>
+
+            <h3>Where Your Data Is Stored</h3>
+            <p>
+                Pacelli offers two storage options, which you choose during initial setup:
+            </p>
+
+            <h3>Option 1: Firebase Cloud (Default)</h3>
+            <p>
+                Your household data is stored in <strong>Google Cloud Firestore</strong>, located in secure, geographically distributed data centers. This allows you to access your household data from any device, anywhere.
+            </p>
+
+            <h3>Option 2: Local SQLite (Offline-First)</h3>
+            <p>
+                You can choose to store all data locally on your device using SQLite. In this mode, data stays entirely on your phone and is never transmitted to any cloud server. You can still use all app features offline.
+            </p>
+
+            <h3>End-to-End Encryption (Cloud Only)</h3>
+            <p>
+                <strong>If you use Firebase Cloud storage, all sensitive household data is encrypted end-to-end before it ever leaves your device.</strong>
+            </p>
+            <p>
+                Here's how it works:
+            </p>
+            <ul>
+                <li><strong>Encryption Standard:</strong> AES-256-CBC (military-grade encryption)</li>
+                <li><strong>Scope:</strong> All user-generated content (task titles, descriptions, notes, inventory names, etc.) is encrypted before transmission</li>
+                <li><strong>Structural Data:</strong> Metadata required for app functionality (timestamps, status flags, unique IDs, user relationships) are stored unencrypted so the app can query and filter your data correctly</li>
+                <li><strong>Key Management:</strong> Each household has a unique encryption key. Keys are derived from your Google ID and securely stored on your device and in Firebase</li>
+                <li><strong>Household Sharing:</strong> When you invite another family member, their device securely receives a copy of the household encryption key so they can decrypt shared data</li>
+            </ul>
+
+            <h3>Security Measures</h3>
+            <ul>
+                <li><strong>HTTPS/TLS:</strong> All communication between your device and Google Cloud is encrypted in transit</li>
+                <li><strong>Authentication:</strong> Only your Google account can access your household data. Firebase security rules enforce membership checks</li>
+                <li><strong>Secure Storage:</strong> Encryption keys are stored securely on your device using platform-specific secure storage (Keychain on iOS, Keystore on Android)</li>
+                <li><strong>No Backdoors:</strong> We do not have a master key or backdoor access to decrypt your data</li>
+            </ul>
+
+            <h3>Data Retention & Deletion</h3>
+            <p>
+                <strong>Permanent Data Deletion ("Burn" Feature):</strong> You can delete all your household data at any time by using the "Burn All Data" feature in the app. This:
+            </p>
+            <ul>
+                <li>Permanently deletes all household content from Firebase Firestore</li>
+                <li>Removes your access from the household</li>
+                <li>Clears the household encryption key from your device</li>
+                <li>Cannot be undone — deleted data is permanently removed</li>
+            </ul>
+            <p>
+                <strong>When You Delete the App:</strong> Your household data remains in the cloud until you explicitly delete it using the Burn feature. This is intentional: if you reinstall Pacelli, your data is still there.
+            </p>
+
+            <h3>Backups</h3>
+            <p>
+                <strong>Cloud Backups (iOS/Android):</strong> If you use Firebase storage, your data is automatically backed up as part of Firebase's infrastructure. These backups are encrypted at rest on Google's servers.
+            </p>
+            <p>
+                <strong>Local Device Backups:</strong> If you back up your phone to iCloud (iOS) or Google Drive (Android), encrypted app data may be included. The encryption keys remain on your device — your cloud backup provider cannot decrypt this data.
+            </p>
+
+            <h3>Data Breach Response</h3>
+            <p>
+                In the unlikely event of a security incident, we will:
+            </p>
+            <ul>
+                <li>Investigate immediately</li>
+                <li>Notify affected users as required by law (typically within 72 hours in the EU)</li>
+                <li>Work with authorities if necessary</li>
+                <li>Implement corrective measures to prevent recurrence</li>
+            </ul>
+        </section>
+
+        <!-- Third-Party Services -->
+        <section id="third-party">
+            <h2>Third-Party Services</h2>
+
+            <h3>Google Cloud (Firebase)</h3>
+            <ul>
+                <li><strong>Purpose:</strong> Cloud storage, authentication, analytics, crash reporting</li>
+                <li><strong>Data Shared:</strong> Encrypted household content (if using cloud storage), user ID, device info, crash logs</li>
+                <li><strong>Privacy Policy:</strong> <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+            </ul>
+
+            <h3>Google Sign-In</h3>
+            <ul>
+                <li><strong>Purpose:</strong> Secure authentication</li>
+                <li><strong>Data Shared:</strong> Email, unique ID, name, profile picture</li>
+                <li><strong>Privacy Policy:</strong> <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+            </ul>
+
+            <h3>What We Do NOT Use</h3>
+            <ul>
+                <li>No third-party analytics (beyond Firebase Crashlytics for crash diagnosis)</li>
+                <li>No advertising networks or marketing trackers</li>
+                <li>No social media trackers</li>
+                <li>No data brokers</li>
+            </ul>
+
+            <h3>Data Processor Agreements</h3>
+            <p>
+                Google acts as a Data Processor on our behalf under the terms of the <a href="https://cloud.google.com/terms/data-processing-terms" target="_blank">Google Cloud Data Processing Terms</a>. Google has committed to adequate safeguards and confidentiality.
+            </p>
+        </section>
+
+        <!-- Your Rights -->
+        <section id="your-rights">
+            <h2>Your Rights & Control</h2>
+
+            <h3>GDPR Rights (EU Users)</h3>
+            <p>
+                If you are in the European Union or another jurisdiction with similar rights (such as Ireland), you have the following rights under GDPR:
+            </p>
+
+            <h3>Right to Access</h3>
+            <p>
+                You have the right to request a copy of all personal data we hold about you. You can export your household data directly from the app.
+            </p>
+
+            <h3>Right to Correction</h3>
+            <p>
+                You can edit or correct any household data directly in the app. You can also update your profile information in your Google account.
+            </p>
+
+            <h3>Right to Erasure ("Right to Be Forgotten")</h3>
+            <p>
+                You can delete all your household data at any time using the Burn feature. This permanently removes:
+            </p>
+            <ul>
+                <li>All household content</li>
+                <li>Your membership in the household</li>
+                <li>Associated metadata and backups</li>
+            </ul>
+
+            <h3>Right to Data Portability</h3>
+            <p>
+                You can export your household data in a portable format (JSON) directly from the app's export feature. This allows you to move your data to another service.
+            </p>
+
+            <h3>Right to Object</h3>
+            <p>
+                You can opt out of non-essential data collection:
+            </p>
+            <ul>
+                <li>Disable crash reporting in app settings</li>
+                <li>Disable analytics in app settings</li>
+                <li>Opt out of push notifications</li>
+            </ul>
+
+            <h3>Right to Restriction</h3>
+            <p>
+                You can request that we restrict processing of your data for specific purposes. Contact us with your request.
+            </p>
+
+            <h3>Right to Withdraw Consent</h3>
+            <p>
+                You can withdraw consent for non-essential data collection at any time in app settings.
+            </p>
+
+            <h3>Making a Rights Request</h3>
+            <p>
+                To exercise any of these rights, contact us at <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a> with:
+            </p>
+            <ul>
+                <li>Your full name</li>
+                <li>Your email address or Google ID</li>
+                <li>A clear description of your request</li>
+                <li>Any supporting documentation (optional)</li>
+            </ul>
+            <p>
+                We will respond to verified requests within 30 days (or as required by applicable law). We may ask for additional information to verify your identity.
+            </p>
+
+            <h3>App-Level Controls</h3>
+            <p>
+                You have full control over your data within the app:
+            </p>
+            <ul>
+                <li><strong>Edit/Delete Content:</strong> Modify or remove any task, inventory item, or note</li>
+                <li><strong>Camera/Photo Permissions:</strong> Grant or revoke camera and photo library access in app settings</li>
+                <li><strong>Notifications:</strong> Turn off expiry reminders and low-stock alerts</li>
+                <li><strong>Crash Reporting:</strong> Disable Firebase Crashlytics</li>
+                <li><strong>Offline Mode:</strong> Switch from cloud storage to local-only storage</li>
+                <li><strong>Sign Out:</strong> Sign out and stop syncing data</li>
+            </ul>
+        </section>
+
+        <!-- Children's Privacy -->
+        <section id="children">
+            <h2>Children's Privacy</h2>
+
+            <h3>Age Requirement</h3>
+            <p>
+                Pacelli is <strong>intended for adults aged 18 and older</strong> who manage a household. We do not knowingly collect personal data from children under 13.
+            </p>
+
+            <h3>Parents & Guardians</h3>
+            <p>
+                If a parent or guardian wishes to give a child access to the app (e.g., to manage their own tasks), they must:
+            </p>
+            <ul>
+                <li>Create a separate Google account for the child</li>
+                <li>Ensure the child understands the app's purpose and privacy practices</li>
+                <li>Supervise the child's use of the app</li>
+                <li>Set up parental controls on the device (iOS Screen Time, Android Family Link)</li>
+            </ul>
+
+            <h3>What We Do</h3>
+            <p>
+                If we become aware that we have unknowingly collected data from a child under 13, we will:
+            </p>
+            <ul>
+                <li>Delete that data immediately</li>
+                <li>Notify the parent or guardian</li>
+            </ul>
+
+            <h3>Data Privacy for Household Members</h3>
+            <p>
+                If a household uses Pacelli and includes family members of various ages, note that:
+            </p>
+            <ul>
+                <li>All household members can see shared tasks, events, and inventory</li>
+                <li>This is intentional — household management requires transparency</li>
+                <li>Parents/guardians are responsible for overseeing children's access and data</li>
+            </ul>
+        </section>
+
+        <!-- Changes to This Policy -->
+        <section id="changes">
+            <h2>Changes to This Privacy Policy</h2>
+
+            <h3>How We Update This Policy</h3>
+            <p>
+                We may update this privacy policy from time to time to reflect:
+            </p>
+            <ul>
+                <li>Changes in data handling practices</li>
+                <li>New features that collect data</li>
+                <li>Changes in applicable law</li>
+                <li>Feedback from users</li>
+            </ul>
+
+            <h3>Notification of Changes</h3>
+            <p>
+                When we make material changes to this policy, we will:
+            </p>
+            <ul>
+                <li>Update the "Last Updated" date at the top of this page</li>
+                <li>Post a notification in the app</li>
+                <li>Request your consent if required by law</li>
+            </ul>
+
+            <h3>Your Acceptance</h3>
+            <p>
+                Your continued use of Pacelli after any changes to this policy constitutes your acceptance of the updated terms. If you do not agree with our privacy practices, please stop using the app and delete your data using the Burn feature.
+            </p>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact">
+            <h2>Contact Us</h2>
+
+            <h3>Questions or Concerns</h3>
+            <p>
+                If you have questions about this privacy policy, our data practices, or how we handle your information, please contact:
+            </p>
+
+            <div class="highlight">
+                <p>
+                    <strong>Juan Carlos Celis Pinto</strong><br>
+                    Developer, Pacelli<br>
+                    <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a>
+                </p>
+            </div>
+
+            <h3>Data Protection Authority (GDPR)</h3>
+            <p>
+                If you believe your rights under GDPR have been violated, you have the right to lodge a complaint with your national data protection authority. In Ireland, this is the <a href="https://www.dataprotection.ie" target="_blank">Data Protection Commission</a>.
+            </p>
+
+            <h3>App Support</h3>
+            <p>
+                For technical support or feature requests, contact: <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a>
+            </p>
+
+            <h3>Response Time</h3>
+            <p>
+                We aim to respond to all inquiries within 5 business days. For GDPR rights requests, we will respond within 30 days (or as required by law).
+            </p>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>
+            Pacelli Privacy Policy — Last updated April 2026<br>
+            <a href="[GITHUB_PAGES_URL]">Visit Pacelli Website</a> | <a href="mailto:juancarlos.celis92@gmail.com">Contact Support</a>
+        </p>
+        <p style="margin-top: 1.5rem; font-size: 0.85rem;">
+            This privacy policy is effective as of April 2026 and applies to Pacelli v1.0 and later.
+        </p>
+    </footer>
+</body>
+</html>

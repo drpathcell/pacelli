@@ -140,7 +140,7 @@ class _HouseholdContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  household['name'] ?? context.l10n.householdMyHousehold,
+                  (household['name'] as String?) ?? context.l10n.householdMyHousehold,
                   style: context.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 4),

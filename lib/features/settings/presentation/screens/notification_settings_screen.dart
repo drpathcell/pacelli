@@ -102,28 +102,30 @@ class _NotificationSettingsScreenState
                         ),
                       ),
                       const SizedBox(height: 12),
-                      RadioGroup<ReminderTiming>(
-                        groupValue: _timing,
-                        onChanged: (value) => _onTimingChanged(value),
-                        child: Column(
-                          children: [
-                            RadioListTile<ReminderTiming>(
-                              title: Text(context.l10n.notifTimingAtDue),
-                              subtitle: Text(context.l10n.notifTimingAtDueDesc),
-                              value: ReminderTiming.atDue,
-                            ),
-                            RadioListTile<ReminderTiming>(
-                              title: Text(context.l10n.notifTimingOneHour),
-                              subtitle: Text(context.l10n.notifTimingOneHourDesc),
-                              value: ReminderTiming.oneHourBefore,
-                            ),
-                            RadioListTile<ReminderTiming>(
-                              title: Text(context.l10n.notifTimingOneDay),
-                              subtitle: Text(context.l10n.notifTimingOneDayDesc),
-                              value: ReminderTiming.oneDayBefore,
-                            ),
-                          ],
-                        ),
+                      Column(
+                        children: [
+                          RadioListTile<ReminderTiming>(
+                            title: Text(context.l10n.notifTimingAtDue),
+                            subtitle: Text(context.l10n.notifTimingAtDueDesc),
+                            value: ReminderTiming.atDue,
+                            groupValue: _timing,
+                            onChanged: _onTimingChanged,
+                          ),
+                          RadioListTile<ReminderTiming>(
+                            title: Text(context.l10n.notifTimingOneHour),
+                            subtitle: Text(context.l10n.notifTimingOneHourDesc),
+                            value: ReminderTiming.oneHourBefore,
+                            groupValue: _timing,
+                            onChanged: _onTimingChanged,
+                          ),
+                          RadioListTile<ReminderTiming>(
+                            title: Text(context.l10n.notifTimingOneDay),
+                            subtitle: Text(context.l10n.notifTimingOneDayDesc),
+                            value: ReminderTiming.oneDayBefore,
+                            groupValue: _timing,
+                            onChanged: _onTimingChanged,
+                          ),
+                        ],
                       ),
                     ],
                   ),

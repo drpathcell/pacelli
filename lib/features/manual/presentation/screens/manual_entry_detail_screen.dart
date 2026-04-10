@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
@@ -137,20 +139,46 @@ class ManualEntryDetailScreen extends ConsumerWidget {
                 ),
               ),
 
-            // Content — render as simple rich text
-            // (Using a basic text display; a full Markdown renderer
-            // can be swapped in later via flutter_markdown.)
-            SelectableText(
-              entry.content.isNotEmpty
-                  ? entry.content
-                  : context.l10n.manualNoContent,
-              style: context.textTheme.bodyLarge?.copyWith(
-                height: 1.6,
-                color: entry.content.isNotEmpty
-                    ? null
-                    : context.colorScheme.outline,
+            // Content — rendered as Markdown via flutter_markdown.
+            if (entry.content.isNotEmpty)
+              MarkdownBody(
+                data: entry.content,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
+                    .copyWith(
+                  p: context.textTheme.bodyLarge?.copyWith(height: 1.6),
+                  code: context.textTheme.bodyMedium?.copyWith(
+                    fontFamily: 'monospace',
+                    backgroundColor: context.colorScheme.surfaceContainerHighest,
+                  ),
+                  blockquoteDecoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: context.colorScheme.primary,
+                        width: 4,
+                      ),
+                    ),
+                    color: context.colorScheme.primaryContainer
+                        .withValues(alpha: 0.2),
+                  ),
+                ),
+                onTapLink: (text, href, title) async {
+                  if (href != null) {
+                    final uri = Uri.tryParse(href);
+                    if (uri != null && await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    }
+                  }
+                },
+              )
+            else
+              Text(
+                context.l10n.manualNoContent,
+                style: context.textTheme.bodyLarge?.copyWith(
+                  color: context.colorScheme.outline,
+                ),
               ),
-            ),
 
             const SizedBox(height: 24),
 
@@ -173,7 +201,7 @@ class ManualEntryDetailScreen extends ConsumerWidget {
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(context.l10n.commonError(e.toString()))),
       ),
     );
   }

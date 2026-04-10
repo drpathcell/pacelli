@@ -12,6 +12,7 @@ class AiAssistantService {
   static const _apiUrlKey = 'ai_assistant_api_url';
   static const _providerKey = 'ai_assistant_provider';
   static const _apiKeyStorageKey = 'ai_assistant_api_key';
+  static const _hostedModeKey = 'ai_assistant_hosted_mode';
 
   /// Default Cloud Functions URL for Pacelli.
   static const defaultApiUrl =
@@ -70,6 +71,20 @@ class AiAssistantService {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return null;
     return user.getIdToken(forceRefresh);
+  }
+
+  // ── Hosted Mode ──────────────────────────────────────────────
+
+  /// Read whether hosted (Firebase token) mode is enabled.
+  static Future<bool> getHostedMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hostedModeKey) ?? false;
+  }
+
+  /// Persist the hosted mode toggle.
+  static Future<void> setHostedMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hostedModeKey, value);
   }
 
   // ── API URL ──────────────────────────────────────────────────

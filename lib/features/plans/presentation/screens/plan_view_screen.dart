@@ -192,10 +192,10 @@ class _PlanViewScreenState extends ConsumerState<PlanViewScreen> {
             body: Center(child: Text(context.l10n.planInvalidUnreadableDates)),
           );
         }
-        final entries =
-            List<Map<String, dynamic>>.from(plan['plan_entries'] ?? []);
+        final entries = List<Map<String, dynamic>>.from(
+            (plan['plan_entries'] as Iterable?) ?? []);
         final checklist = List<Map<String, dynamic>>.from(
-            plan['plan_checklist_items'] ?? []);
+            (plan['plan_checklist_items'] as Iterable?) ?? []);
         final entryMap = _groupEntries(entries);
         final dates = _dateRange(startDate, endDate);
         final isFinalised = plan['status'] == 'finalised';

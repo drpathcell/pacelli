@@ -419,9 +419,9 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
 
     try {
       if (wasCompleted) {
-        await ref.read(dataRepositoryProvider).reopenTask(widget.task['id']);
+        await ref.read(dataRepositoryProvider).reopenTask(widget.task['id'] as String);
       } else {
-        await ref.read(dataRepositoryProvider).completeTask(widget.task['id']);
+        await ref.read(dataRepositoryProvider).completeTask(widget.task['id'] as String);
         widget.onCompleted?.call();
       }
       ref.invalidate(householdTasksProvider(widget.householdId));

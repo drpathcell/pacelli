@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/models/models.dart';
 import '../../../../core/utils/extensions.dart';
@@ -96,7 +97,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       child: const Icon(Icons.note_alt_outlined),
                     ),
                     tooltip: context.l10n.calendarActivePlans,
-                    onSelected: (planId) => context.push('/plans/$planId'),
+                    onSelected: (planId) => context.push('${AppRoutes.plans}/$planId'),
                     itemBuilder: (ctx) => active.map((p) {
                       return PopupMenuItem<String>(
                         value: p['id'] as String,

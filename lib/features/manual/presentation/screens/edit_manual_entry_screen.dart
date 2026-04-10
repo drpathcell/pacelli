@@ -49,7 +49,7 @@ class _EditManualEntryScreenState
         entryId: widget.entryId,
         title: title,
         content: _contentController.text,
-        categoryId: _selectedCategoryId ?? '',
+        categoryId: _selectedCategoryId,
         tags: _tags,
         isPinned: _isPinned,
       );
@@ -62,7 +62,7 @@ class _EditManualEntryScreenState
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        context.showSnackBar('Error: $e', isError: true);
+        context.showSnackBar(context.l10n.commonError(e.toString()), isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -156,8 +156,24 @@ class _EditManualEntryScreenState
                         setState(() => _selectedCategoryId = v),
                   );
                 },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_outlined,
+                          size: 16,
+                          color: context.colorScheme.error),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.l10n.manualCategoryLoadError,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: context.colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -231,7 +247,7 @@ class _EditManualEntryScreenState
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(context.l10n.commonError(e.toString()))),
       ),
     );
   }

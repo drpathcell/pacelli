@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -20,14 +20,21 @@ class ExportService {
 
   ExportService(this._repo);
 
-  /// Exports all household data as a JSON file and opens the share sheet.
+  /// Exports all household data as an encrypted JSON file and opens the share sheet.
   ///
   /// The JSON includes tasks (with subtasks), categories, checklists (with
   /// items), and plans (with entries and checklist items).
   ///
+  /// The [passphrase] parameter is required and must not be empty. The export
+  /// is encrypted with AES-256-CBC and includes an HMAC-SHA256 integrity tag.
+  ///
   /// Data from the repository is already decrypted by the time it reaches
   /// the model layer, so no extra decryption step is needed here.
-  Future<File> exportAsJson(String householdId, {String? passphrase}) async {
+  Future<File> exportAsJson(String householdId, {required String passphrase}) async {
+    // Validate passphrase is not empty
+    if (passphrase.isEmpty) {
+      throw ArgumentError('Passphrase cannot be empty');
+    }
     final tasks = await _repo.getTasks(householdId: householdId);
     final categories = await _repo.getCategories(householdId);
     final checklists = await _repo.getChecklists(householdId);
@@ -70,21 +77,30 @@ class ExportService {
 
     final json = const JsonEncoder.withIndent('  ').convert(export);
 
-    String fileContent;
-    String extension;
+    // Encrypt the JSON with AES-256-CBC using the passphrase
+    final key = EncryptionService.deriveUserKey(passphrase);
+    final encryptedData = EncryptionService.encrypt(json, key);
 
-    if (passphrase != null && passphrase.isNotEmpty) {
-      final key = EncryptionService.deriveUserKey(passphrase);
-      fileContent = EncryptionService.encrypt(json, key);
-      extension = 'json.enc';
-    } else {
-      fileContent = json;
-      extension = 'json';
-    }
+    // Derive a separate HMAC key from the passphrase using a different salt
+    final hmacSalt = utf8.encode('pacelli_export_hmac_salt_v1');
+    final hmacKey = Hmac(sha256, hmacSalt).convert(utf8.encode(passphrase));
+
+    // Compute HMAC-SHA256 over the encrypted data
+    final hmac = Hmac(sha256, hmacKey.bytes).convert(utf8.encode(encryptedData));
+
+    // Build the export format with version, encrypted data, HMAC, and salt
+    final exportedFile = {
+      'version': 3,
+      'encrypted': encryptedData,
+      'hmac': hmac.toString(), // hex string
+      'salt': base64Encode(hmacSalt),
+    };
+
+    final fileContent = const JsonEncoder.withIndent('  ').convert(exportedFile);
 
     final dir = await getApplicationDocumentsDirectory();
     final timestamp = DateFormat('yyyy-MM-dd_HHmmss').format(DateTime.now());
-    final file = File('${dir.path}/pacelli_backup_$timestamp.$extension');
+    final file = File('${dir.path}/pacelli_backup_$timestamp.json.enc');
     await file.writeAsString(fileContent);
 
     await _saveLastExportDate();

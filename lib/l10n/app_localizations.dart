@@ -3121,14 +3121,20 @@ abstract class AppLocalizations {
   /// No description provided for @ieExportPassphrase.
   ///
   /// In en, this message translates to:
-  /// **'Encrypt backup?'**
+  /// **'Set passphrase for backup'**
   String get ieExportPassphrase;
 
   /// No description provided for @ieExportPassphraseHint.
   ///
   /// In en, this message translates to:
-  /// **'Leave blank for no encryption'**
+  /// **'Enter a strong passphrase'**
   String get ieExportPassphraseHint;
+
+  /// No description provided for @ieExportPassphraseRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase is required to encrypt the backup'**
+  String get ieExportPassphraseRequired;
 
   /// No description provided for @ieImportPassphrase.
   ///
@@ -3145,7 +3151,7 @@ abstract class AppLocalizations {
   /// No description provided for @ieInfoNote.
   ///
   /// In en, this message translates to:
-  /// **'If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.'**
+  /// **'All backups are encrypted. Keep your passphrase safe — it cannot be recovered.'**
   String get ieInfoNote;
 
   /// No description provided for @searchTitle.
@@ -4737,6 +4743,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Title is required'**
   String get manualTitleRequired;
+
+  /// No description provided for @manualCategoryLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load categories'**
+  String get manualCategoryLoadError;
 
   /// No description provided for @manualDeleteTitle.
   ///

@@ -362,19 +362,23 @@ class _EditInventoryItemScreenState
 
     try {
       final repo = ref.read(dataRepositoryProvider);
+      final desc = _descCtrl.text.trim();
+      final barcode = _barcodeCtrl.text.trim();
+      final notes = _notesCtrl.text.trim();
+
       await repo.updateInventoryItem(
         itemId: widget.itemId,
         name: _nameCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
-        categoryId: _categoryId ?? '',
-        locationId: _locationId ?? '',
+        description: desc.isEmpty ? null : desc,
+        categoryId: _categoryId,
+        locationId: _locationId,
         quantity: int.tryParse(_quantityCtrl.text) ?? 0,
         unit: _unitCtrl.text.trim().isEmpty ? 'pieces' : _unitCtrl.text.trim(),
         lowStockThreshold: int.tryParse(_thresholdCtrl.text),
-        barcode: _barcodeCtrl.text.trim(),
+        barcode: barcode.isEmpty ? null : barcode,
         expiryDate: _expiryDate,
         purchaseDate: _purchaseDate,
-        notes: _notesCtrl.text.trim(),
+        notes: notes.isEmpty ? null : notes,
       );
 
       // Reschedule expiry notification.

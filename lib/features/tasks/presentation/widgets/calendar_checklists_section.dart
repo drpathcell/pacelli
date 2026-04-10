@@ -225,7 +225,7 @@ class _CalendarChecklistsSectionState
       for (final plan in plans) {
         if (plan['status'] != 'draft') continue;
         final items = List<Map<String, dynamic>>.from(
-            plan['plan_checklist_items'] ?? []);
+            (plan['plan_checklist_items'] as Iterable?) ?? []);
         if (items.isEmpty) continue;
         planChecklistGroups.add(_ChecklistGroup(
           id: plan['id'] as String,
@@ -240,8 +240,8 @@ class _CalendarChecklistsSectionState
     final standaloneGroups = <_ChecklistGroup>[];
     checklistsAsync.whenData((checklists) {
       for (final cl in checklists) {
-        final items =
-            List<Map<String, dynamic>>.from(cl['checklist_items'] ?? []);
+        final items = List<Map<String, dynamic>>.from(
+            (cl['checklist_items'] as Iterable?) ?? []);
         standaloneGroups.add(_ChecklistGroup(
           id: cl['id'] as String,
           title: cl['title'] as String,

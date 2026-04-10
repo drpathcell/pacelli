@@ -27,6 +27,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   late final StreamSubscription<User?> _authSubscription;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -35,22 +36,27 @@ class _SplashScreenState extends State<SplashScreen> {
     // Listen for Firebase auth state changes (login, logout, token refresh).
     _authSubscription =
         FirebaseAuth.instance.authStateChanges().listen((user) async {
-      if (!mounted) return;
+      if (!mounted || _hasNavigated) return;
 
       if (user != null) {
         // Run one-time migration for deterministic member doc IDs.
         unawaited(HouseholdService.migrateMemberDocIds());
+        // Accept any pending household invite for this user.
+        unawaited(HouseholdService.checkAndAcceptInvite());
 
         // User is signed in — check storage backend before going home.
         final prefs = await SharedPreferences.getInstance();
         final backend = prefs.getString('storage_backend');
-        if (!mounted) return;
+        if (!mounted || _hasNavigated) return;
         if (backend == null) {
+          _hasNavigated = true;
           context.go(AppRoutes.storageSetup);
         } else {
+          _hasNavigated = true;
           context.go(AppRoutes.home);
         }
       } else {
+        _hasNavigated = true;
         context.go(AppRoutes.login);
       }
     });
@@ -69,23 +75,29 @@ class _SplashScreenState extends State<SplashScreen> {
     // Small delay so the splash screen is visible briefly.
     await Future.delayed(const Duration(milliseconds: 1500));
 
-    if (!mounted) return;
+    if (!mounted || _hasNavigated) return;
 
     // Check if a user session exists.
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // Accept any pending household invite for this user.
+      unawaited(HouseholdService.checkAndAcceptInvite());
+
       // Check if storage backend is configured.
       final prefs = await SharedPreferences.getInstance();
       final backend = prefs.getString('storage_backend');
-      if (!mounted) return;
+      if (!mounted || _hasNavigated) return;
 
       if (backend == null) {
         // Not configured yet — send to storage selection.
+        _hasNavigated = true;
         context.go(AppRoutes.storageSetup);
       } else {
+        _hasNavigated = true;
         context.go(AppRoutes.home);
       }
     } else {
+      _hasNavigated = true;
       context.go(AppRoutes.login);
     }
   }

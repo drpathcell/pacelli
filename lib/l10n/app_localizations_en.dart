@@ -1684,10 +1684,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ieExportPassphrase => 'Encrypt backup?';
+  String get ieExportPassphrase => 'Set passphrase for backup';
 
   @override
-  String get ieExportPassphraseHint => 'Leave blank for no encryption';
+  String get ieExportPassphraseHint => 'Enter a strong passphrase';
+
+  @override
+  String get ieExportPassphraseRequired =>
+      'Passphrase is required to encrypt the backup';
 
   @override
   String get ieImportPassphrase => 'Enter passphrase';
@@ -1697,7 +1701,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ieInfoNote =>
-      'If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.';
+      'All backups are encrypted. Keep your passphrase safe — it cannot be recovered.';
 
   @override
   String get searchTitle => 'Search';
@@ -2593,6 +2597,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualTitleRequired => 'Title is required';
+
+  @override
+  String get manualCategoryLoadError => 'Could not load categories';
 
   @override
   String get manualDeleteTitle => 'Delete entry?';

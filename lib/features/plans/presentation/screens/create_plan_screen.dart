@@ -40,7 +40,9 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
       case 'weekly':
         return _startDate.add(const Duration(days: 6));
       case 'monthly':
-        return DateTime(_startDate.year, _startDate.month + 1, _startDate.day - 1);
+        // Last day of the month starting from start_date (month boundary + 1 day, then -1 day)
+        return DateTime(_startDate.year, _startDate.month + 1, _startDate.day)
+            .subtract(const Duration(days: 1));
       default:
         return _startDate.add(const Duration(days: 6));
     }
@@ -150,7 +152,8 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
       final start = _nextMonday();
       final templateType = template['type'] as String;
       final end = templateType == 'monthly'
-          ? DateTime(start.year, start.month + 1, start.day - 1)
+          ? DateTime(start.year, start.month + 1, start.day)
+              .subtract(const Duration(days: 1))
           : start.add(const Duration(days: 6));
 
       final plan = await ref.read(dataRepositoryProvider).createFromTemplate(

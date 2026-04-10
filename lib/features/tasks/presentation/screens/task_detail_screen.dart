@@ -55,7 +55,17 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if (text.isEmpty) return;
 
     final task = ref.read(taskDetailProvider(widget.taskId)).valueOrNull;
-    final householdId = task?['household_id'] as String? ?? '';
+    final householdId = task?['household_id'] as String?;
+
+    if (householdId == null || householdId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not add subtask: household information missing')),
+        );
+      }
+      return;
+    }
+
     await ref.read(dataRepositoryProvider).addSubtask(taskId: widget.taskId, householdId: householdId, title: text);
     _subtaskController.clear();
     ref.invalidate(taskDetailProvider(widget.taskId));
@@ -77,6 +87,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         ),
       ),
       data: (task) {
+        final householdId = task['household_id'] as String?;
+
+        // Validate householdId — required for all Firestore operations
+        if (householdId == null || householdId.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: ErrorView(
+              message: context.l10n.taskCouldNotLoadDetails,
+              onRetry: () => ref.invalidate(taskDetailProvider(widget.taskId)),
+            ),
+          );
+        }
+
         final isCompleted = task['status'] == 'completed';
         final priority = task['priority'] as String?;
         final category = task['task_categories'] as Map<String, dynamic>?;
@@ -85,7 +108,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         final isShared = task['is_shared'] as bool? ?? false;
         final recurrence = task['recurrence'] as String?;
         final description = task['description'] as String?;
-        final householdId = task['household_id'] as String;
 
         final startDateStr = task['start_date'] as String?;
         DateTime? startDate;
@@ -355,7 +377,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     secondary: IconButton(
                       icon: const Icon(Icons.close, size: 18),
                       onPressed: () async {
-                        await ref.read(dataRepositoryProvider).deleteSubtask(st['id']);
+                        await ref.read(dataRepositoryProvider).deleteSubtask(st['id'] as String);
                         ref.invalidate(
                             taskDetailProvider(widget.taskId));
                       },
@@ -363,7 +385,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     onChanged: (v) async {
                       HapticFeedback.selectionClick();
                       await ref.read(dataRepositoryProvider).toggleSubtask(
-                        subtaskId: st['id'],
+                        subtaskId: st['id'] as String,
                         isCompleted: v ?? false,
                       );
                       ref.invalidate(

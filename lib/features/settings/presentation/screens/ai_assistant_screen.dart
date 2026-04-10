@@ -49,12 +49,14 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     final url = await AiAssistantService.getApiUrl();
     final provider = await AiAssistantService.getSavedProvider();
     final hasKey = await AiAssistantService.hasApiKey();
+    final hostedMode = await AiAssistantService.getHostedMode();
     if (mounted) {
       setState(() {
         _apiUrl = url;
         _apiUrlLoaded = true;
         _selectedProvider = provider;
         _connected = hasKey;
+        _hostedMode = hostedMode;
       });
     }
   }
@@ -241,7 +243,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             onGenerateToken: _generateToken,
             apiUrl: _apiUrlLoaded ? _apiUrl : '...',
             hostedMode: _hostedMode,
-            onModeChanged: (v) => setState(() => _hostedMode = v),
+            onModeChanged: (v) {
+              setState(() => _hostedMode = v);
+              AiAssistantService.setHostedMode(v);
+            },
             onCopy: _copyToClipboard,
           ),
           const SizedBox(height: 24),

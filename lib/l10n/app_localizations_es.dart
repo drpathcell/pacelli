@@ -1700,10 +1700,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get ieExportPassphrase => '¿Cifrar respaldo?';
+  String get ieExportPassphrase => 'Establecer contraseña para respaldo';
 
   @override
-  String get ieExportPassphraseHint => 'Dejar vacío para no cifrar';
+  String get ieExportPassphraseHint => 'Ingresa una contraseña fuerte';
+
+  @override
+  String get ieExportPassphraseRequired =>
+      'Se requiere contraseña para cifrar el respaldo';
 
   @override
   String get ieImportPassphrase => 'Ingresa la contraseña';
@@ -1713,7 +1717,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ieInfoNote =>
-      'Si estableces una contraseña, la exportación será cifrada. Guarda la contraseña en un lugar seguro — no se puede recuperar.';
+      'Todos los respaldos están cifrados. Guarda tu contraseña en un lugar seguro — no se puede recuperar.';
 
   @override
   String get searchTitle => 'Buscar';
@@ -2614,6 +2618,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualTitleRequired => 'El título es obligatorio';
+
+  @override
+  String get manualCategoryLoadError => 'No se pudieron cargar las categorías';
 
   @override
   String get manualDeleteTitle => '¿Eliminar entrada?';

@@ -820,11 +820,12 @@
       "count": {"type": "int"}
     }
   },
-  "ieExportPassphrase": "Encrypt backup?",
-  "ieExportPassphraseHint": "Leave blank for no encryption",
+  "ieExportPassphrase": "Set passphrase for backup",
+  "ieExportPassphraseHint": "Enter a strong passphrase",
+  "ieExportPassphraseRequired": "Passphrase is required to encrypt the backup",
   "ieImportPassphrase": "Enter passphrase",
   "ieImportEncrypted": "This backup is encrypted",
-  "ieInfoNote": "If you set a passphrase, the export will be encrypted. Keep the passphrase safe — it cannot be recovered.",
+  "ieInfoNote": "All backups are encrypted. Keep your passphrase safe — it cannot be recovered.",
 
   "searchTitle": "Search",
   "searchHint": "Search tasks, checklists, plans...",
@@ -1225,6 +1226,7 @@
   "manualContent": "Content",
   "manualContentHint": "Write your guide, recipe, or instructions here…",
   "manualTitleRequired": "Title is required",
+  "manualCategoryLoadError": "Could not load categories",
   "manualDeleteTitle": "Delete entry?",
   "manualDeleteConfirm": "This will permanently remove this entry from the house manual.",
   "manualNoContent": "No content yet. Tap edit to add some.",

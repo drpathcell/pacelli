@@ -32,7 +32,9 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
       List<Map<String, dynamic>> entries) {
     final map = <String, List<Map<String, dynamic>>>{};
     for (final e in entries) {
-      final key = (e['entry_date'] as String).substring(0, 10);
+      final dateStr = e['entry_date'] as String?;
+      if (dateStr == null || dateStr.length < 10) continue;
+      final key = dateStr.substring(0, 10);
       map.putIfAbsent(key, () => []).add(e);
     }
     // Sort days
@@ -128,7 +130,7 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
         ),
         data: (plan) {
           final entries = List<Map<String, dynamic>>.from(
-              plan['plan_entries'] ?? []);
+              (plan['plan_entries'] as Iterable?) ?? []);
           final grouped = _groupByDate(entries);
           final householdId = plan['household_id'] as String;
 
@@ -179,7 +181,13 @@ class _PlanFinaliseScreenState extends ConsumerState<PlanFinaliseScreen> {
                     : ListView(
                         padding: const EdgeInsets.all(16),
                         children: grouped.entries.map((dayGroup) {
-                          final date = DateTime.parse(dayGroup.key);
+                          DateTime date;
+                          try {
+                            date = DateTime.parse(dayGroup.key);
+                          } catch (e) {
+                            // Fallback to today if date parsing fails
+                            date = DateTime.now();
+                          }
                           return Column(
                             crossAxisAlignment:
                                 CrossAxisAlignment.start,

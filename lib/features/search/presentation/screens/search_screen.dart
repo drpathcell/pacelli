@@ -197,6 +197,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             'itemId': result.id,
           },
         );
+      case 'manual':
+        context.push('${AppRoutes.manual}/${result.id}');
     }
   }
 }

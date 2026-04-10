@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
@@ -23,6 +24,7 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
   bool _processing = false;
   String? _lastScanned;
   DateTime? _lastScannedAt;
+  bool _cameraPermissionDenied = false;
 
   @override
   void dispose() {
@@ -49,20 +51,118 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
                 );
               },
             ),
-            onPressed: () => _controller.toggleTorch(),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await _controller.toggleTorch();
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          context.l10n.commonError('Flash not available'))),
+                );
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.cameraswitch),
-            onPressed: () => _controller.switchCamera(),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await _controller.switchCamera();
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(
+                      content: Text(context.l10n
+                          .commonError('Front camera not available'))),
+                );
+              }
+            },
           ),
         ],
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-          ),
+          if (_cameraPermissionDenied)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.no_photography, size: 64, color: Colors.grey),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Camera access denied. Please enable it in Settings.',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => _openAppSettings(),
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            )
+          else
+            MobileScanner(
+              controller: _controller,
+              onDetect: _onDetect,
+              errorBuilder: (context, error) {
+                // Detect permission denial and show permission UI
+                if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    setState(() => _cameraPermissionDenied = true);
+                  });
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.no_photography, size: 64, color: Colors.grey),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Camera access denied. Please enable it in Settings.',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: () => _openAppSettings(),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Camera Error',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          error.errorCode.toString(),
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.tonal(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(context.l10n.commonCancel),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           // Overlay prompt
           Positioned(
             bottom: 80,
@@ -229,5 +329,18 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
         ],
       ),
     );
+  }
+
+  void _openAppSettings() async {
+    final url = Uri.parse('app-settings:');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                context.l10n.commonError('Unable to open app settings'))),
+      );
+    }
   }
 }

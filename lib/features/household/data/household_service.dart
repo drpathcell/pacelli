@@ -16,21 +16,16 @@ class HouseholdService {
   static final _auth = FirebaseAuth.instance;
   static const _uuid = Uuid();
 
-  /// The [KeyManager] instance — must be set before calling household
-  /// operations that need encryption/decryption.
-  static KeyManager? keyManager;
-
   static String? get _uid => _auth.currentUser?.uid;
 
-  /// The household key (if loaded).
-  static String? get _key => keyManager?.householdKey;
-
-  static String _enc(String plaintext) =>
-      _key != null ? EncryptionService.encrypt(plaintext, _key!) : plaintext;
-
-  // ignore: unused_element
-  static String _dec(String ciphertext) =>
-      _key != null ? EncryptionService.decrypt(ciphertext, _key!) : ciphertext;
+  static String _enc(String plaintext) {
+    if (plaintext.isEmpty) return plaintext;
+    final key = KeyManager.instance.householdKey;
+    if (key == null) {
+      throw Exception('Cannot encrypt: KeyManager.householdKey is null');
+    }
+    return EncryptionService.encrypt(plaintext, key);
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   //  CREATE HOUSEHOLD
@@ -48,10 +43,9 @@ class HouseholdService {
 
     final householdId = _uuid.v4();
     final now = DateTime.now();
-    final km = keyManager ?? KeyManager.instance;
 
     // Generate a new household encryption key.
-    final householdKey = await km.createHouseholdKey(householdId);
+    final householdKey = await KeyManager.instance.createHouseholdKey(householdId);
 
     // Now encrypt the household name with the new key.
     final encryptedName = EncryptionService.encrypt(name, householdKey);
@@ -117,8 +111,7 @@ class HouseholdService {
       final householdId = membership['household_id'] as String;
 
       // Load the household encryption key.
-      final km = keyManager ?? KeyManager.instance;
-      await km.loadHouseholdKey(householdId);
+      await KeyManager.instance.loadHouseholdKey(householdId);
 
       // Fetch the household doc.
       final householdDoc =
@@ -128,9 +121,10 @@ class HouseholdService {
       final householdData = householdDoc.data()!;
 
       // Decrypt name using the now-loaded key.
-      final decryptedName = km.householdKey != null
+      final householdKey = KeyManager.instance.householdKey;
+      final decryptedName = householdKey != null
           ? EncryptionService.decrypt(
-              householdData['name'] as String, km.householdKey!)
+              householdData['name'] as String, householdKey)
           : householdData['name'] as String;
 
       return {
@@ -157,8 +151,7 @@ class HouseholdService {
   static Future<List<Map<String, dynamic>>> getHouseholdMembers(
       String householdId) async {
     // Ensure the household key is loaded so profile names can be decrypted.
-    final km = keyManager ?? KeyManager.instance;
-    await km.loadHouseholdKey(householdId);
+    await KeyManager.instance.loadHouseholdKey(householdId);
 
     final memberSnap = await _db
         .collection('household_members')
@@ -177,12 +170,12 @@ class HouseholdService {
       if (profileDoc.exists) {
         final pData = profileDoc.data()!;
         final rawName = pData['full_name'] as String?;
-        // Decrypt using the key we just loaded — don't rely on the static
-        // _key getter which may be null if keyManager was not set.
+        // Decrypt using the key we just loaded.
+        final householdKey = KeyManager.instance.householdKey;
         profile = {
           'id': userId,
-          'full_name': (km.householdKey != null && rawName != null && rawName.isNotEmpty)
-              ? EncryptionService.decryptNullable(rawName, km.householdKey!)
+          'full_name': (householdKey != null && rawName != null && rawName.isNotEmpty)
+              ? EncryptionService.decryptNullable(rawName, householdKey)
               : rawName,
           'avatar_url': pData['avatar_url'] as String?,
         };
@@ -258,8 +251,7 @@ class HouseholdService {
     await batch.commit();
 
     // Load the household key and encrypt the profile name.
-    final km = keyManager ?? KeyManager.instance;
-    final hKey = await km.loadHouseholdKey(householdId);
+    final hKey = await KeyManager.instance.loadHouseholdKey(householdId);
     if (hKey != null) {
       await _encryptProfileName(user.uid, hKey);
     }
