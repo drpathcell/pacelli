@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacelli — Privacy Policy</title>
+<meta name="description" content="Pacelli privacy policy: end-to-end encrypted household management. We don't sell your data, we can't read your encrypted content.">
+<style>
+  :root {
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #6b8e7f;
+    --bg: #fafaf7;
+    --card: #ffffff;
+    --border: #e5e5e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  h1 {
+    font-size: 36px;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 22px;
+    margin-top: 40px;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 17px;
+    margin-top: 28px;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+  p, li { font-size: 16px; }
+  .meta {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  a { color: var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: #f3f3ee; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+  code {
+    background: #f3f3ee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Pacelli — Privacy Policy</h1>
+  <p class="meta"><strong>Effective date:</strong> 2026-04-28 &nbsp;·&nbsp; <strong>Contact:</strong> <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a></p>
+</header>
+
+<p>Pacelli (the "App", "we") is a household management app that helps families share tasks, plans, lists, a calendar, an inventory, a house manual, and an in-app AI assistant. Privacy is a core feature, not an afterthought — most content you create is end-to-end encrypted on your device before it ever leaves it.</p>
+
+<p>This policy tells you exactly what we collect, why, where it lives, and how to delete it.</p>
+
+<h2>1. Who is the data controller?</h2>
+<p>Juan Carlos Celis Pinto, sole developer of Pacelli, is the data controller under the GDPR. You can contact us at <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a>.</p>
+<p>We are based in Ireland and the App is offered worldwide.</p>
+
+<h2>2. The two storage modes</h2>
+<p>During onboarding you choose where your data lives:</p>
+<ul>
+  <li><strong>Cloud (Firebase Cloud Firestore):</strong> content is stored in Google Cloud servers (EU multi-region). Human-readable fields (titles, descriptions, names, message bodies, manual content, tags) are <strong>encrypted with AES-256-CBC on your device</strong> before upload, using a per-household key that Google never sees. Structural metadata (record IDs, status flags, timestamps, household IDs) is stored unencrypted so that the app can query and sort it.</li>
+  <li><strong>Local (on-device SQLite):</strong> content is stored only on your phone. It is not encrypted at rest because it never leaves your device — it is protected by your phone's own disk encryption.</li>
+</ul>
+<p>You can switch modes at any time and wipe your cloud data with one tap (see "Burn all data" below).</p>
+
+<h2>3. What we collect and why</h2>
+
+<h3>3.1 Account data (Firebase Authentication)</h3>
+<p>When you sign in we receive from your chosen identity provider:</p>
+<ul>
+  <li>A unique Firebase user ID (UID).</li>
+  <li>Your email address.</li>
+  <li>Your display name (if you used Google or Apple Sign-In; for Sign in with Apple, the name is shared only the first time, only with us, and only if you allow it).</li>
+</ul>
+<p>Used to identify you across devices and to scope access to your household. Stored as long as your account exists.</p>
+
+<h3>3.2 Household content (encrypted)</h3>
+<p>Tasks, subtasks, checklists, plans, calendar entries, inventory items, house-manual entries, AI chat messages, attachments metadata, feedback text. All human-readable fields are AES-256-CBC encrypted on-device with your household key before they reach the server. Without that key the ciphertext is meaningless to us, to Google, and to anyone with database access.</p>
+
+<h3>3.3 Diagnostics and feedback (optional, encrypted)</h3>
+<p>If you submit feedback or if the app records a diagnostic event (an error or warning), the message text and any context are encrypted with your household key before being stored. We use this to improve the App; we cannot read it without your household key.</p>
+
+<h3>3.4 Push notifications</h3>
+<p>If you enable notifications we send a Firebase Cloud Messaging device token to Apple Push Notification service or to Google Firebase. We do not include sensitive content in notification payloads.</p>
+
+<h3>3.5 Photos, camera, and Google Drive</h3>
+<p>If you attach a photo or use the barcode scanner, the App accesses your camera or photo library. The image data is processed on-device. If you choose to back attachments to Google Drive, the file is uploaded to <strong>your own Google Drive account</strong> under a Pacelli folder; we never receive a copy.</p>
+
+<h3>3.6 AI Assistant</h3>
+<p>If you connect a third-party AI provider (Anthropic Claude, Google Gemini, or OpenAI ChatGPT), your API key is stored in your device's secure keychain (iOS Keychain / Android Keystore) and only that provider receives your prompt. We do not proxy or log AI requests.</p>
+
+<h3>3.7 What we do NOT collect</h3>
+<ul>
+  <li>We do not collect your contacts, location, microphone audio, advertising IDs, or browsing history.</li>
+  <li>We do not sell or rent your data to anyone.</li>
+  <li>We do not show ads.</li>
+  <li>We do not use your content to train any AI model.</li>
+</ul>
+
+<h2>4. Encryption details</h2>
+<ul>
+  <li>Symmetric scheme: <strong>AES-256-CBC</strong>.</li>
+  <li>Per-household symmetric key, generated on the first device that creates the household.</li>
+  <li>That key is wrapped (encrypted) per member with a key derived from the member's Firebase UID via <strong>HKDF-SHA-256</strong>, and stored in Firestore in the <code>household_keys</code> collection. Only members of your household can unwrap it; we cannot.</li>
+  <li>The unwrapped key is cached in your device's secure keychain (<code>flutter_secure_storage</code>).</li>
+  <li>When a new member joins, an existing member's device re-wraps the household key for the new member's UID — no plaintext key ever crosses the network.</li>
+</ul>
+
+<h2>5. Sub-processors</h2>
+<table>
+  <thead>
+    <tr><th>Sub-processor</th><th>Purpose</th><th>Region</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Google Firebase</td><td>Authentication, Firestore database, Cloud Functions, Cloud Messaging</td><td>EU multi-region</td></tr>
+    <tr><td>Apple</td><td>Sign in with Apple, push notifications</td><td>Worldwide</td></tr>
+    <tr><td>Google</td><td>Google Sign-In, optional Google Drive attachments</td><td>Worldwide</td></tr>
+    <tr><td>Your chosen AI</td><td>In-app AI Assistant (only if you connect one)</td><td>Provider's region</td></tr>
+  </tbody>
+</table>
+
+<h2>6. Data retention and "Burn all data"</h2>
+<ul>
+  <li>Account and household data are retained as long as your account exists.</li>
+  <li>The App ships a <strong>Burn All Data</strong> button (Settings → Burn all data) that deletes every document scoped to your household, terminates and clears the local Firestore cache, and signs you out. After this, only your Firebase Authentication account remains; deleting that is a single tap away in Settings.</li>
+  <li>You can also export an encrypted JSON backup at any time.</li>
+</ul>
+
+<h2>7. Your rights (GDPR)</h2>
+<p>You have the right to: access, rectification, erasure, restriction, portability, and to object to processing. Use the in-app export and burn features for portability and erasure, or email us at <a href="mailto:juancarlos.celis92@gmail.com">juancarlos.celis92@gmail.com</a> for any other request — we will respond within 30 days.</p>
+<p>You also have the right to lodge a complaint with the Irish Data Protection Commission (<a href="https://www.dataprotection.ie">dataprotection.ie</a>).</p>
+
+<h2>8. Children</h2>
+<p>Pacelli is not directed at children under 13. If you believe a child has created an account, please contact us and we will delete it.</p>
+
+<h2>9. Changes to this policy</h2>
+<p>When we change this policy we will update the <strong>Effective date</strong> above and post the new version at the same URL. Material changes will also surface in-app on next launch.</p>
+
+<footer>
+  Last reviewed 2026-04-28 · Pacelli
+</footer>
+</div>
+</body>
+</html>

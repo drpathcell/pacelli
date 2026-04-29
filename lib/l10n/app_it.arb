@@ -33,6 +33,8 @@
   "authSignUp": "Registrati",
   "authContinueWithGoogle": "Continua con Google",
   "authGoogleSignInFailed": "Accesso con Google non riuscito. Riprova.",
+  "authContinueWithApple": "Continua con Apple",
+  "authAppleSignInFailed": "Accesso con Apple non riuscito. Riprova.",
   "authLoginFailed": "Accesso non riuscito. Controlla email e password.",
   "authCreateAccount": "Crea account",
   "authStartOrganising": "Inizia a organizzare la tua casa con amore",

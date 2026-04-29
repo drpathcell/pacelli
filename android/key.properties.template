@@ -1,0 +1,5 @@
+# Copy this to key.properties and fill in values (NEVER commit key.properties)
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+storeFile=../release.keystore

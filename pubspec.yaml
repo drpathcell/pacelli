@@ -51,6 +51,9 @@ dependencies:
   google_sign_in: ^6.2.2
   crypto: ^3.0.6  # Used for HKDF key derivation in E2E encryption
 
+  # Sign in with Apple (REQUIRED by App Review when any third-party login is offered — guideline 4.8)
+  sign_in_with_apple: ^6.1.4
+
   # Calendar & Animations
   table_calendar: ^3.1.2
   confetti: ^0.7.0

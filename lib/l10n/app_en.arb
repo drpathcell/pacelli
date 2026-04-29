@@ -40,6 +40,8 @@
   "authSignUp": "Sign Up",
   "authContinueWithGoogle": "Continue with Google",
   "authGoogleSignInFailed": "Google sign-in failed. Please try again.",
+  "authContinueWithApple": "Continue with Apple",
+  "authAppleSignInFailed": "Apple sign-in failed. Please try again.",
   "authLoginFailed": "Login failed. Please check your email and password.",
   "authCreateAccount": "Create account",
   "authStartOrganising": "Start organising your home with love",

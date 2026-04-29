@@ -9,6 +9,8 @@ import '../../../../config/constants/app_constants.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../data/apple_sign_in_service.dart';
+import '../widgets/apple_sign_in_button.dart';
 
 /// Signup screen — Google Sign-In + email/password registration.
 class SignupScreen extends StatefulWidget {
@@ -26,6 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -35,6 +38,52 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // ── Apple Sign-In ───────────────────────────────────────────
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isAppleLoading = true);
+    try {
+      final user = await AppleSignInService().signIn();
+      if (user == null) {
+        if (mounted) setState(() => _isAppleLoading = false);
+        return;
+      }
+
+      // For first-time Apple users, persist the (now-known) display name
+      // and create a profile doc — same shape as Google signup.
+      const secureStorage = FlutterSecureStorage();
+      final profileSnap = await FirebaseFirestore.instance
+          .collection('profiles')
+          .doc(user.uid)
+          .get();
+      if (!profileSnap.exists) {
+        await secureStorage.write(
+          key: 'profile_name_${user.uid}',
+          value: user.displayName ?? '',
+        );
+        await FirebaseFirestore.instance
+            .collection('profiles')
+            .doc(user.uid)
+            .set({
+          'full_name': '', // Encrypted later, once household key exists
+          'avatar_url': '',
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+      }
+
+      if (mounted) context.go(AppRoutes.home);
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(
+          context.l10n.authAppleSignInFailed,
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAppleLoading = false);
+    }
   }
 
   // ── Google Sign-In ──────────────────────────────────────────
@@ -190,6 +239,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 32),
+
+              // ── Apple Sign-In Button (iOS/macOS only) ───────
+              if (AppleSignInButton.isAvailable) ...[
+                AppleSignInButton(
+                  isLoading: _isAppleLoading,
+                  onPressed: _handleAppleSignIn,
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // ── Google Sign-In Button ───────────────────────
               _GoogleSignInButton(

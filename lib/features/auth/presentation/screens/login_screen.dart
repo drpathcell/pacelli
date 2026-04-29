@@ -7,6 +7,8 @@ import '../../../../config/constants/app_constants.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../data/apple_sign_in_service.dart';
+import '../widgets/apple_sign_in_button.dart';
 
 /// Login screen — Google Sign-In + email/password authentication.
 class LoginScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -79,6 +82,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ── Apple Sign-In ───────────────────────────────────────────
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isAppleLoading = true);
+    try {
+      final user = await AppleSignInService().signIn();
+      if (user == null) {
+        if (mounted) setState(() => _isAppleLoading = false);
+        return;
+      }
+      if (mounted) context.go(AppRoutes.home);
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(
+          context.l10n.authAppleSignInFailed,
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
   // ── Email/Password Sign-In ──────────────────────────────────
 
   Future<void> _handleEmailLogin() async {
@@ -131,6 +157,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 40),
+
+              // ── Apple Sign-In Button (iOS/macOS only) ───────
+              if (AppleSignInButton.isAvailable) ...[
+                AppleSignInButton(
+                  isLoading: _isAppleLoading,
+                  onPressed: _handleAppleSignIn,
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // ── Google Sign-In Button ───────────────────────
               _GoogleSignInButton(

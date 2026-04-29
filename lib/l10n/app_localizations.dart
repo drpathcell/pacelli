@@ -298,6 +298,18 @@ abstract class AppLocalizations {
   /// **'Google sign-in failed. Please try again.'**
   String get authGoogleSignInFailed;
 
+  /// No description provided for @authContinueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get authContinueWithApple;
+
+  /// No description provided for @authAppleSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in failed. Please try again.'**
+  String get authAppleSignInFailed;
+
   /// No description provided for @authLoginFailed.
   ///
   /// In en, this message translates to:

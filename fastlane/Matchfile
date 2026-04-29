@@ -1,0 +1,9 @@
+git_url(ENV["MATCH_GIT_URL"])
+storage_mode("git")
+
+type("appstore")  # default; override per lane
+
+app_identifier(["com.pacelli.pacelli"])
+username(ENV["APPLE_ID"])
+
+# Certificates + profiles are encrypted with MATCH_PASSWORD secret

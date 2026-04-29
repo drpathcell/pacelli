@@ -113,6 +113,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'El inicio de sesión con Google falló. Inténtalo de nuevo.';
 
   @override
+  String get authContinueWithApple => 'Continuar con Apple';
+
+  @override
+  String get authAppleSignInFailed =>
+      'El inicio de sesión con Apple falló. Inténtalo de nuevo.';
+
+  @override
   String get authLoginFailed =>
       'Inicio de sesión fallido. Verifica tu email y contraseña.';
 

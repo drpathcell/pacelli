@@ -1,0 +1,15 @@
+# Release keystore configuration for signing the Pacelli app.
+# Copy this file to key.properties and fill in your actual keystore details.
+# key.properties is .gitignored and should never be committed.
+
+# Path to the keystore file (relative to android/ directory or absolute path)
+storeFile=../pacelli-release.jks
+
+# Password for the keystore
+storePassword=your_keystore_password_here
+
+# Alias of the key within the keystore
+keyAlias=pacelli_release_key
+
+# Password for the key
+keyPassword=your_key_password_here

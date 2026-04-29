@@ -1,0 +1,22 @@
+Pacelli is a private, encrypted household management app for families and housemates.
+
+Manage tasks, checklists, plans, inventory, and shared notes — all in one place, with your household.
+
+PRIVACY FIRST
+Everything sensitive is encrypted end-to-end on your device before it ever leaves. Your household data belongs to you.
+
+FEATURES
+• Tasks & subtasks with due dates, priorities, and categories
+• Checklists for shopping, packing, routines
+• Plans with flexible entries and checklist steps
+• Household inventory with barcode scanning, expiry tracking, and low-stock alerts
+• House Manual — a shared knowledge base for your home
+• Calendar view with upcoming tasks and expiring inventory
+• AI Chat assistant built in — ask about your household data
+• Works offline with local storage option
+
+HOUSEHOLD SHARING
+Invite members to your household. Keys are shared securely — only your household can read your data.
+
+DATA PORTABILITY
+Export your entire household as an encrypted backup. Import it on any device.
