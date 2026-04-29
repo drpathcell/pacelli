@@ -40,21 +40,42 @@ platform :ios do
   desc "Build a signed iOS IPA (no upload)"
   lane :build do
     v = flutter_build_version
-    sync_signing(type: "appstore", readonly: true)
-    sh("flutter build ios --release --build-name=#{v[:name]} --build-number=#{v[:number]}")
-    build_app(
+
+    # Match is optional. Set MATCH_GIT_URL to use it; otherwise Xcode automatic
+    # signing handles certs/profiles (good for first upload + local dev).
+    use_match = !ENV["MATCH_GIT_URL"].nil? && !ENV["MATCH_GIT_URL"].empty?
+
+    if use_match
+      sync_signing(type: "appstore", readonly: true)
+    else
+      UI.message("MATCH_GIT_URL unset — relying on Xcode automatic signing.")
+    end
+
+    sh("flutter build ios --release --no-codesign --build-name=#{v[:name]} --build-number=#{v[:number]}")
+
+    build_options = {
       workspace:        "ios/Runner.xcworkspace",
       scheme:           "Runner",
       configuration:    "Release",
       output_directory: "build/ios",
       output_name:      "Pacelli.ipa",
-      export_method:    "app-store",
-      export_options: {
+      export_method:    "app-store"
+    }
+
+    if use_match
+      build_options[:export_options] = {
         provisioningProfiles: {
           "com.pacelli.pacelli" => "match AppStore com.pacelli.pacelli"
         }
       }
-    )
+    else
+      # Let Xcode automatic signing pick the profile gym just generated.
+      build_options[:export_options] = {
+        signingStyle: "automatic"
+      }
+    end
+
+    build_app(build_options)
   end
 
   desc "Build + upload to TestFlight"
