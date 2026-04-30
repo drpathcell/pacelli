@@ -92,3 +92,14 @@
 -keepclasseswithmembers class * {
     *** *(...);
 }
+
+# ── R8 missing-class suppressions ──
+# Legacy okhttp 1.x classes referenced (but not used at runtime) by io.grpc.okhttp
+-dontwarn com.squareup.okhttp.**
+
+# JVM-only reflection class referenced by Guava's Invokable
+-dontwarn java.lang.reflect.AnnotatedType
+
+# gRPC + Guava transitive deps (Firebase Firestore pulls these in)
+-dontwarn io.grpc.**
+-dontwarn com.google.common.**
