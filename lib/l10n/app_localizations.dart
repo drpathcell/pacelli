@@ -988,6 +988,12 @@ abstract class AppLocalizations {
   /// **'No completed tasks yet.'**
   String get tasksNoCompletedYet;
 
+  /// No description provided for @tasksCreateFirstTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first task'**
+  String get tasksCreateFirstTask;
+
   /// No description provided for @calendarTitle.
   ///
   /// In en, this message translates to:

@@ -177,9 +177,26 @@ class _HouseholdContent extends ConsumerWidget {
               children: members.map((member) {
                 final profile =
                     member['profiles'] as Map<String, dynamic>? ?? {};
-                final name = profile['full_name'] ?? context.l10n.commonUnknown;
                 final memberRole = member['role'] ?? 'member';
-                final isCurrentUser = member['user_id'] == FirebaseAuth.instance.currentUser?.uid;
+                final currentUser = FirebaseAuth.instance.currentUser;
+                final isCurrentUser = member['user_id'] == currentUser?.uid;
+                // Prefer the encrypted profile name; for the current user
+                // fall back to FirebaseAuth's displayName, then the email
+                // local-part — both are populated even when the encrypted
+                // profile field is still empty (Apple Sign-In, freshly-
+                // created profiles before household-key encryption).
+                String name =
+                    (profile['full_name'] as String?)?.trim() ?? '';
+                if (name.isEmpty && isCurrentUser) {
+                  final dn = currentUser?.displayName?.trim() ?? '';
+                  if (dn.isNotEmpty) {
+                    name = dn;
+                  } else if (currentUser?.email != null &&
+                      currentUser!.email!.contains('@')) {
+                    name = currentUser.email!.split('@').first;
+                  }
+                }
+                if (name.isEmpty) name = context.l10n.commonUnknown;
 
                 return Card(
                   child: ListTile(

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Wraps `sign_in_with_apple` so callers get a fully signed-in Firebase user.
@@ -13,8 +14,22 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 ///   3. Exchange the returned (idToken, rawNonce) for a Firebase OAuthCredential.
 ///   4. Sign in to FirebaseAuth.
 ///
-/// The first sign-in is the only time Apple gives back the user's full name,
-/// so we eagerly persist it to `currentUser.displayName`.
+/// **Display name persistence**
+///
+/// Apple only returns the user's name on the FIRST authorization for an App
+/// ID. On every subsequent sign-in (re-grant after revoke, sign-out + sign-in,
+/// etc) the name fields come back null. To prevent the user from becoming
+/// "Hello, Friend" forever, we mirror the name across three layers on first
+/// sign-in:
+///
+///   1. `FirebaseAuth.currentUser.displayName` (server-side, persistent)
+///   2. Flutter secure storage at `profile_name_<uid>` (device-local, also
+///      written by the signup flow before the encryption key exists)
+///   3. The encrypted `profiles/{uid}.full_name` Firestore doc (after the
+///      household is created — handled by `HouseholdService`, not here).
+///
+/// On every later sign-in, if FirebaseAuth's displayName is empty we hydrate
+/// it from secure storage.
 class AppleSignInService {
   AppleSignInService({FirebaseAuth? auth})
       : _auth = auth ?? FirebaseAuth.instance;
@@ -29,22 +44,49 @@ class AppleSignInService {
 
     final userCredential = await _auth.signInWithCredential(pair.credential);
     final user = userCredential.user;
+    if (user == null) return null;
 
-    // Apple only returns the name on the first authorisation. Persist it now.
-    final givenName = pair.appleCredential.givenName;
-    final familyName = pair.appleCredential.familyName;
-    if (user != null &&
-        (user.displayName == null || user.displayName!.isEmpty) &&
-        (givenName != null || familyName != null)) {
-      final displayName = [givenName, familyName]
-          .where((p) => p != null && p.isNotEmpty)
-          .join(' ');
-      if (displayName.isNotEmpty) {
-        await user.updateDisplayName(displayName);
-      }
+    await _hydrateDisplayName(
+      user,
+      apple: pair.appleCredential,
+    );
+    return user;
+  }
+
+  /// Mirrors Apple's name across FirebaseAuth.displayName + secure storage,
+  /// or hydrates displayName from secure storage if Apple didn't return one.
+  Future<void> _hydrateDisplayName(
+    User user, {
+    required AuthorizationCredentialAppleID apple,
+  }) async {
+    const storage = FlutterSecureStorage();
+    final secureKey = 'profile_name_${user.uid}';
+
+    // Did Apple return a name this time? (Only on first authorization.)
+    final givenName = apple.givenName;
+    final familyName = apple.familyName;
+    final fromApple = [givenName, familyName]
+        .where((p) => p != null && p.isNotEmpty)
+        .join(' ')
+        .trim();
+
+    if (fromApple.isNotEmpty) {
+      // First sign-in path — persist everywhere we can reach.
+      await user.updateDisplayName(fromApple);
+      await storage.write(key: secureKey, value: fromApple);
+      return;
     }
 
-    return user;
+    // Re-sign-in path — Apple sent nothing. If FirebaseAuth still has a
+    // displayName from a prior session, we're done. Otherwise try secure
+    // storage as the last line of defence.
+    final current = user.displayName?.trim() ?? '';
+    if (current.isNotEmpty) return;
+
+    final stored = (await storage.read(key: secureKey))?.trim();
+    if (stored != null && stored.isNotEmpty) {
+      await user.updateDisplayName(stored);
+    }
   }
 
   /// Re-authenticates [user] with a fresh Apple credential. Required before

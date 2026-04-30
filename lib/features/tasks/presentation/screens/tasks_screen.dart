@@ -356,6 +356,15 @@ class _TaskList extends ConsumerWidget {
                 style: context.textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.push(
+                  '${AppRoutes.tasks}/create',
+                  extra: householdId,
+                ),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(context.l10n.tasksCreateFirstTask),
+              ),
             ],
           ),
         ),

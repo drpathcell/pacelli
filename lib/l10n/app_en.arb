@@ -193,6 +193,7 @@
   "tasksNoTasksYet": "No tasks yet.\nTap + to create one!",
   "tasksAllCaughtUp": "All caught up!",
   "tasksNoCompletedYet": "No completed tasks yet.",
+  "tasksCreateFirstTask": "Create your first task",
   "calendarTitle": "Calendar",
   "calendarActivePlans": "Active plans",
   "calendarNewPlan": "New Plan",

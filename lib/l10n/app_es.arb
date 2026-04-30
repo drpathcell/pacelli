@@ -151,6 +151,7 @@
   "tasksNoTasksYet": "Aún no hay tareas.\n¡Toca + para crear una!",
   "tasksAllCaughtUp": "¡Todo al día!",
   "tasksNoCompletedYet": "Aún no hay tareas completadas.",
+  "tasksCreateFirstTask": "Crea tu primera tarea",
   "calendarTitle": "Calendario",
   "calendarActivePlans": "Planes activos",
   "calendarNewPlan": "Nuevo Plan",

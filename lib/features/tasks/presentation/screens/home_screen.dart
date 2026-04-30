@@ -28,7 +28,19 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userName = FirebaseAuth.instance.currentUser?.displayName ?? 'Friend';
+    final user = FirebaseAuth.instance.currentUser;
+    // Fallback chain: displayName → email local-part → 'there'.
+    // Apple Sign-In only returns the user's name on the FIRST authorization,
+    // so on re-sign-ins (e.g. after revoking + restoring) displayName can
+    // be empty. Falling back to the email local-part keeps the greeting
+    // personal instead of generic.
+    String userName = 'there';
+    final dn = user?.displayName?.trim();
+    if (dn != null && dn.isNotEmpty) {
+      userName = dn;
+    } else if (user?.email != null && user!.email!.contains('@')) {
+      userName = user.email!.split('@').first;
+    }
     final householdAsync = ref.watch(currentHouseholdProvider);
 
     return Scaffold(

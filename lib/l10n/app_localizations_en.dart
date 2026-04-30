@@ -481,6 +481,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tasksNoCompletedYet => 'No completed tasks yet.';
 
   @override
+  String get tasksCreateFirstTask => 'Create your first task';
+
+  @override
   String get calendarTitle => 'Calendar';
 
   @override
