@@ -2134,6 +2134,12 @@ abstract class AppLocalizations {
   /// **'Pacelli helps your household stay organised — tasks, plans, checklists, and more, all in one place.'**
   String get settingsAboutDescription;
 
+  /// No description provided for @settingsAboutPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get settingsAboutPrivacyPolicy;
+
   /// No description provided for @settingsDataStorageTitle.
   ///
   /// In en, this message translates to:
@@ -2289,6 +2295,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only you and your household members can read your data. Not even the app developers can see it.'**
   String get privacyOnlyYou;
+
+  /// No description provided for @privacyFieldDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Field-level details'**
+  String get privacyFieldDetails;
 
   /// No description provided for @privacyWhatEncrypted.
   ///

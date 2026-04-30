@@ -1136,6 +1136,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Pacelli ayuda a tu hogar a mantenerse organizado — tareas, planes, listas y más, todo en un solo lugar.';
 
   @override
+  String get settingsAboutPrivacyPolicy => 'Política de privacidad';
+
+  @override
   String get settingsDataStorageTitle => 'Almacenamiento de Datos';
 
   @override
@@ -1221,6 +1224,9 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get privacyOnlyYou =>
       'Solo tú y los miembros de tu hogar pueden leer tus datos. Ni siquiera los desarrolladores de la app pueden verlos.';
+
+  @override
+  String get privacyFieldDetails => 'Detalles por campo';
 
   @override
   String get privacyWhatEncrypted => 'Qué se cifra';

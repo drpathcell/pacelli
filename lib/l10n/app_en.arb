@@ -554,6 +554,7 @@
     }
   },
   "settingsAboutDescription": "Pacelli helps your household stay organised — tasks, plans, checklists, and more, all in one place.",
+  "settingsAboutPrivacyPolicy": "Privacy policy",
   "settingsDataStorageTitle": "Data Storage",
   "settingsCurrentBackend": "Current backend:",
   "settingsBackendLocal": "On This Device (SQLite)",
@@ -580,6 +581,7 @@
   "privacyHowProtected": "How your data is protected",
   "privacyAllContent": "All your personal content — task names, descriptions, plan titles, checklist items, your household name — is end-to-end encrypted before it leaves your device.",
   "privacyOnlyYou": "Only you and your household members can read your data. Not even the app developers can see it.",
+  "privacyFieldDetails": "Field-level details",
   "privacyWhatEncrypted": "What is encrypted",
   "privacyTaskTitles": "Task titles and descriptions",
   "privacySubtaskTitles": "Subtask titles",

@@ -91,89 +91,111 @@ class PrivacyEncryptionScreen extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ── Section 2: What IS encrypted ──
-          _SectionHeader(title: context.l10n.privacyWhatEncrypted),
-          const SizedBox(height: 12),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyTaskTitles,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacySubtaskTitles,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyChecklistTitles,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyPlanTitles,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyCategoryNames,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyHouseholdName,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyDisplayName,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyAttachmentNames,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.lock_rounded,
-            iconColor: AppColors.success,
-            label: context.l10n.privacyAttachmentMetadata,
-          ),
-
-          const SizedBox(height: 28),
-
-          // ── Section 3: What is NOT encrypted ──
-          _SectionHeader(title: context.l10n.privacyWhatNotEncrypted),
-          const SizedBox(height: 12),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacyTaskStatus,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacyPriorityLevels,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacyDueDates,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacyCheckedStatus,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacySortOrder,
-          ),
-          _EncryptedFieldTile(
-            icon: Icons.info_outline_rounded,
-            iconColor: Colors.orange.shade700,
-            label: context.l10n.privacyCategoryIcons,
+          // ── Field-level details (collapsed by default) ──
+          // The long lists of "what is and isn't encrypted" are useful
+          // for security-curious users but overwhelming as the default
+          // view. Hide them behind a disclosure tile.
+          ExpansionTile(
+            title: Text(
+              context.l10n.privacyFieldDetails,
+              style: context.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            children: [
+              const SizedBox(height: 4),
+              _SectionHeader(title: context.l10n.privacyWhatEncrypted),
+              const SizedBox(height: 8),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyTaskTitles,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacySubtaskTitles,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyChecklistTitles,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyPlanTitles,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyCategoryNames,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyHouseholdName,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyDisplayName,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyAttachmentNames,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.lock_rounded,
+                iconColor: AppColors.success,
+                label: context.l10n.privacyAttachmentMetadata,
+              ),
+              const SizedBox(height: 16),
+              _SectionHeader(title: context.l10n.privacyWhatNotEncrypted),
+              const SizedBox(height: 8),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacyTaskStatus,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacyPriorityLevels,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacyDueDates,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacyCheckedStatus,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacySortOrder,
+              ),
+              _EncryptedFieldTile(
+                icon: Icons.info_outline_rounded,
+                iconColor: Colors.orange.shade700,
+                label: context.l10n.privacyCategoryIcons,
+              ),
+              const SizedBox(height: 16),
+              _SectionHeader(title: context.l10n.privacyWhyNotEncrypted),
+              const SizedBox(height: 8),
+              _InfoCard(
+                icon: Icons.help_outline_rounded,
+                iconColor: context.colorScheme.primary,
+                text: context.l10n.privacyWhyExplanation,
+              ),
+            ],
           ),
 
           const SizedBox(height: 28),
@@ -195,18 +217,7 @@ class PrivacyEncryptionScreen extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ── Section 4: Why some fields aren't encrypted ──
-          _SectionHeader(title: context.l10n.privacyWhyNotEncrypted),
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: Icons.help_outline_rounded,
-            iconColor: context.colorScheme.primary,
-            text: context.l10n.privacyWhyExplanation,
-          ),
-
-          const SizedBox(height: 28),
-
-          // ── Section 5: Your data, your control ──
+          // ── Section: Your data, your control ──
           _SectionHeader(title: context.l10n.privacyYourControl),
           const SizedBox(height: 12),
           _InfoCard(

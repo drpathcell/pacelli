@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
@@ -14,6 +15,7 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   void _showAbout(BuildContext context) {
+    final l10n = context.l10n;
     showAboutDialog(
       context: context,
       applicationName: 'Pacelli',
@@ -29,7 +31,65 @@ class SettingsScreen extends ConsumerWidget {
       ),
       children: [
         const SizedBox(height: 8),
-        Text(context.l10n.settingsAboutDescription),
+        Text(l10n.settingsAboutDescription),
+        const SizedBox(height: 16),
+        // Contact + privacy + support links
+        InkWell(
+          onTap: () => launchUrl(
+            Uri.parse('mailto:juancarlos.celis92@gmail.com?subject=Pacelli'),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.email_outlined, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'juancarlos.celis92@gmail.com',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => launchUrl(
+            Uri.parse('https://drpathcell.github.io/pacelli/privacy.html'),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.policy_outlined, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                l10n.settingsAboutPrivacyPolicy,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => launchUrl(
+            Uri.parse('https://github.com/drpathcell/pacelli'),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.code_outlined, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'GitHub',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
