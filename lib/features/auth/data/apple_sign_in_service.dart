@@ -49,17 +49,22 @@ class AppleSignInService {
       throw StateError('Apple did not return an identity token.');
     }
 
-    // Diagnostic: decode JWT payload to verify audience matches Firebase config.
-    // The JWT is three base64url segments separated by dots: header.payload.sig.
+    // Diagnostic: print the raw idToken so we can replay against Firebase REST
+    // API via curl and see the precise server-side error (Flutter wraps it
+    // generically as 'invalid-credential').
+    debugPrint('[AppleSignIn] FULL idToken: $idToken');
+    debugPrint('[AppleSignIn] rawNonce: $rawNonce');
+    debugPrint('[AppleSignIn] authorizationCode: ${appleCredential.authorizationCode}');
     try {
       final parts = idToken.split('.');
       if (parts.length == 3) {
         String pad(String s) => s + '=' * ((4 - s.length % 4) % 4);
+        final headerJson =
+            utf8.decode(base64Url.decode(pad(parts[0])));
         final payloadJson =
             utf8.decode(base64Url.decode(pad(parts[1])));
+        debugPrint('[AppleSignIn] JWT header: $headerJson');
         debugPrint('[AppleSignIn] JWT payload: $payloadJson');
-        debugPrint('[AppleSignIn] rawNonce: $rawNonce');
-        debugPrint('[AppleSignIn] hashedNonce sent to Apple: $hashedNonce');
       }
     } catch (e) {
       debugPrint('[AppleSignIn] could not decode JWT payload: $e');

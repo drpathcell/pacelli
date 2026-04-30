@@ -1,0 +1,4 @@
+appId: com.pacelli.pacelli
+---
+- launchApp
+- takeScreenshot: screenshot_initial
