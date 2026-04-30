@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Wraps `sign_in_with_apple` so callers get a fully signed-in Firebase user.
@@ -48,12 +49,52 @@ class AppleSignInService {
       throw StateError('Apple did not return an identity token.');
     }
 
+    // Diagnostic: decode JWT payload to verify audience matches Firebase config.
+    // The JWT is three base64url segments separated by dots: header.payload.sig.
+    try {
+      final parts = idToken.split('.');
+      if (parts.length == 3) {
+        String pad(String s) => s + '=' * ((4 - s.length % 4) % 4);
+        final payloadJson =
+            utf8.decode(base64Url.decode(pad(parts[1])));
+        debugPrint('[AppleSignIn] JWT payload: $payloadJson');
+        debugPrint('[AppleSignIn] rawNonce: $rawNonce');
+        debugPrint('[AppleSignIn] hashedNonce sent to Apple: $hashedNonce');
+      }
+    } catch (e) {
+      debugPrint('[AppleSignIn] could not decode JWT payload: $e');
+    }
+
     final oauth = OAuthProvider('apple.com').credential(
       idToken: idToken,
       rawNonce: rawNonce,
     );
 
-    final userCredential = await _auth.signInWithCredential(oauth);
+    UserCredential userCredential;
+    try {
+      userCredential = await _auth.signInWithCredential(oauth);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[AppleSignIn] FirebaseAuthException code=${e.code} '
+          'message=${e.message} email=${e.email} '
+          'credential=${e.credential?.signInMethod}');
+      // Re-throw with the JWT audience appended so the snackbar shows it.
+      String? aud;
+      try {
+        final parts = idToken.split('.');
+        if (parts.length == 3) {
+          String pad(String s) => s + '=' * ((4 - s.length % 4) % 4);
+          final payloadMap = jsonDecode(
+              utf8.decode(base64Url.decode(pad(parts[1])))) as Map<String, dynamic>;
+          aud = payloadMap['aud']?.toString();
+        }
+      } catch (_) {}
+      throw FirebaseAuthException(
+        code: e.code,
+        message: '${e.message} | aud=$aud',
+        email: e.email,
+        credential: e.credential,
+      );
+    }
     final user = userCredential.user;
 
     // Apple only returns the name on the first authorisation. Persist it now.
