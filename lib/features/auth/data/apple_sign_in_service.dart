@@ -70,9 +70,14 @@ class AppleSignInService {
       debugPrint('[AppleSignIn] could not decode JWT payload: $e');
     }
 
+    // firebase_auth iOS bridge has historically been picky about credential
+    // shape — including the authorizationCode as accessToken alongside idToken
+    // and rawNonce avoids the "invalid OAuth response" rejection that happens
+    // when the bridge silently drops fields.
     final oauth = OAuthProvider('apple.com').credential(
       idToken: idToken,
       rawNonce: rawNonce,
+      accessToken: appleCredential.authorizationCode,
     );
 
     UserCredential userCredential;
