@@ -85,7 +85,7 @@ class AttachmentList extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.attach_file_rounded,
+            const Icon(Icons.attach_file_rounded,
                 size: 18, color: AppColors.textSecondaryLight),
             const SizedBox(width: 6),
             Text(
@@ -180,7 +180,7 @@ class _AttachmentTile extends StatelessWidget {
                 ),
 
               // Open indicator
-              Icon(Icons.open_in_new_rounded,
+              const Icon(Icons.open_in_new_rounded,
                   size: 16, color: AppColors.textSecondaryLight),
             ],
           ),

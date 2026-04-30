@@ -344,7 +344,7 @@ class _DataStorageCard extends ConsumerWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.lock_outline_rounded,
+                  const Icon(Icons.lock_outline_rounded,
                       size: 12, color: AppColors.success),
                   const SizedBox(width: 4),
                   Text(

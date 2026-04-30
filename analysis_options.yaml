@@ -10,6 +10,14 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    # Firebase Functions directory — TypeScript app, only one Dart helper
+    # used to generate cross-language test vectors. Not part of Flutter app.
+    - "functions/**"
+    # Generated code (build_runner output)
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gen.dart"
   errors:
     missing_return: error
     missing_required_param: error

@@ -53,13 +53,12 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
             ),
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
+              final errorMsg = context.l10n.commonError('Flash not available');
               try {
                 await _controller.toggleTorch();
               } catch (e) {
                 messenger.showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          context.l10n.commonError('Flash not available'))),
+                  SnackBar(content: Text(errorMsg)),
                 );
               }
             },
@@ -68,13 +67,13 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
             icon: const Icon(Icons.cameraswitch),
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
+              final errorMsg =
+                  context.l10n.commonError('Front camera not available');
               try {
                 await _controller.switchCamera();
               } catch (e) {
                 messenger.showSnackBar(
-                  SnackBar(
-                      content: Text(context.l10n
-                          .commonError('Front camera not available'))),
+                  SnackBar(content: Text(errorMsg)),
                 );
               }
             },

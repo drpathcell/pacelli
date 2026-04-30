@@ -73,7 +73,7 @@ class CalendarTasksSection extends StatelessWidget {
                   title: Text(
                     task['title'] as String,
                     style: isCompleted
-                        ? TextStyle(
+                        ? const TextStyle(
                             decoration: TextDecoration.lineThrough,
                             color: AppColors.textSecondaryLight,
                             fontSize: 14,

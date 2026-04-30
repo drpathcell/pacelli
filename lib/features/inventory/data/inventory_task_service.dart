@@ -31,7 +31,7 @@ class InventoryTaskService {
     );
     if (alreadyExists) return null;
 
-    return await _repo.createTask(
+    return _repo.createTask(
       householdId: _householdId,
       title: 'Restock: ${item.name}',
       description:
@@ -62,7 +62,7 @@ class InventoryTaskService {
         ? DateFormat.yMMMd().format(item.expiryDate!)
         : 'soon';
 
-    return await _repo.createTask(
+    return _repo.createTask(
       householdId: _householdId,
       title: 'Use before expiry: ${item.name}',
       description:

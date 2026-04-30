@@ -269,7 +269,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.shield_outlined,
+                          const Icon(Icons.shield_outlined,
                               size: 20, color: AppColors.info),
                           const SizedBox(width: 12),
                           Expanded(
@@ -295,7 +295,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.check_circle_rounded,
+                                const Icon(Icons.check_circle_rounded,
                                     color: AppColors.success, size: 24),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -329,7 +329,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.folder_rounded,
+                                  const Icon(Icons.folder_rounded,
                                       size: 20,
                                       color: AppColors.textSecondaryLight),
                                   const SizedBox(width: 8),
@@ -385,7 +385,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline,
+                          const Icon(Icons.info_outline,
                               size: 20, color: AppColors.warning),
                           const SizedBox(width: 12),
                           Expanded(

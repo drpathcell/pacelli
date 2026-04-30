@@ -682,7 +682,7 @@ class _EntryAttachBadge extends ConsumerWidget {
               right: 4,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),

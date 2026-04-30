@@ -166,7 +166,7 @@ class _StorageSetupScreenState extends ConsumerState<StorageSetupScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.shield_outlined,
+                          const Icon(Icons.shield_outlined,
                               size: 20, color: AppColors.info),
                           const SizedBox(width: 12),
                           Expanded(
@@ -281,7 +281,7 @@ class _BackendOptionCard extends StatelessWidget {
                   ),
                 ),
                 if (!isDisabled)
-                  Icon(Icons.arrow_forward_ios_rounded,
+                  const Icon(Icons.arrow_forward_ios_rounded,
                       size: 16, color: AppColors.textSecondaryLight),
               ],
             ),
