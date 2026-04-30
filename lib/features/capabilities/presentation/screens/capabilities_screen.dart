@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/extensions.dart';
-import '../../../../shared/widgets/pacelli_ai_icon.dart';
 import '../../data/capability_data.dart';
 
 /// "What can Pacelli do?" discovery screen.
@@ -41,10 +40,6 @@ class CapabilitiesScreen extends StatelessWidget {
         return l.capGroupCalendar;
       case 'capGroupCalendarDesc':
         return l.capGroupCalendarDesc;
-      case 'capGroupAi':
-        return l.capGroupAi;
-      case 'capGroupAiDesc':
-        return l.capGroupAiDesc;
       case 'capGroupSecurity':
         return l.capGroupSecurity;
       case 'capGroupSecurityDesc':
@@ -57,10 +52,6 @@ class CapabilitiesScreen extends StatelessWidget {
         return l.capSubmitFeedback;
       case 'capSubmitFeedbackDesc':
         return l.capSubmitFeedbackDesc;
-      case 'capAiChatFeedback':
-        return l.capAiChatFeedback;
-      case 'capAiChatFeedbackDesc':
-        return l.capAiChatFeedbackDesc;
       case 'capWeeklyDigest':
         return l.capWeeklyDigest;
       case 'capWeeklyDigestDesc':
@@ -131,14 +122,6 @@ class CapabilitiesScreen extends StatelessWidget {
         return l.capReminders;
       case 'capRemindersDesc':
         return l.capRemindersDesc;
-      case 'capNaturalLanguage':
-        return l.capNaturalLanguage;
-      case 'capNaturalLanguageDesc':
-        return l.capNaturalLanguageDesc;
-      case 'capMcpIntegration':
-        return l.capMcpIntegration;
-      case 'capMcpIntegrationDesc':
-        return l.capMcpIntegrationDesc;
       case 'capEncryption':
         return l.capEncryption;
       case 'capEncryptionDesc':
@@ -257,34 +240,6 @@ class _CapabilityTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (capability.aiSupported)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.primary
-                              .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            PacelliAiIcon(
-                              size: 12,
-                              color: context.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              'AI',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: context.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 2),

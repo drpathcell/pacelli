@@ -697,105 +697,15 @@ export const weeklyDigestList = apiHandler(async (ctx, body) => {
 //  AI CHAT (In-App Assistant)
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * In-app AI chat endpoint.
- *
- * Receives a conversation history (user/assistant message pairs) and
- * routes the latest user message to the appropriate Pacelli function
- * or returns a natural-language response.
- *
- * For now this is a simple routing layer that:
- * 1. Detects intent from the user's latest message
- * 2. Calls the relevant Pacelli function(s)
- * 3. Returns a formatted natural-language reply
- *
- * A full LLM integration can be added later by proxying to an AI
- * provider (OpenAI, Anthropic, Gemini) with function calling.
- */
-export const aiChat = apiHandler(async (ctx, body) => {
-  const messages = body.messages as Array<{ role: string; content: string }>;
-  if (!messages || messages.length === 0) {
-    throw new Error("messages array is required and must not be empty");
-  }
-
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage.role !== "user") {
-    throw new Error("Last message must be from the user");
-  }
-
-  const userQuery = lastMessage.content.toLowerCase();
-
-  // ── Intent routing (simple keyword matching for MVP) ──
-  // This will be replaced by LLM function-calling in a future iteration.
-
-  // Task queries
-  if (userQuery.includes("task") && (userQuery.includes("due") || userQuery.includes("week") || userQuery.includes("today") || userQuery.includes("overdue"))) {
-    const result = await tasks.listTasks(ctx, { status: "pending" });
-    const taskList = result as unknown as Array<Record<string, unknown>>;
-    if (taskList.length === 0) {
-      return { reply: "You have no pending tasks. Everything is up to date!" };
-    }
-    const summary = taskList.slice(0, 10).map((t, i) =>
-      `${i + 1}. ${t.title}${t.dueDate ? ` (due ${t.dueDate})` : ""}${t.priority ? ` [${t.priority}]` : ""}`
-    ).join("\n");
-    return {
-      reply: `Here are your pending tasks:\n\n${summary}${taskList.length > 10 ? `\n\n...and ${taskList.length - 10} more.` : ""}`,
-    };
-  }
-
-  // Shopping / checklist queries
-  if (userQuery.includes("shopping") || userQuery.includes("checklist") || userQuery.includes("list")) {
-    const result = await checklists.listChecklists(ctx);
-    const lists = result as unknown as Array<Record<string, unknown>>;
-    if (lists.length === 0) {
-      return { reply: "You don't have any checklists yet. Would you like me to create one?" };
-    }
-    const summary = lists.map((l, i) => `${i + 1}. ${l.title}`).join("\n");
-    return {
-      reply: `Here are your checklists:\n\n${summary}\n\nWhich one would you like to see?`,
-    };
-  }
-
-  // Inventory / expiry queries
-  if (userQuery.includes("expir") || userQuery.includes("inventory") || userQuery.includes("stock")) {
-    const result = await inventory.listInventoryItems(ctx, {
-      expiringOnly: userQuery.includes("expir"),
-      lowStockOnly: userQuery.includes("stock") || userQuery.includes("low"),
-    });
-    const items = result as unknown as Array<Record<string, unknown>>;
-    if (items.length === 0) {
-      return { reply: "No items found matching that query. Your inventory looks good!" };
-    }
-    const summary = items.slice(0, 10).map((item, i) =>
-      `${i + 1}. ${item.name}${item.quantity !== undefined ? ` (qty: ${item.quantity})` : ""}${item.expiryDate ? ` — expires ${item.expiryDate}` : ""}`
-    ).join("\n");
-    return {
-      reply: `Here are the matching inventory items:\n\n${summary}${items.length > 10 ? `\n\n...and ${items.length - 10} more.` : ""}`,
-    };
-  }
-
-  // Plan queries
-  if (userQuery.includes("plan") || userQuery.includes("schedule") || userQuery.includes("trip")) {
-    const result = await plans.listPlans(ctx);
-    const planList = result as unknown as Array<Record<string, unknown>>;
-    if (planList.length === 0) {
-      return { reply: "You don't have any plans yet. Would you like to create one?" };
-    }
-    const summary = planList.map((p, i) => `${i + 1}. ${p.title} (${p.status})`).join("\n");
-    return { reply: `Your plans:\n\n${summary}` };
-  }
-
-  // Stats / overview
-  if (userQuery.includes("overview") || userQuery.includes("summary") || userQuery.includes("stats") || userQuery.includes("how am i doing")) {
-    const taskStats = await tasks.getTaskStats(ctx);
-    const invStats = await inventory.getInventoryStats(ctx);
-    return {
-      reply: `Here's your household overview:\n\n📋 Tasks: ${JSON.stringify(taskStats)}\n📦 Inventory: ${JSON.stringify(invStats)}`,
-    };
-  }
-
-  // Fallback — friendly response
-  return {
-    reply: "I'm your household assistant. I can help you with:\n\n• Checking tasks & deadlines\n• Viewing shopping lists & checklists\n• Inventory & expiry tracking\n• Plans & schedules\n• Household overview\n\nWhat would you like to know?",
-  };
-}, "read");
+// In-app AI chat (`aiChat`) was removed 2026-04-30.
+// Pacelli now exposes its data to external AI agents via the MCP server
+// (mcp-server/) — agents read tasks, inventory, plans, etc. through
+// well-typed MCP tools and the pacelli://capabilities resource. A
+// keyword-routing chat endpoint inside the app added more confusion than
+// value, and the architecture of "let the AI come to Pacelli" is the
+// correct one.
+//
+// If a future product direction needs an in-app conversational UI, build
+// it as a thin wrapper around Anthropic / OpenAI / Gemini SDKs with
+// function-calling backed by the same Pacelli function set the MCP
+// server uses — do not resurrect the keyword router.

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../shared/widgets/pacelli_ai_icon.dart';
 import '../../data/feedback_providers.dart';
 
 /// Main feedback & insights screen with tabs: Submit, History, Digests.
@@ -311,7 +310,9 @@ class _FeedbackCard extends StatelessWidget {
       case FeedbackType.featureRequest:
         return Icon(Icons.lightbulb_rounded, size: 20, color: color);
       case FeedbackType.aiResponse:
-        return PacelliAiIcon(size: 20, color: color);
+        // Legacy enum value — kept for backward-compatibility with old entries
+        // in Firestore. AI chat is no longer in the app.
+        return Icon(Icons.chat_bubble_outline_rounded, size: 20, color: color);
       case FeedbackType.general:
         return Icon(Icons.chat_bubble_rounded, size: 20, color: color);
     }
@@ -486,8 +487,6 @@ class _DigestCard extends StatelessWidget {
                     '${digest.inventoryItemsAdded}'),
                 _StatChip(Icons.menu_book_rounded, l10n.feedbackDigestManual,
                     '${digest.manualEntriesCreated}'),
-                _StatChipWidget(PacelliAiIcon(size: 16, color: Theme.of(context).colorScheme.outline), l10n.feedbackDigestAI,
-                    '${digest.aiChatMessages}'),
               ],
             ),
 

@@ -9,13 +9,11 @@ class Capability {
   final String icon;
   final String titleKey;
   final String descKey;
-  final bool aiSupported;
 
   const Capability({
     required this.icon,
     required this.titleKey,
     required this.descKey,
-    this.aiSupported = true,
   });
 }
 
@@ -160,25 +158,6 @@ const capabilityGroups = [
     ],
   ),
 
-  // ── AI Assistant ──
-  CapabilityGroup(
-    icon: '✨',
-    titleKey: 'capGroupAi',
-    descKey: 'capGroupAiDesc',
-    capabilities: [
-      Capability(
-        icon: '💬',
-        titleKey: 'capNaturalLanguage',
-        descKey: 'capNaturalLanguageDesc',
-      ),
-      Capability(
-        icon: '🔌',
-        titleKey: 'capMcpIntegration',
-        descKey: 'capMcpIntegrationDesc',
-      ),
-    ],
-  ),
-
   // ── Feedback & Insights ──
   CapabilityGroup(
     icon: '📊',
@@ -189,11 +168,6 @@ const capabilityGroups = [
         icon: '💬',
         titleKey: 'capSubmitFeedback',
         descKey: 'capSubmitFeedbackDesc',
-      ),
-      Capability(
-        icon: '👍',
-        titleKey: 'capAiChatFeedback',
-        descKey: 'capAiChatFeedbackDesc',
       ),
       Capability(
         icon: '📈',
@@ -213,19 +187,16 @@ const capabilityGroups = [
         icon: '🔐',
         titleKey: 'capEncryption',
         descKey: 'capEncryptionDesc',
-        aiSupported: false,
       ),
       Capability(
         icon: '🔥',
         titleKey: 'capBurnData',
         descKey: 'capBurnDataDesc',
-        aiSupported: false,
       ),
       Capability(
         icon: '💾',
         titleKey: 'capBackupRestore',
         descKey: 'capBackupRestoreDesc',
-        aiSupported: false,
       ),
     ],
   ),
@@ -240,7 +211,6 @@ List<Map<String, dynamic>> capabilitiesToJson() {
     'capabilities': g.capabilities.map((c) => {
       'name': c.titleKey,
       'icon': c.icon,
-      'aiSupported': c.aiSupported,
     }).toList(),
   }).toList();
 }

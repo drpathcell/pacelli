@@ -32,10 +32,8 @@ import '../../features/inventory/presentation/screens/barcode_scanner_screen.dar
 import '../../features/inventory/presentation/screens/virtual_barcode_view_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/notification_settings_screen.dart';
-import '../../features/settings/presentation/screens/ai_assistant_screen.dart';
 import '../../features/settings/presentation/screens/privacy_encryption_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
-import '../../features/ai_chat/presentation/screens/chat_screen.dart';
 import '../../features/capabilities/presentation/screens/capabilities_screen.dart';
 import '../../features/manual/presentation/screens/manual_screen.dart';
 import '../../features/manual/presentation/screens/manual_entry_detail_screen.dart';
@@ -78,8 +76,6 @@ class AppRoutes {
   static const String createPlan = '/plans/create';
   static const String manual = '/manual';
   static const String manualCategories = '/manual/categories';
-  static const String aiAssistant = '/ai-assistant';
-  static const String aiChat = '/ai-chat';
   static const String capabilities = '/capabilities';
   static const String feedback = '/feedback';
 }
@@ -130,32 +126,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.privacyEncryption,
         builder: (context, state) => const PrivacyEncryptionScreen(),
-      ),
-
-      // AI Assistant settings
-      GoRoute(
-        path: AppRoutes.aiAssistant,
-        builder: (context, state) => const AiAssistantScreen(),
-      ),
-
-      // AI Chat (full-screen modal from center FAB)
-      GoRoute(
-        path: AppRoutes.aiChat,
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const ChatScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 1),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            );
-          },
-        ),
       ),
 
       // Capabilities — "What can Pacelli do?"
@@ -543,22 +513,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
-          // Map route → nav index. Index 2 is the center FAB (no tab).
-          // 0 = Home, 1 = Tasks, (2 = AI FAB gap), 3 = Calendar, 4 = Settings
+          // Map route → nav index.
+          // 0 = Home, 1 = Tasks, 2 = Calendar, 3 = Settings
           int currentIndex = 0;
           final location = state.uri.path;
           if (location == AppRoutes.tasks) {
             currentIndex = 1;
           } else if (location == AppRoutes.calendar) {
-            currentIndex = 3;
+            currentIndex = 2;
           } else if (location == AppRoutes.settings) {
-            currentIndex = 4;
+            currentIndex = 3;
           }
 
           return MainShell(
             currentIndex: currentIndex,
             onTabChanged: (index) {
-              // Skip index 2 (AI FAB dummy spacer)
               switch (index) {
                 case 0:
                   context.go(AppRoutes.home);
@@ -566,15 +535,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 case 1:
                   context.go(AppRoutes.tasks);
                   break;
-                case 3:
+                case 2:
                   context.go(AppRoutes.calendar);
                   break;
-                case 4:
+                case 3:
                   context.go(AppRoutes.settings);
                   break;
               }
             },
-            onAiChatPressed: () => context.push(AppRoutes.aiChat),
             child: child,
           );
         },

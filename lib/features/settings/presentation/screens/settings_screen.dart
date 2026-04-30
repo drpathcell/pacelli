@@ -7,7 +7,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../shared/widgets/pacelli_ai_icon.dart';
 import '../../../household/data/household_providers.dart';
 
 /// Settings screen — app preferences, account management, logout.
@@ -263,15 +262,6 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.feedback),
           ),
           _SettingsTile(
-            leadingWidget: PacelliAiIcon(
-              size: 24,
-              color: context.colorScheme.primary,
-            ),
-            title: context.l10n.settingsAiAssistant,
-            subtitle: context.l10n.settingsAiAssistantSubtitle,
-            onTap: () => context.push(AppRoutes.aiAssistant),
-          ),
-          _SettingsTile(
             icon: Icons.info_outlined,
             title: context.l10n.settingsAbout,
             subtitle: context.l10n.settingsAboutVersion,
@@ -382,15 +372,13 @@ class SettingsScreen extends ConsumerWidget {
 
 /// A reusable settings list tile.
 class _SettingsTile extends StatelessWidget {
-  final IconData? icon;
-  final Widget? leadingWidget;
+  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _SettingsTile({
-    this.icon,
-    this.leadingWidget,
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -400,7 +388,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: leadingWidget ?? Icon(icon, color: context.colorScheme.primary),
+        leading: Icon(icon, color: context.colorScheme.primary),
         title: Text(title, style: context.textTheme.titleMedium),
         subtitle: Text(subtitle, style: context.textTheme.bodyMedium),
         trailing: const Icon(Icons.chevron_right_rounded),
