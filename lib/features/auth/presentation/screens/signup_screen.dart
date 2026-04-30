@@ -74,17 +74,10 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       if (mounted) context.go(AppRoutes.home);
-    } catch (e, st) {
-      debugPrint('Apple sign-up failed: $e\n$st');
-      String detail;
-      if (e is FirebaseAuthException) {
-        detail = '${e.code}: ${e.message ?? e.toString()}';
-      } else {
-        detail = e.toString();
-      }
+    } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          '${context.l10n.authAppleSignInFailed} — $detail',
+          context.l10n.authAppleSignInFailed,
           isError: true,
         );
       }

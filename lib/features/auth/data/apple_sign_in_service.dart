@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Wraps `sign_in_with_apple` so callers get a fully signed-in Firebase user.
@@ -49,62 +48,18 @@ class AppleSignInService {
       throw StateError('Apple did not return an identity token.');
     }
 
-    // Diagnostic: print the raw idToken so we can replay against Firebase REST
-    // API via curl and see the precise server-side error (Flutter wraps it
-    // generically as 'invalid-credential').
-    debugPrint('[AppleSignIn] FULL idToken: $idToken');
-    debugPrint('[AppleSignIn] rawNonce: $rawNonce');
-    debugPrint('[AppleSignIn] authorizationCode: ${appleCredential.authorizationCode}');
-    try {
-      final parts = idToken.split('.');
-      if (parts.length == 3) {
-        String pad(String s) => s + '=' * ((4 - s.length % 4) % 4);
-        final headerJson =
-            utf8.decode(base64Url.decode(pad(parts[0])));
-        final payloadJson =
-            utf8.decode(base64Url.decode(pad(parts[1])));
-        debugPrint('[AppleSignIn] JWT header: $headerJson');
-        debugPrint('[AppleSignIn] JWT payload: $payloadJson');
-      }
-    } catch (e) {
-      debugPrint('[AppleSignIn] could not decode JWT payload: $e');
-    }
-
-    // firebase_auth iOS bridge has historically been picky about credential
-    // shape — including the authorizationCode as accessToken alongside idToken
-    // and rawNonce avoids the "invalid OAuth response" rejection that happens
-    // when the bridge silently drops fields.
+    // firebase_auth iOS bridge silently rejects credentials that only have
+    // idToken + rawNonce — the authorizationCode must also be passed via the
+    // accessToken field. Diagnosed 2026-04-30 by replaying captured JWTs
+    // directly against Firebase's signInWithIdp REST endpoint, which accepted
+    // them, proving the issue was client-side serialization, not server.
     final oauth = OAuthProvider('apple.com').credential(
       idToken: idToken,
       rawNonce: rawNonce,
       accessToken: appleCredential.authorizationCode,
     );
 
-    UserCredential userCredential;
-    try {
-      userCredential = await _auth.signInWithCredential(oauth);
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[AppleSignIn] FirebaseAuthException code=${e.code} '
-          'message=${e.message} email=${e.email} '
-          'credential=${e.credential?.signInMethod}');
-      // Re-throw with the JWT audience appended so the snackbar shows it.
-      String? aud;
-      try {
-        final parts = idToken.split('.');
-        if (parts.length == 3) {
-          String pad(String s) => s + '=' * ((4 - s.length % 4) % 4);
-          final payloadMap = jsonDecode(
-              utf8.decode(base64Url.decode(pad(parts[1])))) as Map<String, dynamic>;
-          aud = payloadMap['aud']?.toString();
-        }
-      } catch (_) {}
-      throw FirebaseAuthException(
-        code: e.code,
-        message: '${e.message} | aud=$aud',
-        email: e.email,
-        credential: e.credential,
-      );
-    }
+    final userCredential = await _auth.signInWithCredential(oauth);
     final user = userCredential.user;
 
     // Apple only returns the name on the first authorisation. Persist it now.

@@ -93,21 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       if (mounted) context.go(AppRoutes.home);
-    } catch (e, st) {
-      // Surface the actual error in the snackbar — invaluable for TestFlight
-      // debugging where we don't have Console.app handy. FirebaseAuthException
-      // gives a `.code` that pinpoints config issues (invalid-credential,
-      // operation-not-allowed, etc).
-      debugPrint('Apple sign-in failed: $e\n$st');
-      String detail;
-      if (e is FirebaseAuthException) {
-        detail = '${e.code}: ${e.message ?? e.toString()}';
-      } else {
-        detail = e.toString();
-      }
+    } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          '${context.l10n.authAppleSignInFailed} — $detail',
+          context.l10n.authAppleSignInFailed,
           isError: true,
         );
       }
