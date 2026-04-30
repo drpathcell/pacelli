@@ -39,8 +39,16 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted || _hasNavigated) return;
 
       if (user != null) {
-        // Run one-time migration for deterministic member doc IDs.
-        unawaited(HouseholdService.migrateMemberDocIds());
+        // CRITICAL: Run the deterministic-member-doc-ID migration BEFORE
+        // navigating away from splash. Any household-scoped Firestore write
+        // (Drive connect, plan create, inventory edit) made within the first
+        // second of sign-in will hit `permission-denied` if a legacy
+        // random-UUID member doc still exists, because the security rule's
+        // `isMember()` check does an `exists()` on the deterministic path.
+        // Idempotent — fast no-op when docs are already migrated.
+        try {
+          await HouseholdService.migrateMemberDocIds();
+        } catch (_) {/* migration is best-effort; per-screen guards remain */}
         // Accept any pending household invite for this user.
         unawaited(HouseholdService.checkAndAcceptInvite());
 
@@ -80,6 +88,11 @@ class _SplashScreenState extends State<SplashScreen> {
     // Check if a user session exists.
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // Same migration guarantee as the authStateChanges path — see comment
+      // above. Idempotent fast-path when already migrated.
+      try {
+        await HouseholdService.migrateMemberDocIds();
+      } catch (_) {/* best-effort */}
       // Accept any pending household invite for this user.
       unawaited(HouseholdService.checkAndAcceptInvite());
 

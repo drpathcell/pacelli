@@ -8,6 +8,7 @@ import '../../../../core/models/attachment.dart';
 import '../../../../core/services/google_drive_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/household_providers.dart';
+import '../../data/household_service.dart';
 
 /// Screen for the household owner to connect Google Drive storage.
 ///
@@ -41,6 +42,11 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Make sure the deterministic household_members doc ID exists before
+      // any read that depends on isMember(). Idempotent — only mutates when
+      // a legacy random-UUID doc is found.
+      await HouseholdService.migrateMemberDocIds();
+
       final doc = await FirebaseFirestore.instance
           .collection('household_drive_config')
           .doc(widget.householdId)
@@ -56,10 +62,42 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
         }
       }
     } catch (e) {
-      debugPrint('DriveSetupScreen: Failed to check config: $e');
+      debugPrint('[DriveSetup] Failed to check config: $e');
+      // Don't surface here — permission-denied at this stage means the
+      // membership check failed. _connectDrive() does an explicit, actionable
+      // membership probe before writing.
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Verifies that the current user has a deterministic-ID member doc at
+  /// `/household_members/{uid}_{householdId}`. The Firestore security rule
+  /// `isMember(householdId)` does an `exists()` lookup at exactly that path,
+  /// so a missing doc (or a legacy random-UUID doc) yields permission-denied
+  /// on every write to household-scoped collections.
+  ///
+  /// Returns null if membership is confirmed, otherwise an error string the
+  /// caller can show to the user.
+  Future<String?> _ensureMembership(String uid) async {
+    final db = FirebaseFirestore.instance;
+    final expectedId = '${uid}_${widget.householdId}';
+
+    Future<bool> deterministicExists() async {
+      final snap = await db.collection('household_members').doc(expectedId).get();
+      return snap.exists;
+    }
+
+    if (await deterministicExists()) return null;
+
+    debugPrint('[DriveSetup] Member doc $expectedId missing — running migration');
+    await HouseholdService.migrateMemberDocIds();
+
+    if (await deterministicExists()) return null;
+
+    debugPrint('[DriveSetup] ✗ Still no member doc at $expectedId after migration');
+    return 'You are not a member of this household. Please leave and rejoin '
+        'before connecting Google Drive.';
   }
 
   /// Connect Google Drive: request scope, create folder, save config.
@@ -67,6 +105,28 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 0. Confirm Firestore membership BEFORE doing any Drive work — Drive
+      // scope grant + folder create are wasted if the final write fails on
+      // a missing isMember() check.
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (mounted) {
+          context.showSnackBar(
+            'Not signed in. Please sign in again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+      final membershipError = await _ensureMembership(user.uid);
+      if (membershipError != null) {
+        if (mounted) context.showSnackBar(membershipError, isError: true);
+        return;
+      }
+      debugPrint(
+        '[DriveSetup] Membership OK — uid=${user.uid} householdId=${widget.householdId}',
+      );
+
       // 1. Request Drive file scope
       final granted = await _driveService.requestDriveScope();
       if (!granted) {
@@ -89,10 +149,9 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
       final folderId = await _driveService.ensurePacelliFolder(householdName);
 
       // 4. Save the config to Firestore
-      final uid = FirebaseAuth.instance.currentUser!.uid;
       final config = HouseholdDriveConfig(
         householdId: widget.householdId,
-        ownerId: uid,
+        ownerId: user.uid,
         driveFolderId: folderId,
         isEnabled: true,
         createdAt: DateTime.now(),
@@ -111,6 +170,7 @@ class _DriveSetupScreenState extends ConsumerState<DriveSetupScreen> {
         context.showSnackBar(context.l10n.driveConnectedSuccess);
       }
     } catch (e) {
+      debugPrint('[DriveSetup] ✗ _connectDrive failed: $e');
       if (mounted) {
         context.showSnackBar(
           context.l10n.driveConnectFailed(e.toString()),
