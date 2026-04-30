@@ -24,6 +24,53 @@ class AppleSignInService {
   /// Returns the signed-in [User], or `null` if the user cancelled.
   /// Throws on any other failure (network, configuration, etc).
   Future<User?> signIn() async {
+    final pair = await _getAppleCredential();
+    if (pair == null) return null;
+
+    final userCredential = await _auth.signInWithCredential(pair.credential);
+    final user = userCredential.user;
+
+    // Apple only returns the name on the first authorisation. Persist it now.
+    final givenName = pair.appleCredential.givenName;
+    final familyName = pair.appleCredential.familyName;
+    if (user != null &&
+        (user.displayName == null || user.displayName!.isEmpty) &&
+        (givenName != null || familyName != null)) {
+      final displayName = [givenName, familyName]
+          .where((p) => p != null && p.isNotEmpty)
+          .join(' ');
+      if (displayName.isNotEmpty) {
+        await user.updateDisplayName(displayName);
+      }
+    }
+
+    return user;
+  }
+
+  /// Re-authenticates [user] with a fresh Apple credential. Required before
+  /// sensitive operations like `user.delete()` (used by the burn flow).
+  ///
+  /// Returns `true` on success, `false` if the user cancelled the SIWA sheet.
+  /// Throws on any other failure (network, configuration, credential mismatch).
+  Future<bool> reauthenticate(User user) async {
+    final pair = await _getAppleCredential();
+    if (pair == null) return false;
+    await user.reauthenticateWithCredential(pair.credential);
+    return true;
+  }
+
+  /// Drives the Apple Sign-In sheet and packages the result as a Firebase
+  /// OAuth credential ready for [signIn] or [reauthenticate].
+  ///
+  /// Returns `null` if the user cancelled the sheet. Throws on any other
+  /// SIWA failure.
+  ///
+  /// firebase_auth iOS bridge silently rejects credentials that only have
+  /// idToken + rawNonce — the authorizationCode must also be passed via the
+  /// accessToken field. Diagnosed 2026-04-30 by replaying captured JWTs
+  /// directly against Firebase's signInWithIdp REST endpoint, which accepted
+  /// them, proving the issue was client-side serialization, not server.
+  Future<_AppleCredentialPair?> _getAppleCredential() async {
     final rawNonce = _generateNonce();
     final hashedNonce = _sha256(rawNonce);
 
@@ -48,35 +95,12 @@ class AppleSignInService {
       throw StateError('Apple did not return an identity token.');
     }
 
-    // firebase_auth iOS bridge silently rejects credentials that only have
-    // idToken + rawNonce — the authorizationCode must also be passed via the
-    // accessToken field. Diagnosed 2026-04-30 by replaying captured JWTs
-    // directly against Firebase's signInWithIdp REST endpoint, which accepted
-    // them, proving the issue was client-side serialization, not server.
-    final oauth = OAuthProvider('apple.com').credential(
+    final credential = OAuthProvider('apple.com').credential(
       idToken: idToken,
       rawNonce: rawNonce,
       accessToken: appleCredential.authorizationCode,
     );
-
-    final userCredential = await _auth.signInWithCredential(oauth);
-    final user = userCredential.user;
-
-    // Apple only returns the name on the first authorisation. Persist it now.
-    final givenName = appleCredential.givenName;
-    final familyName = appleCredential.familyName;
-    if (user != null &&
-        (user.displayName == null || user.displayName!.isEmpty) &&
-        (givenName != null || familyName != null)) {
-      final displayName = [givenName, familyName]
-          .where((p) => p != null && p.isNotEmpty)
-          .join(' ');
-      if (displayName.isNotEmpty) {
-        await user.updateDisplayName(displayName);
-      }
-    }
-
-    return user;
+    return _AppleCredentialPair(appleCredential, credential);
   }
 
   String _generateNonce([int length = 32]) {
@@ -89,4 +113,12 @@ class AppleSignInService {
 
   String _sha256(String input) =>
       sha256.convert(utf8.encode(input)).toString();
+}
+
+/// Bundles the raw Apple credential (for name extraction) with the Firebase
+/// OAuth credential (for signIn / reauthenticate).
+class _AppleCredentialPair {
+  _AppleCredentialPair(this.appleCredential, this.credential);
+  final AuthorizationCredentialAppleID appleCredential;
+  final OAuthCredential credential;
 }

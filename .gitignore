@@ -73,3 +73,4 @@ fastlane/test_output/
 functions/tests/cross-language/test_vectors.json
 vendor/bundle/
 .tmp-*
+.audit-*/

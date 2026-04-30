@@ -14,6 +14,7 @@ import '../../../../core/data/data_repository_provider.dart';
 import '../../../../core/data/local_database.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../auth/data/apple_sign_in_service.dart';
 
 /// Full-screen fire animation shown while all user data is being deleted.
 class BurnDataScreen extends ConsumerStatefulWidget {
@@ -140,12 +141,15 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       debugPrint('[BURN] Starting burn for userId=$userId');
 
       // For email/password users, prompt for password upfront so we can
-      // re-authenticate later for account deletion.
+      // re-authenticate later for account deletion. Google + Apple users get
+      // re-authenticated interactively via their provider just before deletion.
       String? emailPassword;
       if (currentUser != null) {
         final providerIds =
             currentUser.providerData.map((p) => p.providerId).toSet();
-        if (!providerIds.contains('google.com')) {
+        final usesProviderReauth = providerIds.contains('google.com') ||
+            providerIds.contains('apple.com');
+        if (!usesProviderReauth) {
           emailPassword = await _promptForPassword();
           if (emailPassword == null) {
             // User cancelled — go back to settings.
@@ -242,6 +246,17 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                 idToken: googleAuth.idToken,
               );
               await user.reauthenticateWithCredential(credential);
+            }
+          } else if (providerIds.contains('apple.com')) {
+            // Re-authenticate with Apple before deleting. SIWA returns a
+            // null user on cancel — treat that as abort.
+            final reauthed =
+                await AppleSignInService().reauthenticate(user);
+            if (!reauthed) {
+              debugPrint('[BURN] Apple reauth cancelled or failed');
+              _updateStatus(l10n.burnPasswordError);
+              if (mounted) setState(() => _hasFailed = true);
+              return;
             }
           } else if (emailPassword != null && user.email != null) {
             // Re-authenticate with email/password.

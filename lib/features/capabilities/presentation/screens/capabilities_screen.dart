@@ -49,6 +49,22 @@ class CapabilitiesScreen extends StatelessWidget {
         return l.capGroupSecurity;
       case 'capGroupSecurityDesc':
         return l.capGroupSecurityDesc;
+      case 'capGroupFeedback':
+        return l.capGroupFeedback;
+      case 'capGroupFeedbackDesc':
+        return l.capGroupFeedbackDesc;
+      case 'capSubmitFeedback':
+        return l.capSubmitFeedback;
+      case 'capSubmitFeedbackDesc':
+        return l.capSubmitFeedbackDesc;
+      case 'capAiChatFeedback':
+        return l.capAiChatFeedback;
+      case 'capAiChatFeedbackDesc':
+        return l.capAiChatFeedbackDesc;
+      case 'capWeeklyDigest':
+        return l.capWeeklyDigest;
+      case 'capWeeklyDigestDesc':
+        return l.capWeeklyDigestDesc;
 
       // Capability titles
       case 'capCreateTasks':
