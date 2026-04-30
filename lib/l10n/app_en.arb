@@ -529,6 +529,9 @@
     }
   },
   "settingsTitle": "Settings",
+  "settingsSectionHousehold": "Household",
+  "settingsSectionApp": "App",
+  "settingsSectionHelp": "Help",
   "settingsHousehold": "Household",
   "settingsHouseholdSubtitle": "Manage household & members",
   "settingsNotifications": "Notifications",

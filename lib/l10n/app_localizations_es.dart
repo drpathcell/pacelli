@@ -1078,6 +1078,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Ajustes';
 
   @override
+  String get settingsSectionHousehold => 'Hogar';
+
+  @override
+  String get settingsSectionApp => 'Aplicación';
+
+  @override
+  String get settingsSectionHelp => 'Ayuda';
+
+  @override
   String get settingsHousehold => 'Hogar';
 
   @override

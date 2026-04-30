@@ -2026,6 +2026,24 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @settingsSectionHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Household'**
+  String get settingsSectionHousehold;
+
+  /// No description provided for @settingsSectionApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get settingsSectionApp;
+
+  /// No description provided for @settingsSectionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get settingsSectionHelp;
+
   /// No description provided for @settingsHousehold.
   ///
   /// In en, this message translates to:

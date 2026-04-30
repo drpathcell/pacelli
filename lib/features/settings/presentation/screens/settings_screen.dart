@@ -208,7 +208,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Settings options
+          // ── Household ──
+          _SettingsSectionHeader(label: context.l10n.settingsSectionHousehold),
           _SettingsTile(
             icon: Icons.home_outlined,
             title: context.l10n.settingsHousehold,
@@ -221,17 +222,28 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: context.l10n.settingsNotificationsSubtitle,
             onTap: () => context.push(AppRoutes.notifications),
           ),
-          _SettingsTile(
-            icon: Icons.shield_outlined,
-            title: context.l10n.settingsPrivacy,
-            subtitle: context.l10n.settingsPrivacySubtitle,
-            onTap: () => context.push(AppRoutes.privacyEncryption),
-          ),
+          if (householdId != null)
+            _SettingsTile(
+              icon: Icons.menu_book_outlined,
+              title: context.l10n.settingsManual,
+              subtitle: context.l10n.settingsManualSubtitle,
+              onTap: () =>
+                  context.push(AppRoutes.manual, extra: householdId),
+            ),
+
+          // ── App ──
+          _SettingsSectionHeader(label: context.l10n.settingsSectionApp),
           _SettingsTile(
             icon: Icons.palette_outlined,
             title: context.l10n.settingsAppearance,
             subtitle: context.l10n.settingsAppearanceSubtitle,
             onTap: () => context.push(AppRoutes.appearance),
+          ),
+          _SettingsTile(
+            icon: Icons.shield_outlined,
+            title: context.l10n.settingsPrivacy,
+            subtitle: context.l10n.settingsPrivacySubtitle,
+            onTap: () => context.push(AppRoutes.privacyEncryption),
           ),
           if (householdId != null)
             _SettingsTile(
@@ -241,14 +253,9 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () =>
                   context.push(AppRoutes.importExport, extra: householdId),
             ),
-          if (householdId != null)
-            _SettingsTile(
-              icon: Icons.menu_book_outlined,
-              title: context.l10n.settingsManual,
-              subtitle: context.l10n.settingsManualSubtitle,
-              onTap: () =>
-                  context.push(AppRoutes.manual, extra: householdId),
-            ),
+
+          // ── Help ──
+          _SettingsSectionHeader(label: context.l10n.settingsSectionHelp),
           _SettingsTile(
             icon: Icons.explore_outlined,
             title: context.l10n.settingsCapabilities,
@@ -371,6 +378,27 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 /// A reusable settings list tile.
+/// Small uppercase label that introduces a logical settings group.
+class _SettingsSectionHeader extends StatelessWidget {
+  final String label;
+  const _SettingsSectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+      child: Text(
+        label.toUpperCase(),
+        style: context.textTheme.labelSmall?.copyWith(
+          color: context.colorScheme.primary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;

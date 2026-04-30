@@ -1069,6 +1069,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get settingsSectionHousehold => 'Household';
+
+  @override
+  String get settingsSectionApp => 'App';
+
+  @override
+  String get settingsSectionHelp => 'Help';
+
+  @override
   String get settingsHousehold => 'Household';
 
   @override

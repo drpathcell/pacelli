@@ -1074,6 +1074,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsTitle => 'Impostazioni';
 
   @override
+  String get settingsSectionHousehold => 'Casa';
+
+  @override
+  String get settingsSectionApp => 'App';
+
+  @override
+  String get settingsSectionHelp => 'Aiuto';
+
+  @override
   String get settingsHousehold => 'Casa';
 
   @override
