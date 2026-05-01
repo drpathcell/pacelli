@@ -10,6 +10,7 @@ import '../../../../config/routes/app_router.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/apple_sign_in_service.dart';
+import '../utils/post_auth_nav.dart';
 import '../widgets/apple_sign_in_button.dart';
 
 /// Signup screen — Google Sign-In + email/password registration.
@@ -73,7 +74,7 @@ class _SignupScreenState extends State<SignupScreen> {
         });
       }
 
-      if (mounted) context.go(AppRoutes.home);
+      if (mounted) await goAfterAuth(context);
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
@@ -138,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       if (mounted) {
-        context.go(AppRoutes.home);
+        await goAfterAuth(context);
       }
     } catch (e) {
       if (mounted) {
@@ -191,7 +192,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (mounted) {
         context.showSnackBar(context.l10n.authAccountCreated);
-        context.go(AppRoutes.home);
+        await goAfterAuth(context);
       }
     } catch (e) {
       if (mounted) {

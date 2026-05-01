@@ -74,3 +74,5 @@ functions/tests/cross-language/test_vectors.json
 vendor/bundle/
 .tmp-*
 .audit-*/
+.audits/
+AUDIT_*.md

@@ -38,6 +38,13 @@ class NotificationService {
   /// Initialises the notification plugin and loads preferences.
   ///
   /// Must be called once at app startup (from `main()` or a provider).
+  ///
+  /// IMPORTANT: this does NOT prompt the user for OS-level notification
+  /// permissions. The system permission dialog is deferred until the user
+  /// actually opts into a notification (creates a task with a reminder, sets
+  /// up an inventory expiry alert, or toggles Notifications on in Settings).
+  /// This follows iOS HIG advice — asking up-front yields lower opt-in rates.
+  /// See [requestPermissionsIfNeeded].
   Future<void> init() async {
     if (_initialised) return;
 
@@ -45,15 +52,17 @@ class NotificationService {
     tz.initializeTimeZones();
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Pass false for all three flags — we trigger the system prompt lazily,
+    // not on app launch.
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
     const macosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -70,6 +79,56 @@ class NotificationService {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  //  PERMISSIONS — requested lazily on first use, not at app launch
+  // ═══════════════════════════════════════════════════════════════════
+
+  bool _permissionRequested = false;
+
+  /// Requests OS-level notification permissions if not already requested.
+  ///
+  /// Call this BEFORE scheduling any notification (task reminder, expiry
+  /// reminder, low-stock alert) and when the user toggles Notifications ON
+  /// in Settings. iOS shows the system prompt only the first time; subsequent
+  /// calls are silent if the user already granted or denied.
+  ///
+  /// Idempotent — safe to call from every scheduling helper.
+  Future<bool> requestPermissionsIfNeeded() async {
+    if (_permissionRequested) return true;
+    _permissionRequested = true;
+
+    final iosImpl = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    if (iosImpl != null) {
+      final granted = await iosImpl.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      debugPrint('[NotificationService] iOS permissions granted=$granted');
+      return granted ?? false;
+    }
+    final macosImpl = _plugin.resolvePlatformSpecificImplementation<
+        MacOSFlutterLocalNotificationsPlugin>();
+    if (macosImpl != null) {
+      final granted = await macosImpl.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      debugPrint('[NotificationService] macOS permissions granted=$granted');
+      return granted ?? false;
+    }
+    final androidImpl = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      final granted = await androidImpl.requestNotificationsPermission();
+      debugPrint('[NotificationService] Android permissions granted=$granted');
+      return granted ?? false;
+    }
+    return true;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   //  PREFERENCES
   // ═══════════════════════════════════════════════════════════════════
 
@@ -81,13 +140,18 @@ class NotificationService {
 
   /// Enables or disables notifications globally.
   ///
-  /// When disabled, cancels all pending notifications.
+  /// When enabling, prompts for OS permission if it hasn't been requested
+  /// yet (this is the user's explicit opt-in moment).
+  /// When disabling, cancels all pending notifications.
   Future<void> setEnabled(bool enabled) async {
     _enabled = enabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kNotificationsEnabled, enabled);
 
-    if (!enabled) {
+    if (enabled) {
+      // Trigger the OS prompt (idempotent — silent if already requested).
+      await requestPermissionsIfNeeded();
+    } else {
       await cancelAll();
     }
   }
@@ -121,6 +185,10 @@ class NotificationService {
 
     // Don't schedule if the time has already passed.
     if (scheduledDate.isBefore(DateTime.now())) return;
+
+    // Lazily prompt for OS permission on first scheduled notification.
+    final granted = await requestPermissionsIfNeeded();
+    if (!granted) return;
 
     final notificationId = _stableId(taskId);
 
@@ -184,6 +252,9 @@ class NotificationService {
     final scheduledDate = _applyTiming(expiryDate);
     if (scheduledDate.isBefore(DateTime.now())) return;
 
+    final granted = await requestPermissionsIfNeeded();
+    if (!granted) return;
+
     final notificationId = _stableId('expiry_$itemId');
 
     const androidDetails = AndroidNotificationDetails(
@@ -238,6 +309,9 @@ class NotificationService {
     required int threshold,
   }) async {
     if (!_enabled) return;
+
+    final granted = await requestPermissionsIfNeeded();
+    if (!granted) return;
 
     final notificationId = _stableId('lowstock_$itemId');
 

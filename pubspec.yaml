@@ -1,7 +1,7 @@
 name: pacelli
 description: "A household management app born from love and peace."
 publish_to: 'none'
-version: 1.0.0+11
+version: 1.0.0+12
 
 environment:
   sdk: ^3.5.0
