@@ -52,6 +52,19 @@ void main() async {
     ],
   );
 
+  // ── Crashlytics breadcrumb wiring ──
+  // When `firebase_crashlytics` lands (App Store route Phase 1.5), uncomment
+  // the two lines below. Every diagnostics line written via
+  // `_log()` / `ref.read(diagnosticsBufferProvider).log()` will then be
+  // attached as a Crashlytics breadcrumb, so production crashes arrive
+  // with the full burn / sync / migration trail already in the report.
+  //
+  // import 'core/diagnostics/diagnostics_buffer.dart';
+  // import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+  // container
+  //     .read(diagnosticsBufferProvider)
+  //     .setCrashlyticsHook(FirebaseCrashlytics.instance.log);
+
   // Launch the app wrapped in Riverpod's UncontrolledProviderScope.
   runApp(
     UncontrolledProviderScope(

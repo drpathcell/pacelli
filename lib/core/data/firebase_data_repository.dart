@@ -2557,17 +2557,21 @@ class FirebaseDataRepository implements DataRepository {
         .get();
     debugPrint('[BURN] household_members query returned ${memberSnap.docs.length} docs for userId=$userId');
 
+    // Log every doc up-front so we can diagnose orphans / malformed docs.
+    for (final d in memberSnap.docs) {
+      final data = d.data();
+      debugPrint('[BURN]   member doc id=${d.id} user_id=${data['user_id']} household_id=${data['household_id']}');
+    }
+
     final householdIds = memberSnap.docs
         .map((d) => d.data()['household_id'] as String? ?? '')
         .where((id) => id.isNotEmpty)
         .toSet();
     debugPrint('[BURN] householdIds=$householdIds');
 
-    if (householdIds.isEmpty) {
-      debugPrint('[BURN] No households found for user — skipping Firestore wipe');
-      return;
-    }
-
+    // Per-household wipe (skipped only if no valid household_id is present;
+    // orphan member docs with null/empty household_id are handled by the
+    // final orphan-sweep below).
     for (final hid in householdIds) {
       // Delete Drive config FIRST — requires isMember() which needs the
       // member doc to still exist.
@@ -2579,6 +2583,43 @@ class FirebaseDataRepository implements DataRepository {
 
       // Now wipe all household data (including the member doc itself).
       await _wipeHouseholdData(hid, userId: userId);
+    }
+
+    // ── FINAL ORPHAN SWEEP ──
+    // Re-query member docs by user_id and delete every survivor. This
+    // catches: orphans with null/empty household_id, docs missed because
+    // their household_id pointed to a household no longer reachable, and
+    // any race left over from the per-household batch deletes. The
+    // Firestore rules allow self-delete via
+    // `resource.data.user_id == request.auth.uid`, so this is permitted
+    // even when household membership has already been torn down.
+    final orphanSnap = await _db
+        .collection('household_members')
+        .where('user_id', isEqualTo: userId)
+        .get();
+    if (orphanSnap.docs.isNotEmpty) {
+      debugPrint('[BURN] Orphan sweep: deleting ${orphanSnap.docs.length} surviving member doc(s)');
+      const maxRetries = 3;
+      for (var attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          final batch = _db.batch();
+          for (final doc in orphanSnap.docs) {
+            debugPrint('[BURN]   sweeping ${doc.id} (household_id=${doc.data()['household_id']})');
+            batch.delete(doc.reference);
+          }
+          await batch.commit();
+          break;
+        } catch (e) {
+          if (attempt >= maxRetries) {
+            debugPrint('[BURN] ✗ Orphan sweep failed after $maxRetries retries: $e');
+            rethrow;
+          }
+          debugPrint('[BURN] Orphan sweep attempt $attempt failed, retrying in ${attempt}s: $e');
+          await Future.delayed(Duration(seconds: attempt));
+        }
+      }
+    } else {
+      debugPrint('[BURN] Orphan sweep: 0 survivors');
     }
 
     // Delete user's profile.

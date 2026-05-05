@@ -1,0 +1,14 @@
+{
+  "name": "pacelli-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rule tests that lock the security guarantees the Pacelli client depends on (notably household_members self-delete, which the burn orphan-sweep relies on).",
+  "scripts": {
+    "test": "firebase --project=demo-pacelli emulators:exec --only firestore \"jest --runInBand\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.2",
+    "jest": "^29.7.0"
+  }
+}

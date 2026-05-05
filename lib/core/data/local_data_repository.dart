@@ -2156,26 +2156,46 @@ class LocalDataRepository implements DataRepository {
 
   @override
   Future<void> wipeAllData(String userId) async {
-    // Wrap all deletes in a transaction so it's all-or-nothing.
+    // Wipe all known tables, in child-before-parent order for FK safety.
+    // We tolerate missing tables (schema may not yet have created some
+    // optional tables on this device — e.g. plan_attachments). Anything
+    // that does exist gets emptied; missing tables are no-ops.
+    const tables = <String>[
+      'manual_entries',
+      'manual_categories',
+      'inventory_attachments',
+      'inventory_logs',
+      'inventory_items',
+      'inventory_locations',
+      'inventory_categories',
+      'task_attachments',
+      'plan_attachments',
+      'subtasks',
+      'plan_checklist_items',
+      'plan_entries',
+      'checklist_items',
+      'tasks',
+      'checklists',
+      'scratch_plans',
+      'task_categories',
+      'profile_cache',
+    ];
+
+    // Resolve which tables actually exist in this database. If the schema
+    // is older than the code, missing tables would otherwise abort the
+    // entire transaction and leave data behind.
+    final existing = await _db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table'",
+    );
+    final existingNames =
+        existing.map((row) => row['name'] as String).toSet();
+
     await _db.transaction((txn) async {
-      // Order: children before parents to respect FK constraints.
-      await txn.delete('manual_entries');
-      await txn.delete('manual_categories');
-      await txn.delete('inventory_attachments');
-      await txn.delete('inventory_logs');
-      await txn.delete('inventory_items');
-      await txn.delete('inventory_locations');
-      await txn.delete('inventory_categories');
-      await txn.delete('task_attachments');
-      await txn.delete('plan_attachments');
-      await txn.delete('subtasks');
-      await txn.delete('plan_checklist_items');
-      await txn.delete('plan_entries');
-      await txn.delete('checklist_items');
-      await txn.delete('tasks');
-      await txn.delete('checklists');
-      await txn.delete('scratch_plans');
-      await txn.delete('task_categories');
+      for (final t in tables) {
+        if (existingNames.contains(t)) {
+          await txn.delete(t);
+        }
+      }
     });
 
     // Close any open stream controllers.

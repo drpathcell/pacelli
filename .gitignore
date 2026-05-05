@@ -60,6 +60,12 @@ functions/dist/
 mcp-server/node_modules/
 mcp-server/dist/
 
+# Firestore rules tests
+firestore-tests/node_modules/
+firestore-tests/firestore-debug.log
+firestore-tests/ui-debug.log
+firestore-tests/firebase-debug.log
+
 # Fastlane
 vendor/bundle/
 fastlane/report.xml
@@ -76,3 +82,6 @@ vendor/bundle/
 .audit-*/
 .audits/
 AUDIT_*.md
+
+# Jarvis dashboard runtime output
+.jarvis_dashboard/

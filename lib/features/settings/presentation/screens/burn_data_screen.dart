@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
 import '../../../../core/data/local_database.dart';
+import '../../../../core/diagnostics/diagnostics_buffer.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../auth/data/apple_sign_in_service.dart';
@@ -31,9 +33,11 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
   late final AnimationController _particleController;
 
   String _statusText = '';
+  String? _failureDetail;
   bool _isComplete = false;
   bool _hasFailed = false;
   bool _burnStarted = false;
+  bool _showDiagnostics = false;
 
   @override
   void initState() {
@@ -135,10 +139,14 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
   Future<void> _burnEverything() async {
     final l10n = context.l10n;
+    // Each attempt starts with a clean diagnostics buffer so the user
+    // sees only THIS attempt's breadcrumbs on failure, not stale lines
+    // from a previous run.
+    ref.read(diagnosticsBufferProvider).clear();
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
-      debugPrint('[BURN] Starting burn for userId=$userId');
+      _log('START', 'burn for userId=$userId');
 
       // For email/password users, prompt for password upfront so we can
       // re-authenticate later for account deletion. Google + Apple users get
@@ -177,27 +185,47 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       if (userId != null) {
         try {
           await repo.wipeAllData(userId);
-          debugPrint('[BURN] ✓ wipeAllData completed');
+          _log('WIPE', '✓ wipeAllData completed');
 
           // Verify burn — re-query household_members to confirm deletion.
+          // Firestore indexed queries can lag a few hundred ms behind a
+          // batch.commit(), so retry up to 3 times with backoff before
+          // giving up. Each attempt forces a server read.
           try {
-            final verify = await FirebaseFirestore.instance
-                .collection('household_members')
-                .where('user_id', isEqualTo: userId)
-                .get();
-            if (verify.docs.isNotEmpty) {
-              debugPrint('[BURN] ✗ VERIFICATION FAILED: ${verify.docs.length} household_members still exist!');
+            const maxAttempts = 3;
+            int remaining = -1;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+              final verify = await FirebaseFirestore.instance
+                  .collection('household_members')
+                  .where('user_id', isEqualTo: userId)
+                  .get(const GetOptions(source: Source.server));
+              remaining = verify.docs.length;
+              if (remaining == 0) {
+                _log('VERIFY', '✓ passed (attempt $attempt): 0 household_members remain');
+                break;
+              }
+              _log('VERIFY', 'attempt $attempt: $remaining still present, retrying…');
+              if (attempt < maxAttempts) {
+                await Future.delayed(Duration(milliseconds: 400 * attempt));
+              }
+            }
+            if (remaining > 0) {
+              _log('VERIFY', '✗ FAILED after $maxAttempts attempts: $remaining household_members still exist');
               throw Exception('Burn verification failed: household docs still exist');
             }
-            debugPrint('[BURN] ✓ Verification passed: 0 household_members remain');
           } catch (e) {
             if (e.toString().contains('verification failed')) rethrow;
-            debugPrint('[BURN] Verification query error: $e');
+            _log('VERIFY', 'query error: $e');
           }
         } catch (e) {
-          debugPrint('[BURN] ✗ wipeAllData failed: $e');
+          _log('WIPE', '✗ wipeAllData failed: $e');
           _updateStatus(l10n.burnStatusError);
-          if (mounted) setState(() => _hasFailed = true);
+          if (mounted) {
+            setState(() {
+              _hasFailed = true;
+              _failureDetail = 'wipeAllData: $e';
+            });
+          }
           return; // Do NOT proceed — data was not deleted.
         }
       }
@@ -273,10 +301,18 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
           if (e.toString().contains('wrong-password') ||
               e.toString().contains('invalid-credential')) {
             _updateStatus(l10n.burnPasswordError);
-            if (mounted) setState(() => _hasFailed = true);
+            if (mounted) {
+              setState(() {
+                _hasFailed = true;
+                _failureDetail = 'auth: ${e.toString()}';
+              });
+            }
             return;
           }
           // Other errors — account stays but all data is gone.
+          if (mounted) {
+            setState(() => _failureDetail = 'auth (non-fatal): $e');
+          }
         }
       }
 
@@ -331,20 +367,32 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
       if (!mounted) return;
       context.go(AppRoutes.login);
-    } catch (e) {
-      debugPrint('[BURN] Fatal error: $e');
+    } catch (e, stack) {
+      debugPrint('[BURN] Fatal error: $e\n$stack');
       _updateStatus(l10n.burnStatusError);
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) context.go(AppRoutes.login);
+      if (mounted) {
+        setState(() {
+          _hasFailed = true;
+          _failureDetail = 'fatal: $e';
+        });
+      }
     }
   }
 
   void _updateStatus(String text) {
     if (!mounted) return;
     setState(() => _statusText = text);
+    _log('STATUS', text);
     // Re-trigger text fade animation.
     _textFadeController.reset();
     _textFadeController.forward();
+  }
+
+  /// Forwards a tagged line into the global diagnostics buffer so it
+  /// can be surfaced to the user on failure and (once Crashlytics is
+  /// wired in Phase 1.5) attached to production crash reports.
+  void _log(String tag, Object msg) {
+    ref.read(diagnosticsBufferProvider).log(tag, msg);
   }
 
   @override
@@ -429,10 +477,115 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
                     color: Colors.red,
                     size: 28,
                   ),
+                  if (_failureDetail != null) ...[
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _failureDetail!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 11,
+                          fontFamily: 'Menlo',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                  // Expandable diagnostics block — surfaces the global
+                  // diagnostics buffer (shared across all failure flows)
+                  // so the user can copy-paste it into a support email
+                  // without needing flutter logs / Console.app.
+                  Builder(builder: (context) {
+                    final diagnostics =
+                        ref.watch(diagnosticsBufferProvider);
+                    if (!diagnostics.isNotEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(children: [
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => setState(
+                          () => _showDiagnostics = !_showDiagnostics,
+                        ),
+                        icon: Icon(
+                          _showDiagnostics
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          size: 18,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                        label: Text(
+                          _showDiagnostics ? 'Hide details' : 'Show details',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      if (_showDiagnostics) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.all(12),
+                          constraints: const BoxConstraints(maxHeight: 180),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            child: SelectableText(
+                              diagnostics.text,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 10,
+                                fontFamily: 'Menlo',
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            await Clipboard.setData(
+                              ClipboardData(text: diagnostics.text),
+                            );
+                            if (!mounted) return;
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Diagnostics copied to clipboard'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                          label: Text(
+                            'Copy diagnostics',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ]);
+                  }),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: () {
-                      setState(() => _hasFailed = false);
+                      ref.read(diagnosticsBufferProvider).clear();
+                      setState(() {
+                        _hasFailed = false;
+                        _showDiagnostics = false;
+                      });
                       _burnEverything();
                     },
                     icon: const Icon(Icons.refresh_rounded),

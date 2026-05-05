@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Caches user profiles from Firestore into local SQLite.
@@ -65,6 +67,37 @@ class ProfileCache {
       }
     } catch (_) {
       // Network error — return fallback
+    }
+
+    // 3. Fallback for local-only mode: if this is the currently signed-in
+    // user, use their Firebase Auth displayName or the locally-stashed
+    // signup name from secure storage. Avoids "Unknown" appearing for the
+    // user's own creations when there's no Firestore profile to fetch.
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null && currentUser.uid == userId) {
+        String? name = currentUser.displayName;
+        if (name == null || name.trim().isEmpty) {
+          const secureStorage = FlutterSecureStorage();
+          name = await secureStorage.read(key: 'profile_name_$userId');
+        }
+        if (name != null && name.trim().isNotEmpty) {
+          // Cache locally so subsequent reads are instant.
+          await _db.insert(
+            'profile_cache',
+            {
+              'id': userId,
+              'full_name': name,
+              'avatar_url': null,
+              'updated_at': DateTime.now().toIso8601String(),
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          return {'id': userId, 'full_name': name, 'avatar_url': null};
+        }
+      }
+    } catch (_) {
+      // Fall through to Unknown.
     }
 
     return {'id': userId, 'full_name': 'Unknown', 'avatar_url': null};
