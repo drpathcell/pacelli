@@ -82,6 +82,16 @@ platform :ios do
           "com.pacelli.pacelli" => "match AppStore com.pacelli.pacelli"
         }
       }
+      # Force manual signing for the archive step. Project ships with
+      # CODE_SIGN_STYLE=Automatic which makes xcodebuild look for an iOS
+      # App Development profile by default — match only installed an App
+      # Store Distribution profile. Override at build time with the exact
+      # cert + profile names match seeded.
+      build_options[:xcargs] = [
+        "CODE_SIGN_STYLE=Manual",
+        "CODE_SIGN_IDENTITY=\"Apple Distribution: JUAN CARLOS CELIS PINTO (5PCNU95W9V)\"",
+        "PROVISIONING_PROFILE_SPECIFIER=\"match AppStore com.pacelli.pacelli\""
+      ].join(" ")
     else
       build_options[:export_options] = { signingStyle: "automatic" }
       # Archive call needs explicit auth flags (gym does NOT auto-inject here)
