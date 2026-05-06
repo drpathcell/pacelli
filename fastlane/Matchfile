@@ -1,9 +1,9 @@
-git_url(ENV["MATCH_GIT_URL"])
+git_url("https://github.com/drpathcell/pacelli-match-certs.git")
 storage_mode("git")
 
-type("appstore")  # default; override per lane
-
+type("appstore")
 app_identifier(["com.pacelli.pacelli"])
-username(ENV["APPLE_ID"])
+username("juancarlos.celis@outlook.com")
 
-# Certificates + profiles are encrypted with MATCH_PASSWORD secret
+# Branch where match stores encrypted certs (default = master, but new repos use main)
+git_branch("main")
