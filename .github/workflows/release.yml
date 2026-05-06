@@ -44,6 +44,17 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
+      - name: Create build keychain
+        env:
+          KEY_PWD: ${{ secrets.MATCH_KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEY_PWD" build_keychain
+          security default-keychain -s build_keychain
+          security unlock-keychain -p "$KEY_PWD" build_keychain
+          security set-keychain-settings -lut 21600 build_keychain
+          # Add login keychain back to search list so system certs are visible
+          security list-keychains -s build_keychain login.keychain
+
       - name: Install CocoaPods
         run: cd ios && pod install
 
