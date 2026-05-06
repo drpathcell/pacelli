@@ -9,11 +9,12 @@ jobs:
   # ── iOS → TestFlight ──────────────────────────────────────────────────────────
   ios-beta:
     name: iOS → TestFlight
-    # PINNED: macos-latest (currently macos-15) ships OpenSSL 3.5+ which
-    # rejects Apple's ASC P-256 key curve naming via fastlane's spaceship
-    # token.rb (fastlane/fastlane#20553). macos-14 has OpenSSL 3.0 which
-    # parses the .p8 fine. Revert to macos-latest once fastlane#20553 lands.
-    runs-on: macos-14
+    # PIN: macos-15 ships Xcode 16 / Swift 6, required by Firebase iOS SDK
+    # 11.x (uses `sending`, access-level-on-imports, FIRAllocatedUnfairLock<T>).
+    # macos-14 has Xcode 15 / Swift 5.10 which fails to compile FirebaseCore.
+    # Earlier macos-14 pin was based on a misdiagnosed OpenSSL/curve error;
+    # actual root cause was empty ASC_KEY_CONTENT secret — see secrets guard.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
