@@ -42,10 +42,11 @@ platform :ios do
     v = flutter_build_version
     api_key = asc_api_key  # sets global Spaceship session for pilot/deliver
 
-    # Match is optional. Without MATCH_GIT_URL we drive Xcode automatic signing
-    # by passing ASC API key directly to xcodebuild via -authenticationKey*
-    # flags (NOT build_app's :api_key — gym doesn't accept it). For repeat-CI
-    # robustness, prefer match: it removes the per-run cert provisioning churn.
+    # Match is optional. Without MATCH_GIT_URL we rely on Xcode automatic
+    # signing — fastlane gym auto-injects -allowProvisioningUpdates and the
+    # -authenticationKey* flags into xcodebuild because asc_api_key set the
+    # Spaceship session. For repeat-CI robustness, prefer match: it removes
+    # the per-run cert provisioning churn (Apple's 3-cert/team limit).
     use_match = !ENV["MATCH_GIT_URL"].nil? && !ENV["MATCH_GIT_URL"].empty?
 
     if use_match
@@ -53,14 +54,6 @@ platform :ios do
     else
       UI.message("MATCH_GIT_URL unset — using Xcode automatic signing with ASC API key.")
     end
-
-    # Materialize ASC API key to disk so xcodebuild -authenticationKeyPath can read it
-    require "base64"
-    require "fileutils"
-    asc_key_dir = File.expand_path("../tmp_asc", __FILE__)
-    FileUtils.mkdir_p(asc_key_dir)
-    asc_key_path = File.join(asc_key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-    File.binwrite(asc_key_path, Base64.decode64(ENV["ASC_KEY_CONTENT"]))
 
     sh("flutter build ios --release --no-codesign --build-name=#{v[:name]} --build-number=#{v[:number]}")
 
@@ -81,20 +74,13 @@ platform :ios do
       }
     else
       build_options[:export_options] = { signingStyle: "automatic" }
-      auth_args = [
-        "-allowProvisioningUpdates",
-        "-authenticationKeyIssuerID", ENV["ASC_ISSUER_ID"],
-        "-authenticationKeyID",       ENV["ASC_KEY_ID"],
-        "-authenticationKeyPath",     asc_key_path
-      ].join(" ")
-      build_options[:xcargs]        = auth_args  # archive
-      build_options[:export_xcargs] = auth_args  # exportArchive
+      # Don't pass -authenticationKey* via xcargs/export_xcargs: fastlane gym
+      # auto-injects them when app_store_connect_api_key has set the Spaceship
+      # session (which asc_api_key did at the top of this lane). Passing them
+      # ourselves duplicates the flags → xcodebuild exits 64 (usage error).
     end
 
     build_app(build_options)
-
-    # Clean up the on-disk .p8 immediately after build
-    File.unlink(asc_key_path) if File.exist?(asc_key_path)
   end
 
   desc "Build + upload to TestFlight"
