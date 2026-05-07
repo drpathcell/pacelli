@@ -526,5 +526,5 @@ abstract class DataRepository {
   /// This is a destructive, irreversible operation used by the "Burn All
   /// Data" feature. Deletes tasks, subtasks, categories, checklists,
   /// plans, entries, plan checklist items, and inventory data.
-  Future<void> wipeAllData(String userId);
+  Future<void> wipeAllData(String userId, {void Function(String tag, Object msg)? log});
 }

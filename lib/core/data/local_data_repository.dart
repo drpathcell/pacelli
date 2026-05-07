@@ -2155,7 +2155,7 @@ class LocalDataRepository implements DataRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   @override
-  Future<void> wipeAllData(String userId) async {
+  Future<void> wipeAllData(String userId, {void Function(String tag, Object msg)? log}) async {
     // Wipe all known tables, in child-before-parent order for FK safety.
     // We tolerate missing tables (schema may not yet have created some
     // optional tables on this device — e.g. plan_attachments). Anything

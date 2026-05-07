@@ -2547,27 +2547,29 @@ class FirebaseDataRepository implements DataRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   @override
-  Future<void> wipeAllData(String userId) async {
-    debugPrint('[BURN] Starting Firestore data wipe…');
+  Future<void> wipeAllData(String userId, {void Function(String tag, Object msg)? log}) async {
+    void logBoth(String tag, Object msg) {
+      debugPrint('[BURN][$tag] $msg');
+      log?.call(tag, msg);
+    }
+    logBoth('REPO', 'Starting Firestore data wipe…');
 
     // Find all households this user belongs to.
     final memberSnap = await _db
         .collection('household_members')
         .where('user_id', isEqualTo: userId)
         .get();
-    debugPrint('[BURN] household_members query returned ${memberSnap.docs.length} docs for userId=$userId');
-
-    // Log every doc up-front so we can diagnose orphans / malformed docs.
+    logBoth('REPO', 'initial household_members query: ${memberSnap.docs.length} docs for user_id=$userId');
     for (final d in memberSnap.docs) {
       final data = d.data();
-      debugPrint('[BURN]   member doc id=${d.id} user_id=${data['user_id']} household_id=${data['household_id']}');
+      logBoth('REPO', '  doc id=${d.id} user_id=${data['user_id']} household_id=${data['household_id']}');
     }
 
     final householdIds = memberSnap.docs
         .map((d) => d.data()['household_id'] as String? ?? '')
         .where((id) => id.isNotEmpty)
         .toSet();
-    debugPrint('[BURN] householdIds=$householdIds');
+    logBoth('REPO', 'householdIds=$householdIds');
 
     // Per-household wipe (skipped only if no valid household_id is present;
     // orphan member docs with null/empty household_id are handled by the
@@ -2593,33 +2595,40 @@ class FirebaseDataRepository implements DataRepository {
     // Firestore rules allow self-delete via
     // `resource.data.user_id == request.auth.uid`, so this is permitted
     // even when household membership has already been torn down.
+    // Orphan sweep — force Source.server because the local cache may show
+    // stale 0-doc results after the per-household batch deletes, masking
+    // server-side stragglers from this query (which the user-visible
+    // verification THEN sees because IT forces Source.server).
     final orphanSnap = await _db
         .collection('household_members')
         .where('user_id', isEqualTo: userId)
-        .get();
+        .get(const GetOptions(source: Source.server));
     if (orphanSnap.docs.isNotEmpty) {
-      debugPrint('[BURN] Orphan sweep: deleting ${orphanSnap.docs.length} surviving member doc(s)');
+      logBoth('SWEEP', 'orphan sweep found ${orphanSnap.docs.length} surviving doc(s)');
+      for (final doc in orphanSnap.docs) {
+        logBoth('SWEEP', '  surviving doc id=${doc.id} household_id=${doc.data()['household_id']} user_id=${doc.data()['user_id']}');
+      }
       const maxRetries = 3;
       for (var attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           final batch = _db.batch();
           for (final doc in orphanSnap.docs) {
-            debugPrint('[BURN]   sweeping ${doc.id} (household_id=${doc.data()['household_id']})');
             batch.delete(doc.reference);
           }
           await batch.commit();
+          logBoth('SWEEP', 'batch.commit ok on attempt $attempt');
           break;
         } catch (e) {
           if (attempt >= maxRetries) {
-            debugPrint('[BURN] ✗ Orphan sweep failed after $maxRetries retries: $e');
+            logBoth('SWEEP', '✗ failed after $maxRetries retries: $e');
             rethrow;
           }
-          debugPrint('[BURN] Orphan sweep attempt $attempt failed, retrying in ${attempt}s: $e');
+          logBoth('SWEEP', 'attempt $attempt failed, retrying in ${attempt}s: $e');
           await Future.delayed(Duration(seconds: attempt));
         }
       }
     } else {
-      debugPrint('[BURN] Orphan sweep: 0 survivors');
+      logBoth('SWEEP', 'no survivors (server-source query)');
     }
 
     // Delete user's profile.
@@ -2631,7 +2640,7 @@ class FirebaseDataRepository implements DataRepository {
       await _keyManager.deleteKeyFromFirestore(hid);
     }
 
-    debugPrint('[BURN] ✓ All data wiped for user $userId');
+    logBoth('REPO', '✓ wipe complete');
   }
 
   /// Deletes all data for a household (tasks, subtasks, categories,

@@ -184,7 +184,7 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       final repo = ref.read(dataRepositoryProvider);
       if (userId != null) {
         try {
-          await repo.wipeAllData(userId);
+          await repo.wipeAllData(userId, log: _log);
           _log('WIPE', '✓ wipeAllData completed');
 
           // Verify burn — re-query household_members to confirm deletion.
