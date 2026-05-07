@@ -9,12 +9,13 @@ jobs:
   # ── iOS → TestFlight ──────────────────────────────────────────────────────────
   ios-beta:
     name: iOS → TestFlight
-    # PIN: macos-15 ships Xcode 16 / Swift 6, required by Firebase iOS SDK
-    # 11.x (uses `sending`, access-level-on-imports, FIRAllocatedUnfairLock<T>).
-    # macos-14 has Xcode 15 / Swift 5.10 which fails to compile FirebaseCore.
-    # Earlier macos-14 pin was based on a misdiagnosed OpenSSL/curve error;
-    # actual root cause was empty ASC_KEY_CONTENT secret — see secrets guard.
-    runs-on: macos-15
+    # PIN: macos-26 ships Xcode 26 / iOS SDK 26, required by App Store Connect
+    # as of April 2026 (rejects uploads built with iOS SDK < 26):
+    #   "SDK version issue. This app was built with the iOS 18.5 SDK. All
+    #    iOS and iPadOS apps must be built with the iOS 26 SDK or later."
+    # macos-15 (Xcode 16) compiled fine but TestFlight upload was rejected.
+    # macos-14 (Xcode 15 / Swift 5.10) cannot compile Firebase 11.x at all.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
