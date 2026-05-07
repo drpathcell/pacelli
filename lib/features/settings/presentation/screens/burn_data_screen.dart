@@ -12,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../config/routes/app_router.dart';
 import '../../../../core/data/data_repository_provider.dart';
+import '../../../../core/data/firebase_data_repository.dart';
+import '../../../../core/crypto/key_manager.dart';
 import '../../../../core/data/local_database.dart';
 import '../../../../core/diagnostics/diagnostics_buffer.dart';
 import '../../../../core/services/notification_service.dart';
@@ -184,8 +186,24 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
       final repo = ref.read(dataRepositoryProvider);
       if (userId != null) {
         try {
+          // Burn must wipe data from EVERY source: local SQLite (if any)
+          // AND Firestore (always — signup creates Firestore docs even
+          // when the active backend is local). Without this, a user who
+          // is currently on local backend would leave behind Firestore
+          // household_members docs, and the App Store-required account
+          // deletion (Guideline 5.1.1(v)) would not fully delete data.
           await repo.wipeAllData(userId, log: _log);
-          _log('WIPE', '✓ wipeAllData completed');
+          _log('WIPE', '✓ active-repo wipe completed (${repo.runtimeType})');
+
+          // If the active repo isn't already Firebase, run Firebase wipe
+          // as well so cross-backend leftovers are cleared.
+          if (repo is! FirebaseDataRepository) {
+            _log('WIPE', 'cross-backend Firestore wipe…');
+            final keyManager = ref.read(keyManagerProvider);
+            final firebaseRepo = FirebaseDataRepository(keyManager: keyManager);
+            await firebaseRepo.wipeAllData(userId, log: _log);
+            _log('WIPE', '✓ Firestore wipe completed');
+          }
 
           // Verify burn — re-query household_members to confirm deletion.
           // Firestore indexed queries can lag a few hundred ms behind a
