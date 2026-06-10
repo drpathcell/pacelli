@@ -84,59 +84,17 @@ class _BurnDataScreenState extends ConsumerState<BurnDataScreen>
 
   /// Shows a password prompt for email/password users. Returns the password,
   /// or null if the user cancels.
-  Future<String?> _promptForPassword() async {
-    final l10n = context.l10n;
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+  Future<String?> _promptForPassword() {
+    // The dialog widget owns its TextEditingController and disposes it in its
+    // own State.dispose(), after the route (and its exit animation) is fully
+    // torn down. A post-frame dispose here is NOT safe — the exit animation
+    // spans many frames, so the controller died while the TextField was still
+    // attached (intermittent '_dependents.isEmpty' crashes).
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-        icon: Icon(
-          Icons.lock_outline_rounded,
-          size: 40,
-          color: Colors.red.shade600,
-        ),
-        title: Text(l10n.burnPasswordTitle),
-        content: SizedBox(
-          width: 300,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.burnPasswordMessage),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  obscureText: true,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: l10n.burnPasswordHint,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(null),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
-            ),
-            child: Text(l10n.burnPasswordConfirm),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _BurnPasswordDialog(),
     );
-    // Dispose after a frame so the dialog exit animation finishes.
-    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
-    return result;
   }
 
   Future<void> _burnEverything() async {
@@ -712,4 +670,71 @@ class _Ember {
         alpha: 0.3 + rng.nextDouble() * 0.5,
         colorMix: rng.nextDouble(),
       );
+}
+
+/// Password prompt for the burn flow. Owns its [TextEditingController] so
+/// disposal happens in [State.dispose], after the route has fully closed.
+class _BurnPasswordDialog extends StatefulWidget {
+  const _BurnPasswordDialog();
+
+  @override
+  State<_BurnPasswordDialog> createState() => _BurnPasswordDialogState();
+}
+
+class _BurnPasswordDialogState extends State<_BurnPasswordDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      icon: Icon(
+        Icons.lock_outline_rounded,
+        size: 40,
+        color: Colors.red.shade600,
+      ),
+      title: Text(l10n.burnPasswordTitle),
+      content: SizedBox(
+        width: 300,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.burnPasswordMessage),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _controller,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: l10n.burnPasswordHint,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.red.shade700,
+          ),
+          child: Text(l10n.burnPasswordConfirm),
+        ),
+      ],
+    );
+  }
 }

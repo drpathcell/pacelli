@@ -14,6 +14,12 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+		<string>it</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>Pacelli</string>
 	<key>CFBundlePackageType</key>
@@ -41,6 +47,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Pacelli uses Face ID to protect access to your securely stored encryption keys.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Pacelli needs camera access to scan barcodes and QR codes for your inventory items.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

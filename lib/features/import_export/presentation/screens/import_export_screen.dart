@@ -37,32 +37,17 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     if (mounted) setState(() => _lastExport = date);
   }
 
-  Future<String?> _askPassphrase({required String title, required String hint}) async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+  Future<String?> _askPassphrase({required String title, required String hint}) {
+    // The dialog widget owns its TextEditingController and disposes it in its
+    // own State.dispose(), which runs only after the route (including its exit
+    // animation) is fully torn down. Disposing the controller here, right after
+    // showDialog resolves, crashes: the TextField is still attached while the
+    // dialog animates out ("A TextEditingController was used after being
+    // disposed", cascading into '_dependents.isEmpty' assertions).
+    return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          decoration: InputDecoration(hintText: hint),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(null),
-            child: Text(context.l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: Text(context.l10n.commonOk),
-          ),
-        ],
-      ),
+      builder: (ctx) => _PassphraseDialog(title: title, hint: hint),
     );
-    controller.dispose();
-    return result;
   }
 
   Future<void> _exportJson() async {
@@ -138,16 +123,24 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
 
-    // Pick file — allow .json and .enc files.
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json', 'enc'],
-    );
+    // Pick file. FileType.any instead of allowedExtensions: ['json','enc'] —
+    // iOS resolves custom extensions through UTIs and '.enc' has none, so the
+    // exported '*.json.enc' backups show up greyed-out/unselectable in the
+    // picker. We validate the extension ourselves below instead.
+    final result = await FilePicker.platform.pickFiles(type: FileType.any);
 
     if (result == null || result.files.single.path == null) return;
 
     final file = File(result.files.single.path!);
     final isEncrypted = file.path.endsWith('.enc');
+
+    if (!isEncrypted && !file.path.endsWith('.json')) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.ieImportInvalid('not a .json or .enc backup file'))),
+      );
+      return;
+    }
 
     // If encrypted, ask for the passphrase before starting.
     String? passphrase;
@@ -411,6 +404,52 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Passphrase prompt dialog. Owns its [TextEditingController] so disposal
+/// happens in [State.dispose] after the route has fully closed.
+class _PassphraseDialog extends StatefulWidget {
+  final String title;
+  final String hint;
+
+  const _PassphraseDialog({required this.title, required this.hint});
+
+  @override
+  State<_PassphraseDialog> createState() => _PassphraseDialogState();
+}
+
+class _PassphraseDialogState extends State<_PassphraseDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        obscureText: true,
+        decoration: InputDecoration(hintText: widget.hint),
+        autofocus: true,
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(context.l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(context.l10n.commonOk),
+        ),
+      ],
     );
   }
 }
