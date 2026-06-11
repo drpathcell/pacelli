@@ -65,7 +65,18 @@ platform :ios do
     asc_key_path = File.join(asc_key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
     File.binwrite(asc_key_path, Base64.decode64(ENV["ASC_KEY_CONTENT"]))
 
-    sh("flutter build ios --release --no-codesign --build-name=#{v[:name]} --build-number=#{v[:number]}")
+    # Collision-proof build number: never reuse a number already on TestFlight.
+    # A re-tag or a double-triggered run would otherwise fail upload_to_testflight
+    # with altool 409 "buildUpload" (root cause of the v1.0.0+22 failure 2026-06-10).
+    latest_tf = (latest_testflight_build_number(
+      api_key:        api_key,
+      app_identifier: "com.pacelli.pacelli",
+      version:        v[:name]
+    ) rescue 0)
+    build_number = [v[:number], latest_tf.to_i + 1].max
+    UI.message("Build number: pubspec=#{v[:number]} latest_testflight=#{latest_tf} -> using #{build_number}")
+
+    sh("flutter build ios --release --no-codesign --build-name=#{v[:name]} --build-number=#{build_number}")
 
     build_options = {
       workspace:        "ios/Runner.xcworkspace",
