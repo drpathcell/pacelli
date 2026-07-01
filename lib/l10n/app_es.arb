@@ -886,5 +886,16 @@
   "feedbackDigestPlans": "Planes",
   "feedbackDigestInventory": "Inventario",
   "feedbackDigestManual": "Manual",
-  "feedbackDigestAI": "Chats IA"
+  "feedbackDigestAI": "Chats IA",
+  "authContinueAsGuest": "Continuar como invitado",
+  "authGuestSignInFailed": "No se pudo continuar como invitado. Inténtalo de nuevo.",
+  "authEmailAlreadyInUse": "Ese correo ya tiene una cuenta. Inicia sesión en su lugar.",
+  "settingsGuestName": "Invitado",
+  "settingsGuestCaption": "Estás explorando Pacelli como invitado",
+  "settingsCreateAccount": "Crear una cuenta",
+  "settingsCreateAccountSubtitle": "Guarda tus datos y sincronízalos entre tus dispositivos",
+  "settingsUpgradeSuccess": "Cuenta creada: tus datos ya están guardados.",
+  "settingsLeaveGuestTitle": "¿Salir del modo invitado?",
+  "settingsLeaveGuestBody": "Aún no has creado una cuenta, por lo que se perderán los datos de este dispositivo. Crea una cuenta para conservarlos.",
+  "settingsLeaveGuestConfirm": "Salir y borrar"
 }

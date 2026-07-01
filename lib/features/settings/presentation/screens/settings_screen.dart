@@ -195,6 +195,29 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
+    // Guests have no recoverable account — warn before their data is lost.
+    final current = FirebaseAuth.instance.currentUser;
+    if (current?.isAnonymous ?? false) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(ctx.l10n.settingsLeaveGuestTitle),
+          content: Text(ctx.l10n.settingsLeaveGuestBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(ctx.l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(ctx.l10n.settingsLeaveGuestConfirm),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      if (!context.mounted) return;
+    }
     try {
       // Also sign out from Google if they used Google Sign-In.
       try {
@@ -239,12 +262,17 @@ class SettingsScreen extends ConsumerWidget {
                     radius: 28,
                     backgroundColor:
                         context.colorScheme.primary.withValues(alpha: 0.2),
-                    child: Text(
-                      (user?.displayName ?? '?').substring(0, 1).toUpperCase(),
-                      style: context.textTheme.titleLarge?.copyWith(
-                        color: context.colorScheme.primary,
-                      ),
-                    ),
+                    child: (user?.isAnonymous ?? false)
+                        ? Icon(Icons.person_outline_rounded,
+                            color: context.colorScheme.primary)
+                        : Text(
+                            (user?.displayName?.isNotEmpty ?? false)
+                                ? user!.displayName!.substring(0, 1).toUpperCase()
+                                : '?',
+                            style: context.textTheme.titleLarge?.copyWith(
+                              color: context.colorScheme.primary,
+                            ),
+                          ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -252,11 +280,15 @@ class SettingsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.displayName ?? 'User',
+                          (user?.isAnonymous ?? false)
+                              ? context.l10n.settingsGuestName
+                              : (user?.displayName ?? 'User'),
                           style: context.textTheme.titleMedium,
                         ),
                         Text(
-                          user?.email ?? '',
+                          (user?.isAnonymous ?? false)
+                              ? context.l10n.settingsGuestCaption
+                              : (user?.email ?? ''),
                           style: context.textTheme.bodyMedium,
                         ),
                       ],
@@ -267,6 +299,22 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // ── Guest upgrade CTA (anonymous users only) ──
+          if (user?.isAnonymous ?? false) ...[
+            Card(
+              color: context.colorScheme.primary.withValues(alpha: 0.08),
+              child: ListTile(
+                leading: Icon(Icons.person_add_alt_1_rounded,
+                    color: context.colorScheme.primary),
+                title: Text(context.l10n.settingsCreateAccount),
+                subtitle: Text(context.l10n.settingsCreateAccountSubtitle),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push(AppRoutes.signup),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // ── Household ──
           _SettingsSectionHeader(label: context.l10n.settingsSectionHousehold),

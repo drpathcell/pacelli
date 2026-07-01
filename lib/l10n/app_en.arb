@@ -1279,5 +1279,16 @@
   "feedbackDigestPlans": "Plans",
   "feedbackDigestInventory": "Inventory",
   "feedbackDigestManual": "Manual",
-  "feedbackDigestAI": "AI chats"
+  "feedbackDigestAI": "AI chats",
+  "authContinueAsGuest": "Continue as guest",
+  "authGuestSignInFailed": "Couldn't continue as guest. Please try again.",
+  "authEmailAlreadyInUse": "That email already has an account. Please sign in instead.",
+  "settingsGuestName": "Guest",
+  "settingsGuestCaption": "You're exploring Pacelli as a guest",
+  "settingsCreateAccount": "Create an account",
+  "settingsCreateAccountSubtitle": "Save your data and sync across your devices",
+  "settingsUpgradeSuccess": "Account created — your data is now saved.",
+  "settingsLeaveGuestTitle": "Leave guest mode?",
+  "settingsLeaveGuestBody": "You haven't created an account yet, so your data on this device will be lost. Create an account first to keep it.",
+  "settingsLeaveGuestConfirm": "Leave & erase"
 }

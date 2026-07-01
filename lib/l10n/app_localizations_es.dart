@@ -2772,4 +2772,42 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get feedbackDigestAI => 'Chats IA';
+
+  @override
+  String get authContinueAsGuest => 'Continuar como invitado';
+
+  @override
+  String get authGuestSignInFailed =>
+      'No se pudo continuar como invitado. Inténtalo de nuevo.';
+
+  @override
+  String get authEmailAlreadyInUse =>
+      'Ese correo ya tiene una cuenta. Inicia sesión en su lugar.';
+
+  @override
+  String get settingsGuestName => 'Invitado';
+
+  @override
+  String get settingsGuestCaption => 'Estás explorando Pacelli como invitado';
+
+  @override
+  String get settingsCreateAccount => 'Crear una cuenta';
+
+  @override
+  String get settingsCreateAccountSubtitle =>
+      'Guarda tus datos y sincronízalos entre tus dispositivos';
+
+  @override
+  String get settingsUpgradeSuccess =>
+      'Cuenta creada: tus datos ya están guardados.';
+
+  @override
+  String get settingsLeaveGuestTitle => '¿Salir del modo invitado?';
+
+  @override
+  String get settingsLeaveGuestBody =>
+      'Aún no has creado una cuenta, por lo que se perderán los datos de este dispositivo. Crea una cuenta para conservarlos.';
+
+  @override
+  String get settingsLeaveGuestConfirm => 'Salir y borrar';
 }

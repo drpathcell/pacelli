@@ -2772,4 +2772,42 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get feedbackDigestAI => 'Chat IA';
+
+  @override
+  String get authContinueAsGuest => 'Continua come ospite';
+
+  @override
+  String get authGuestSignInFailed =>
+      'Impossibile continuare come ospite. Riprova.';
+
+  @override
+  String get authEmailAlreadyInUse =>
+      'Questa email ha già un account. Accedi invece.';
+
+  @override
+  String get settingsGuestName => 'Ospite';
+
+  @override
+  String get settingsGuestCaption => 'Stai esplorando Pacelli come ospite';
+
+  @override
+  String get settingsCreateAccount => 'Crea un account';
+
+  @override
+  String get settingsCreateAccountSubtitle =>
+      'Salva i tuoi dati e sincronizzali tra i tuoi dispositivi';
+
+  @override
+  String get settingsUpgradeSuccess =>
+      'Account creato: i tuoi dati sono ora salvati.';
+
+  @override
+  String get settingsLeaveGuestTitle => 'Uscire dalla modalità ospite?';
+
+  @override
+  String get settingsLeaveGuestBody =>
+      'Non hai ancora creato un account, quindi i dati su questo dispositivo andranno persi. Crea un account per conservarli.';
+
+  @override
+  String get settingsLeaveGuestConfirm => 'Esci ed elimina';
 }

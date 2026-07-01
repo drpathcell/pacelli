@@ -30,6 +30,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGuestLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -112,13 +113,31 @@ class _SignupScreenState extends State<SignupScreen> {
         throw Exception('No ID token received from Google');
       }
 
-      // Sign in to Firebase with the Google credential.
+      // Sign in to Firebase with the Google credential. If the user is
+      // currently a guest (anonymous), link instead so their existing
+      // household + data are preserved under the same uid.
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
         accessToken: accessToken,
       );
-      final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      final anon = FirebaseAuth.instance.currentUser;
+      late UserCredential userCredential;
+      if (anon != null && anon.isAnonymous) {
+        try {
+          userCredential = await anon.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use' ||
+              e.code == 'email-already-in-use') {
+            userCredential =
+                await FirebaseAuth.instance.signInWithCredential(credential);
+          } else {
+            rethrow;
+          }
+        }
+      } else {
+        userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+      }
 
       // Create a profile doc in Firestore for new Google users.
       // Store the display name locally only — it will be encrypted with
@@ -161,12 +180,21 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Create the Firebase Auth account.
-      final userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      // If the user is currently a guest (anonymous), upgrade that same
+      // account via linkWithCredential so their existing household + data
+      // survive. Otherwise create a fresh account.
+      final anon = FirebaseAuth.instance.currentUser;
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      final UserCredential userCredential;
+      if (anon != null && anon.isAnonymous) {
+        userCredential = await anon.linkWithCredential(
+          EmailAuthProvider.credential(email: email, password: password),
+        );
+      } else {
+        userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+      }
 
       // Set the display name on the Auth profile.
       await userCredential.user?.updateDisplayName(
@@ -194,6 +222,14 @@ class _SignupScreenState extends State<SignupScreen> {
         context.showSnackBar(context.l10n.authAccountCreated);
         await goAfterAuth(context);
       }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        final msg = (e.code == 'email-already-in-use' ||
+                e.code == 'credential-already-in-use')
+            ? context.l10n.authEmailAlreadyInUse
+            : context.l10n.authSignupFailed;
+        context.showSnackBar(msg, isError: true);
+      }
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
@@ -203,6 +239,22 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Continue as Guest (anonymous auth, no personal info) ────
+
+  Future<void> _handleGuestSignIn() async {
+    setState(() => _isGuestLoading = true);
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+      if (mounted) await goAfterAuth(context);
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(context.l10n.authGuestSignInFailed, isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isGuestLoading = false);
     }
   }
 
@@ -403,6 +455,20 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // ── Continue as guest (no account required) ──────
+              TextButton(
+                onPressed: _isGuestLoading ? null : _handleGuestSignIn,
+                child: _isGuestLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(context.l10n.authContinueAsGuest),
               ),
             ],
           ),

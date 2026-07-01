@@ -886,5 +886,16 @@
   "feedbackDigestPlans": "Piani",
   "feedbackDigestInventory": "Inventario",
   "feedbackDigestManual": "Manuale",
-  "feedbackDigestAI": "Chat IA"
+  "feedbackDigestAI": "Chat IA",
+  "authContinueAsGuest": "Continua come ospite",
+  "authGuestSignInFailed": "Impossibile continuare come ospite. Riprova.",
+  "authEmailAlreadyInUse": "Questa email ha già un account. Accedi invece.",
+  "settingsGuestName": "Ospite",
+  "settingsGuestCaption": "Stai esplorando Pacelli come ospite",
+  "settingsCreateAccount": "Crea un account",
+  "settingsCreateAccountSubtitle": "Salva i tuoi dati e sincronizzali tra i tuoi dispositivi",
+  "settingsUpgradeSuccess": "Account creato: i tuoi dati sono ora salvati.",
+  "settingsLeaveGuestTitle": "Uscire dalla modalità ospite?",
+  "settingsLeaveGuestBody": "Non hai ancora creato un account, quindi i dati su questo dispositivo andranno persi. Crea un account per conservarli.",
+  "settingsLeaveGuestConfirm": "Esci ed elimina"
 }

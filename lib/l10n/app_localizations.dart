@@ -5037,6 +5037,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI chats'**
   String get feedbackDigestAI;
+
+  /// No description provided for @authContinueAsGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as guest'**
+  String get authContinueAsGuest;
+
+  /// No description provided for @authGuestSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t continue as guest. Please try again.'**
+  String get authGuestSignInFailed;
+
+  /// No description provided for @authEmailAlreadyInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'That email already has an account. Please sign in instead.'**
+  String get authEmailAlreadyInUse;
+
+  /// No description provided for @settingsGuestName.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get settingsGuestName;
+
+  /// No description provided for @settingsGuestCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re exploring Pacelli as a guest'**
+  String get settingsGuestCaption;
+
+  /// No description provided for @settingsCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get settingsCreateAccount;
+
+  /// No description provided for @settingsCreateAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your data and sync across your devices'**
+  String get settingsCreateAccountSubtitle;
+
+  /// No description provided for @settingsUpgradeSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created — your data is now saved.'**
+  String get settingsUpgradeSuccess;
+
+  /// No description provided for @settingsLeaveGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave guest mode?'**
+  String get settingsLeaveGuestTitle;
+
+  /// No description provided for @settingsLeaveGuestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t created an account yet, so your data on this device will be lost. Create an account first to keep it.'**
+  String get settingsLeaveGuestBody;
+
+  /// No description provided for @settingsLeaveGuestConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave & erase'**
+  String get settingsLeaveGuestConfirm;
 }
 
 class _AppLocalizationsDelegate

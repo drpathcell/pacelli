@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGuestLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -131,6 +132,22 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Continue as Guest (anonymous auth, no personal info) ────
+
+  Future<void> _handleGuestSignIn() async {
+    setState(() => _isGuestLoading = true);
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+      if (mounted) await goAfterAuth(context);
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(context.l10n.authGuestSignInFailed, isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isGuestLoading = false);
     }
   }
 
@@ -331,6 +348,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // ── Continue as guest (no account required) ──────
+              TextButton(
+                onPressed: _isGuestLoading ? null : _handleGuestSignIn,
+                child: _isGuestLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(context.l10n.authContinueAsGuest),
               ),
             ],
           ),

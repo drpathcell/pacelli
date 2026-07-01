@@ -42,7 +42,26 @@ class AppleSignInService {
     final pair = await _getAppleCredential();
     if (pair == null) return null;
 
-    final userCredential = await _auth.signInWithCredential(pair.credential);
+    // If the caller is currently a guest (anonymous), upgrade that same
+    // account via linkWithCredential so their household + data survive under
+    // the same uid. Fall back to a normal sign-in if the Apple account is
+    // already registered.
+    final current = _auth.currentUser;
+    late UserCredential userCredential;
+    if (current != null && current.isAnonymous) {
+      try {
+        userCredential = await current.linkWithCredential(pair.credential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'credential-already-in-use' ||
+            e.code == 'email-already-in-use') {
+          userCredential = await _auth.signInWithCredential(pair.credential);
+        } else {
+          rethrow;
+        }
+      }
+    } else {
+      userCredential = await _auth.signInWithCredential(pair.credential);
+    }
     final user = userCredential.user;
     if (user == null) return null;
 

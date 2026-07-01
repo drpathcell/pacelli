@@ -2749,4 +2749,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedbackDigestAI => 'AI chats';
+
+  @override
+  String get authContinueAsGuest => 'Continue as guest';
+
+  @override
+  String get authGuestSignInFailed =>
+      'Couldn\'t continue as guest. Please try again.';
+
+  @override
+  String get authEmailAlreadyInUse =>
+      'That email already has an account. Please sign in instead.';
+
+  @override
+  String get settingsGuestName => 'Guest';
+
+  @override
+  String get settingsGuestCaption => 'You\'re exploring Pacelli as a guest';
+
+  @override
+  String get settingsCreateAccount => 'Create an account';
+
+  @override
+  String get settingsCreateAccountSubtitle =>
+      'Save your data and sync across your devices';
+
+  @override
+  String get settingsUpgradeSuccess =>
+      'Account created — your data is now saved.';
+
+  @override
+  String get settingsLeaveGuestTitle => 'Leave guest mode?';
+
+  @override
+  String get settingsLeaveGuestBody =>
+      'You haven\'t created an account yet, so your data on this device will be lost. Create an account first to keep it.';
+
+  @override
+  String get settingsLeaveGuestConfirm => 'Leave & erase';
 }
