@@ -11,6 +11,7 @@ import '../../../../config/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/apple_sign_in_service.dart';
 import '../utils/post_auth_nav.dart';
+import '../utils/guest_session.dart';
 import '../widgets/apple_sign_in_button.dart';
 
 /// Signup screen — Google Sign-In + email/password registration.
@@ -247,8 +248,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleGuestSignIn() async {
     setState(() => _isGuestLoading = true);
     try {
-      await FirebaseAuth.instance.signInAnonymously();
-      if (mounted) await goAfterAuth(context);
+      await enterGuestMode(context);
     } catch (e) {
       if (mounted) {
         context.showSnackBar(context.l10n.authGuestSignInFailed, isError: true);
