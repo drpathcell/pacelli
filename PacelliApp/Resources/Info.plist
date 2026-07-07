@@ -7,5 +7,14 @@
 	     All other keys come from GENERATE_INFOPLIST_FILE + INFOPLIST_KEY_*. -->
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.506154778945-68ta2sjllehr81l6ubl34e8htfcgtfig</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

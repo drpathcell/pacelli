@@ -55,6 +55,18 @@ struct AuthView: View {
                     }
                     .frame(height: 48)
                     .listRowInsets(EdgeInsets())
+
+                    Button {
+                        runGoogle()
+                    } label: {
+                        Text("Continue with Google")
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(busy)
+                    .listRowInsets(EdgeInsets())
                 }
 
                 Section(isCreatingAccount ? "Create account" : "Sign in") {
@@ -136,6 +148,30 @@ struct AuthView: View {
             }
             busy = false
         }
+    }
+
+private func runGoogle() {
+        errorText = nil
+        busy = true
+        Task {
+            do {
+                try await AuthService.signInWithGoogle()
+                dismiss()
+                await appState.postAuth()
+            } catch {
+                if !isGoogleCancellation(error) {
+                    print("[AuthView] google auth failed: \(error)")
+                    errorText = friendlyMessage(for: error)
+                }
+            }
+            busy = false
+        }
+    }
+
+    /// GIDSignInError.canceled (user dismissed the sheet) — not worth surfacing.
+    private func isGoogleCancellation(_ error: Error) -> Bool {
+        let ns = error as NSError
+        return ns.domain == "com.google.GIDSignIn" && ns.code == -5
     }
 
     private func friendlyMessage(for error: Error) -> String {

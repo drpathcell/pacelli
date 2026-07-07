@@ -1,8 +1,11 @@
 import AuthenticationServices
 import CryptoKit
 import FirebaseAuth
+import FirebaseCore
 import FirebaseFirestore
 import Foundation
+import GoogleSignIn
+import UIKit
 
 /// Firebase auth flows. Ports the Flutter semantics:
 /// - Anonymous (guest) users UPGRADE in place via `link(with:)`, preserving
@@ -61,6 +64,44 @@ enum AuthService {
     static func signUp(email: String, password: String, name: String) async throws {
         let credential = EmailAuthProvider.credential(withEmail: email, password: password)
         try await completeSignIn(with: credential, displayNameHint: name, isSignUp: true)
+    }
+
+    // MARK: - Google
+
+    /// Presents Google Sign-In, exchanges the tokens for a Firebase credential,
+    /// then runs the shared (guest-upgrade-aware) completion. Interactive — the
+    /// caller must NOT wrap this in a short deadline.
+    @MainActor
+    static func signInWithGoogle() async throws {
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            throw AuthError.googleConfigMissing
+        }
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+
+        guard let presenter = topViewController() else {
+            throw AuthError.noPresenter
+        }
+
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw AuthError.googleCredentialMissing
+        }
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken, accessToken: result.user.accessToken.tokenString)
+
+        try await completeSignIn(with: credential, displayNameHint: result.user.profile?.name)
+    }
+
+    /// Frontmost view controller to present the Google flow from.
+    @MainActor
+    private static func topViewController() -> UIViewController? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        var top = scene?.keyWindow?.rootViewController
+            ?? scene?.windows.first?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
     }
 
     // MARK: - Shared completion (guest upgrade aware)
@@ -124,11 +165,20 @@ enum AuthService {
 
 enum AuthError: LocalizedError {
     case appleCredentialMissing
+    case googleConfigMissing
+    case googleCredentialMissing
+    case noPresenter
 
     var errorDescription: String? {
         switch self {
         case .appleCredentialMissing:
             String(localized: "Apple didn't return a valid credential. Please try again.")
+        case .googleConfigMissing:
+            String(localized: "Google Sign-In isn't configured. Please try another method.")
+        case .googleCredentialMissing:
+            String(localized: "Google didn't return a valid credential. Please try again.")
+        case .noPresenter:
+            String(localized: "Couldn't open Google Sign-In right now. Please try again.")
         }
     }
 }
