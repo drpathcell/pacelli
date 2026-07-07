@@ -1,0 +1,37 @@
+# XcodeGen spec for the native Pacelli app.
+# Regenerate after edits: cd PacelliApp && xcodegen generate
+#
+# Firebase SPM (FirebaseAuth, FirebaseFirestore) + GoogleSignIn arrive in
+# Phase 3 (data layer) — kept out of Phase 1 so the shell builds fast and
+# the crypto vector gate stays dependency-free.
+name: PacelliApp
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+packages:
+  PacelliKit:
+    path: Packages/PacelliKit
+
+targets:
+  PacelliApp:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: PacelliKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pacelli.pacelli
+        DEVELOPMENT_TEAM: 5PCNU95W9V
+        TARGETED_DEVICE_FAMILY: "1"          # iPhone-only (decision 2026-05-05)
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO   # parity with Flutter Info.plist
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "Pacelli uses Face ID to protect access to your securely stored encryption keys."

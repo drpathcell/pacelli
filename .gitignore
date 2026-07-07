@@ -86,3 +86,7 @@ AUDIT_*.md
 # Jarvis dashboard runtime output
 .jarvis_dashboard/
 .wrangler/
+
+# Native app (XcodeGen generates the project; SPM build artifacts)
+PacelliApp/PacelliApp.xcodeproj/
+PacelliApp/Packages/PacelliKit/.build/

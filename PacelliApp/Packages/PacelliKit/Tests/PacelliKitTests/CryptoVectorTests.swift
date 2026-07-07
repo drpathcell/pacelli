@@ -1,0 +1,177 @@
+import Foundation
+import Testing
+@testable import PacelliKit
+
+// MARK: - Shared fixtures (cross-language vectors are the source of truth)
+
+/// `<repo>/functions/tests/cross-language/`, located relative to this file:
+/// …/PacelliApp/Packages/PacelliKit/Tests/PacelliKitTests/CryptoVectorTests.swift
+private let crossLangDir: URL = {
+    var url = URL(fileURLWithPath: #filePath)
+    for _ in 0..<6 { url.deleteLastPathComponent() }  // filename + 5 dirs → repo root
+    return url.appendingPathComponent("functions/tests/cross-language")
+}()
+
+private func loadJSON<T: Decodable>(_ name: String, as type: T.Type) throws -> T {
+    let url = crossLangDir.appendingPathComponent(name)
+    try #require(
+        FileManager.default.fileExists(atPath: url.path),
+        "Missing vector file \(name) — the cross-language gate cannot be skipped")
+    return try JSONDecoder().decode(T.self, from: Data(contentsOf: url))
+}
+
+private struct EncryptedVector: Decodable {
+    let plaintext: String
+    let ciphertext: String
+}
+
+private struct TSVectorFile: Decodable {
+    let testKey: String
+    let vectors: [EncryptedVector]
+}
+
+private struct DartVectorFile: Decodable {
+    let testKey: String
+    let testUid: String
+    let v2DerivedKey: String
+    let dartEncrypted: [EncryptedVector]
+    let householdKey: String
+    let wrappedHouseholdKey: String
+}
+
+// MARK: - HKDF derivation must match TypeScript + Dart exactly
+
+@Suite("HKDF key derivation")
+struct HKDFDerivationTests {
+    @Test("matches TypeScript-derived keys for all recorded UIDs")
+    func matchesTypeScript() throws {
+        let tsKeys = try loadJSON("ts_derived_keys.json", as: [String: String].self)
+        #expect(!tsKeys.isEmpty)
+        for (uid, expected) in tsKeys {
+            #expect(
+                PacelliCrypto.deriveUserKey(uid: uid) == expected,
+                "HKDF mismatch for UID: \(uid)")
+        }
+    }
+
+    @Test("matches the Dart-recorded v2DerivedKey")
+    func matchesDart() throws {
+        let dart = try loadJSON("test_vectors.json", as: DartVectorFile.self)
+        #expect(PacelliCrypto.deriveUserKey(uid: dart.testUid) == dart.v2DerivedKey)
+    }
+
+    @Test("output shape is 64-char lowercase hex")
+    func outputShape() {
+        let derived = PacelliCrypto.deriveUserKey(uid: "any-uid")
+        #expect(derived.count == 64)
+        #expect(derived.allSatisfy { "0123456789abcdef".contains($0) })
+    }
+}
+
+// MARK: - Decrypting ciphertexts produced by the other ports
+
+@Suite("Cross-language ciphertext compatibility")
+struct CrossLanguageDecryptTests {
+    @Test("decrypts every Dart-generated vector")
+    func decryptsDartVectors() throws {
+        let dart = try loadJSON("test_vectors.json", as: DartVectorFile.self)
+        #expect(!dart.dartEncrypted.isEmpty)
+        for v in dart.dartEncrypted {
+            #expect(try PacelliCrypto.decrypt(v.ciphertext, key: dart.testKey) == v.plaintext)
+        }
+    }
+
+    @Test("decrypts every TypeScript-generated vector")
+    func decryptsTSVectors() throws {
+        let ts = try loadJSON("ts_encrypted_vectors.json", as: TSVectorFile.self)
+        #expect(!ts.vectors.isEmpty)
+        for v in ts.vectors {
+            #expect(try PacelliCrypto.decrypt(v.ciphertext, key: ts.testKey) == v.plaintext)
+        }
+    }
+
+    @Test("unwraps the Dart-wrapped household key")
+    func unwrapsHouseholdKey() throws {
+        let dart = try loadJSON("test_vectors.json", as: DartVectorFile.self)
+        let userKey = PacelliCrypto.deriveUserKey(uid: dart.testUid)
+        let unwrapped = try PacelliCrypto.decryptKeyForUser(
+            dart.wrappedHouseholdKey, userKey: userKey)
+        #expect(unwrapped == dart.householdKey)
+    }
+}
+
+// MARK: - Behavioural parity with the Dart implementation
+
+@Suite("Round-trip and edge-case parity")
+struct BehaviouralParityTests {
+    private let key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+    @Test(
+        "round-trips representative plaintexts",
+        arguments: [
+            "Hello, Pacelli!",
+            "Café ☕ résumé 日本語 emoji 🎉",
+            String(repeating: "A", count: 1000),
+            "Task: Buy groceries\nDescription: Milk, eggs, bread",
+        ])
+    func roundTrip(_ plaintext: String) throws {
+        let ct = try PacelliCrypto.encrypt(plaintext, key: key)
+        #expect(try PacelliCrypto.decrypt(ct, key: key) == plaintext)
+    }
+
+    @Test("fresh IV per call — identical plaintexts yield distinct ciphertexts")
+    func semanticSecurity() throws {
+        let a = try PacelliCrypto.encrypt("same input", key: key)
+        let b = try PacelliCrypto.encrypt("same input", key: key)
+        #expect(a != b)
+    }
+
+    @Test("nullable variants short-circuit nil and empty")
+    func nullableShortCircuit() throws {
+        #expect(try PacelliCrypto.encryptNullable(nil, key: key) == nil)
+        #expect(try PacelliCrypto.encryptNullable("", key: key) == "")
+        #expect(PacelliCrypto.decryptNullable(nil, key: key) == nil)
+        #expect(PacelliCrypto.decryptNullable("", key: key) == "")
+    }
+
+    @Test("decryptNullable returns the safe placeholder on wrong key")
+    func safePlaceholder() throws {
+        let ct = try PacelliCrypto.encrypt("secret", key: key)
+        let wrongKey = PacelliCrypto.generateHouseholdKey()
+        #expect(PacelliCrypto.decryptNullable(ct, key: wrongKey) == "[encrypted]")
+    }
+
+    @Test("rejects payloads under 17 bytes, like Dart")
+    func tooShort() {
+        let short = Data([UInt8](repeating: 0, count: 16)).base64EncodedString()
+        #expect(throws: PacelliCryptoError.ciphertextTooShort) {
+            try PacelliCrypto.decrypt(short, key: key)
+        }
+    }
+
+    @Test("v1→v2 key migration fallback")
+    func migrationFallback() throws {
+        let uid = "legacy-user-1"
+        let household = PacelliCrypto.generateHouseholdKey()
+        // Wrapped under the LEGACY v1 key:
+        let v1Wrapped = try PacelliCrypto.encrypt(
+            household, key: PacelliCrypto.deriveUserKeyV1(uid: uid))
+        #expect(
+            try PacelliCrypto.decryptKeyWithMigration(encryptedKey: v1Wrapped, uid: uid)
+                == household)
+        // And under the CURRENT v2 key:
+        let v2Wrapped = try PacelliCrypto.encryptKeyForUser(
+            household, userKey: PacelliCrypto.deriveUserKey(uid: uid))
+        #expect(
+            try PacelliCrypto.decryptKeyWithMigration(encryptedKey: v2Wrapped, uid: uid)
+                == household)
+    }
+
+    @Test("household key generation shape")
+    func householdKeyShape() {
+        let k = PacelliCrypto.generateHouseholdKey()
+        #expect(k.count == 64)
+        #expect(k.allSatisfy { "0123456789abcdef".contains($0) })
+        #expect(k != PacelliCrypto.generateHouseholdKey())
+    }
+}
