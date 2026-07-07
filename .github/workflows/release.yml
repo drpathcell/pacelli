@@ -1,22 +1,20 @@
-name: Release (Flutter — PARKED)
+name: Release (native)
 
-# ⚠️ PARKED 2026-07-07: the Flutter release lane is dead — Pacelli is being
-# rewritten natively (see docs/native-rewrite-plan.md, Phase 7). Tag pushes
-# no longer trigger anything; manual dispatch only, kept as reference for
-# the match/ASC secrets wiring until the native xcodebuild lane replaces it.
+# Native SwiftUI release lane (rewrite, 2026-07-07). Tag `v1.0.0+N` →
+# fastlane native_beta → TestFlight, on the same ASC record as the retired
+# Flutter app (builds continue from 26). Flutter lane history: git log.
 on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+\+[0-9]+'
   workflow_dispatch:
+
 jobs:
-  # ── iOS → TestFlight ──────────────────────────────────────────────────────────
-  ios-beta:
-    name: iOS → TestFlight
-    # PIN: macos-26 ships Xcode 26 / iOS SDK 26, required by App Store Connect
-    # as of April 2026 (rejects uploads built with iOS SDK < 26):
-    #   "SDK version issue. This app was built with the iOS 18.5 SDK. All
-    #    iOS and iPadOS apps must be built with the iOS 26 SDK or later."
-    # macos-15 (Xcode 16) compiled fine but TestFlight upload was rejected.
-    # macos-14 (Xcode 15 / Swift 5.10) cannot compile Firebase 11.x at all.
+  native-beta:
+    name: Native iOS → TestFlight
+    # macos-26 = Xcode 26 SDK, required by ASC since April 2026.
     runs-on: macos-26
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -25,26 +23,22 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
         run: |
           : "${ASC_KEY_ID:?ASC_KEY_ID secret is empty}"
           : "${ASC_ISSUER_ID:?ASC_ISSUER_ID secret is empty}"
           : "${ASC_KEY_CONTENT:?ASC_KEY_CONTENT secret is empty}"
+          : "${MATCH_GIT_URL:?MATCH_GIT_URL secret is empty}"
           echo "All required iOS secrets are present."
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.4'
-          cache: true
-
-      - name: Flutter pub get
-        run: flutter pub get
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
 
       - name: Create build keychain
         env:
@@ -57,10 +51,7 @@ jobs:
           # Add login keychain back to search list so system certs are visible
           security list-keychains -s build_keychain login.keychain
 
-      - name: Install CocoaPods
-        run: cd ios && pod install
-
-      - name: Run fastlane ios beta
+      - name: Run fastlane ios native_beta
         env:
           MATCH_GIT_URL:      ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
@@ -69,4 +60,4 @@ jobs:
           ASC_KEY_CONTENT:    ${{ secrets.ASC_KEY_CONTENT }}
           MATCH_KEYCHAIN_NAME: build_keychain
           MATCH_KEYCHAIN_PASSWORD: ${{ secrets.MATCH_KEYCHAIN_PASSWORD }}
-        run: bundle exec fastlane ios beta
+        run: bundle exec fastlane ios native_beta
