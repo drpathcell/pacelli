@@ -8,13 +8,24 @@ import SwiftUI
 /// Account creation is an optional upgrade (`linkWithCredential` semantics),
 /// never a gate.
 struct RootView: View {
+    @State private var appState = AppState()
+
     var body: some View {
-        WelcomeView()
+        switch appState.phase {
+        case .welcome:
+            WelcomeView(appState: appState)
+                .task { await appState.restoreSession() }
+        case .working(let label):
+            ProgressView(label)
+        case .home(let current):
+            HomeView(current: current)
+        }
     }
 }
 
-/// Phase 1 placeholder — auth + guest flow arrive in Phase 4.
 struct WelcomeView: View {
+    let appState: AppState
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -30,11 +41,18 @@ struct WelcomeView: View {
                 .font(.title3)
                 .foregroundStyle(.secondary)
 
+            if let error = appState.errorMessage {
+                Text(error)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
+
             Spacer()
 
             // Guest-first: primary action requires no account.
             Button {
-                // Phase 4: anonymous auth → auto-provision household → Home
+                Task { await appState.enterGuestMode() }
             } label: {
                 Text("Continue as guest")
                     .frame(maxWidth: .infinity)
@@ -43,7 +61,7 @@ struct WelcomeView: View {
             .controlSize(.large)
 
             Button {
-                // Phase 4: SIWA / Google / email
+                // Phase 4 (next): SIWA / Google / email
             } label: {
                 Text("Sign in")
                     .frame(maxWidth: .infinity)
