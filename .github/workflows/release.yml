@@ -40,6 +40,23 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      # Firebase ships binary SPM targets (grpc.zip from dl.google.com) whose
+      # download flakes on runners — pre-resolve with retries so a transient
+      # blip doesn't kill the run (v1.0.0+26 first attempt died here).
+      - name: Pre-resolve SPM dependencies (retry ×3)
+        working-directory: PacelliApp
+        run: |
+          xcodegen generate
+          for i in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies \
+                 -project PacelliApp.xcodeproj -scheme PacelliApp; then
+              exit 0
+            fi
+            echo "SPM resolve attempt $i failed; retrying in 20s…"
+            sleep 20
+          done
+          exit 1
+
       - name: Create build keychain
         env:
           KEY_PWD: ${{ secrets.MATCH_KEYCHAIN_PASSWORD }}
