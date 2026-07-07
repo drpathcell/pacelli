@@ -44,9 +44,24 @@ enum HouseholdService {
 
         try await batch.commit()
 
+        // Dart parity (_encryptProfileName): now that a household key exists,
+        // encrypt the locally-cached display name into the profile doc.
+        await encryptProfileName(uid: uid, householdKey: householdKey)
+
         return CurrentHousehold(
             household: Household(id: householdId, name: name, createdBy: uid, createdAt: now),
             role: "admin")
+    }
+
+    /// Reads the Keychain-cached profile name, encrypts it with the
+    /// household key, writes it to `profiles/{uid}`. Non-fatal on failure.
+    private static func encryptProfileName(uid: String, householdKey: String) async {
+        guard let localName = SecureStore.read("profile_name_\(uid)"),
+              !localName.isEmpty,
+              let encrypted = try? PacelliCrypto.encrypt(localName, key: householdKey)
+        else { return }
+        try? await db.collection("profiles").document(uid)
+            .updateData(["full_name": encrypted])
     }
 
     /// The current user's household with its key loaded, or nil if none.

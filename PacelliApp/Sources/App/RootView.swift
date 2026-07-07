@@ -18,7 +18,7 @@ struct RootView: View {
             case .working(let label):
                 ProgressView(label)
             case .home(let current):
-                HomeView(current: current)
+                HomeView(current: current, appState: appState)
             }
         }
         // Session restore runs exactly once per launch, at the root —
@@ -29,6 +29,8 @@ struct RootView: View {
 
 struct WelcomeView: View {
     let appState: AppState
+
+    @State private var showSignIn = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -65,7 +67,7 @@ struct WelcomeView: View {
             .controlSize(.large)
 
             Button {
-                // Phase 4 (next): SIWA / Google / email
+                showSignIn = true
             } label: {
                 Text("Sign in")
                     .frame(maxWidth: .infinity)
@@ -74,6 +76,9 @@ struct WelcomeView: View {
             .controlSize(.large)
         }
         .padding(24)
+        .sheet(isPresented: $showSignIn) {
+            AuthView(mode: .signIn, appState: appState)
+        }
     }
 }
 

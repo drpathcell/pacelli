@@ -1,3 +1,4 @@
+import FirebaseAuth
 import PacelliKit
 import SwiftUI
 
@@ -5,11 +6,15 @@ import SwiftUI
 /// Walking-skeleton scope: live task list (decrypted), add, complete.
 struct HomeView: View {
     let current: CurrentHousehold
+    let appState: AppState
 
     @State private var tasks: [HouseholdTask] = []
     @State private var newTitle = ""
     @State private var loading = true
     @State private var errorMessage: String?
+    @State private var showAccount = false
+
+    private var isGuest: Bool { Auth.auth().currentUser?.isAnonymous ?? false }
 
     var body: some View {
         NavigationStack {
@@ -30,6 +35,20 @@ struct HomeView: View {
                 }
             }
             .navigationTitle(current.household.name)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAccount = true
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                    }
+                    .accessibilityLabel("Account")
+                }
+            }
+            .sheet(isPresented: $showAccount) {
+                AccountSheet(appState: appState)
+                    .presentationDetents([.medium])
+            }
             .safeAreaInset(edge: .bottom) { addBar }
             .task { await reload() }
             .refreshable { await reload() }

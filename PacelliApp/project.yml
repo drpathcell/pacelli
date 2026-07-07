@@ -45,6 +45,7 @@ targets:
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "26"
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Resources/PacelliApp.entitlements   # SIWA
         INFOPLIST_KEY_CFBundleDisplayName: Pacelli    # home-screen name (target is PacelliApp)
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon   # altool 90713: icon is mandatory for upload
         INFOPLIST_FILE: Resources/Info.plist          # explicit CFBundleIconName (merged with generated keys)

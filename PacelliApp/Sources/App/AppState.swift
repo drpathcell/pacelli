@@ -94,6 +94,36 @@ final class AppState {
         }
     }
 
+    /// After a successful sign-in/up/upgrade: load (or auto-provision) the
+    /// household and land on Home. Zero-wall philosophy applies to
+    /// registered users too — no setup screens.
+    func postAuth() async {
+        errorMessage = nil
+        phase = .working(String(localized: "Loading your home…"))
+        do {
+            let current = try await withTimeout(20) {
+                if let existing = await HouseholdService.getCurrentHousehold() {
+                    return existing
+                }
+                return try await HouseholdService.createHousehold(
+                    named: String(localized: "My Household"))
+            }
+            phase = .home(current)
+        } catch {
+            print("[AppState] postAuth failed: \(error)")
+            errorMessage = String(
+                localized: "Signed in, but we couldn't load your home. Please try again.")
+            phase = .welcome
+        }
+    }
+
+    /// Explicit sign-out from Home.
+    func signOut() async {
+        await resetSession()
+        errorMessage = nil
+        phase = .welcome
+    }
+
     private func resetSession() async {
         try? Auth.auth().signOut()
         await KeyManager.shared.clearKeys()
