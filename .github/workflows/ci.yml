@@ -1,14 +1,22 @@
 name: CI/CD
 
+# Flutter tree is FROZEN (native rewrite, 2026-07-07) — these jobs only run
+# when Flutter/shared paths change. Native app CI lives in native-ci.yml.
 on:
   push:
     branches:
       - main
       - develop
+    paths-ignore:
+      - 'PacelliApp/**'
+      - 'docs/**'
   pull_request:
     branches:
       - main
       - develop
+    paths-ignore:
+      - 'PacelliApp/**'
+      - 'docs/**'
 
 # Cancel superseded runs on the same branch to avoid stacking long iOS builds.
 concurrency:

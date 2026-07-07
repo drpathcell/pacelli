@@ -1,10 +1,11 @@
-name: Release
+name: Release (Flutter — PARKED)
 
-# Trigger: push a version tag like v1.0.0+42
+# ⚠️ PARKED 2026-07-07: the Flutter release lane is dead — Pacelli is being
+# rewritten natively (see docs/native-rewrite-plan.md, Phase 7). Tag pushes
+# no longer trigger anything; manual dispatch only, kept as reference for
+# the match/ASC secrets wiring until the native xcodebuild lane replaces it.
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+\+[0-9]+'
+  workflow_dispatch:
 jobs:
   # ── iOS → TestFlight ──────────────────────────────────────────────────────────
   ios-beta:

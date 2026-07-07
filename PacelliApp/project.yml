@@ -29,8 +29,11 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"          # iPhone-only (decision 2026-05-05)
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        # Ship strategy: reuse the existing ASC version 1.0 + its rejection
+        # thread (Resolution Center reply on resubmit). Builds under a version
+        # must be unique/ascending — Flutter got to 25, native starts at 26.
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "26"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO   # parity with Flutter Info.plist

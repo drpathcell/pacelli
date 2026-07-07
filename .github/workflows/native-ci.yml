@@ -1,0 +1,64 @@
+name: Native CI
+
+# CI for the native SwiftUI app (PacelliApp/). The crypto vector gate is the
+# non-negotiable job: PacelliKit must decrypt the Dart/TS cross-language
+# vectors in functions/tests/cross-language/ on every change.
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'PacelliApp/**'
+      - 'functions/tests/cross-language/**'
+      - '.github/workflows/native-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'PacelliApp/**'
+      - 'functions/tests/cross-language/**'
+      - '.github/workflows/native-ci.yml'
+
+concurrency:
+  group: native-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kit-tests:
+    name: PacelliKit tests (crypto vector gate)
+    # macos-26 = Xcode 26 / Swift 6 toolchain (April 2026 ASC SDK policy;
+    # same pin rationale as release.yml).
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: swift test
+        working-directory: PacelliApp/Packages/PacelliKit
+        run: swift test
+
+  app-build:
+    name: Build PacelliApp (iOS Simulator)
+    needs: [kit-tests]
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: PacelliApp
+        run: xcodegen generate
+
+      - name: Build for iOS Simulator
+        working-directory: PacelliApp
+        run: |
+          xcodebuild -project PacelliApp.xcodeproj \
+            -scheme PacelliApp \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
