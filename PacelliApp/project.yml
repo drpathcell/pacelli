@@ -25,6 +25,7 @@ targets:
       - Sources
       - path: Resources/GoogleService-Info.plist
         buildPhase: resources
+      - Resources/Assets.xcassets
     dependencies:
       - package: PacelliKit
       - package: Firebase
@@ -44,6 +45,8 @@ targets:
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "26"
         GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon   # altool 90713: icon is mandatory for upload
+        INFOPLIST_FILE: Resources/Info.plist          # explicit CFBundleIconName (merged with generated keys)
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO   # parity with Flutter Info.plist
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Pacelli uses Face ID to protect access to your securely stored encryption keys."

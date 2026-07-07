@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- altool 90713: CFBundleIconName is mandatory for App Store uploads.
+	     Kept explicit rather than relying on the actool partial-plist merge.
+	     All other keys come from GENERATE_INFOPLIST_FILE + INFOPLIST_KEY_*. -->
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+</dict>
+</plist>
