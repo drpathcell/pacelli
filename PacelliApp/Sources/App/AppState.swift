@@ -4,8 +4,16 @@ import Observation
 import PacelliKit
 
 /// Session state machine: welcome → working → home.
-/// `enterGuestMode()` is the 5.1.1(v) invariant — port of
-/// `lib/features/auth/presentation/utils/guest_session.dart`.
+///
+/// Hard rules (build 26 field lesson — iPhone stuck on "Loading your home…"):
+/// 1. Session restore runs ONCE per launch (`start()` from RootView), never
+///    from view-appearance side effects — no retry loops.
+/// 2. Every Firebase await is deadline-bound (`withTimeout`) — the UI can
+///    never wait forever.
+/// 3. A session that can't produce a usable Home within the deadline is
+///    signed out: Keychain-restored sessions survive app reinstalls (the
+///    Flutter app's session leaks into this bundle ID), and the walking
+///    skeleton has no sign-in UI to serve them yet. Guest-first, no walls.
 @MainActor
 @Observable
 final class AppState {
@@ -18,42 +26,94 @@ final class AppState {
     var phase: Phase = .welcome
     var errorMessage: String?
 
-    /// Guest mode with zero setup:
-    /// 1. Anonymous auth (no personal data).
-    /// 2. Auto-provision a default household when none exists.
-    /// 3. Land on a usable Home — no walls.
+    private var didStart = false
+
+    /// Single launch entry point. Restores an existing session if it can be
+    /// made usable quickly; otherwise resets to a clean Welcome.
+    func start() async {
+        guard !didStart else { return }
+        didStart = true
+
+        #if DEBUG
+        await debugSignInIfRequested()
+        #endif
+
+        guard Auth.auth().currentUser != nil else {
+            phase = .welcome
+            return
+        }
+        phase = .working(String(localized: "Loading your home…"))
+        do {
+            let current = try await withTimeout(15) {
+                await HouseholdService.getCurrentHousehold()
+            }
+            if let current {
+                phase = .home(current)
+            } else {
+                // Signed in but no household reachable — a state the
+                // skeleton can't serve (no sign-in UI). Clean slate.
+                print("[AppState] restored session has no usable household — resetting")
+                await resetSession()
+                phase = .welcome
+            }
+        } catch {
+            print("[AppState] session restore failed/timed out: \(error) — resetting")
+            await resetSession()
+            errorMessage = String(
+                localized: "We couldn't restore your previous session, so we've reset it. Continue as guest below.")
+            phase = .welcome
+        }
+    }
+
+    /// Guest mode with zero setup (Guideline 5.1.1(v)):
+    /// anonymous auth → auto-provisioned household → usable Home.
     /// Anonymous data upgrades in place later via `linkWithCredential`.
     func enterGuestMode() async {
         errorMessage = nil
         phase = .working(String(localized: "Setting things up…"))
+        let hadSession = Auth.auth().currentUser != nil
         do {
-            if Auth.auth().currentUser == nil {
+            if !hadSession {
                 try await Auth.auth().signInAnonymously()
             }
-            let current: CurrentHousehold
-            if let existing = await HouseholdService.getCurrentHousehold() {
-                current = existing
-            } else {
-                current = try await HouseholdService.createHousehold(
+            let current = try await withTimeout(20) {
+                if let existing = await HouseholdService.getCurrentHousehold() {
+                    return existing
+                }
+                return try await HouseholdService.createHousehold(
                     named: String(localized: "My Household"))
             }
             phase = .home(current)
         } catch {
             print("[AppState] enterGuestMode failed: \(error)")
+            // Don't strand a half-provisioned anonymous session.
+            if !hadSession { await resetSession() }
             errorMessage = String(
                 localized: "Couldn't start guest mode. Please check your connection and try again.")
             phase = .welcome
         }
     }
 
-    /// Restores an existing session (guest or registered) on launch.
-    func restoreSession() async {
-        guard Auth.auth().currentUser != nil else { return }
-        phase = .working(String(localized: "Loading your home…"))
-        if let existing = await HouseholdService.getCurrentHousehold() {
-            phase = .home(existing)
-        } else {
-            phase = .welcome
+    private func resetSession() async {
+        try? Auth.auth().signOut()
+        await KeyManager.shared.clearKeys()
+    }
+
+    #if DEBUG
+    /// Sim-only hook: sign in a real account before restore, e.g.
+    /// SIMCTL_CHILD_PACELLI_DEBUG_EMAIL / _PASSWORD via `simctl launch`.
+    /// Compiled out of Release builds.
+    private func debugSignInIfRequested() async {
+        let env = ProcessInfo.processInfo.environment
+        guard let email = env["PACELLI_DEBUG_EMAIL"],
+              let password = env["PACELLI_DEBUG_PASSWORD"]
+        else { return }
+        do {
+            try await Auth.auth().signIn(withEmail: email, password: password)
+            print("[AppState] DEBUG signed in as \(email)")
+        } catch {
+            print("[AppState] DEBUG sign-in failed: \(error)")
         }
     }
+    #endif
 }

@@ -11,15 +11,19 @@ struct RootView: View {
     @State private var appState = AppState()
 
     var body: some View {
-        switch appState.phase {
-        case .welcome:
-            WelcomeView(appState: appState)
-                .task { await appState.restoreSession() }
-        case .working(let label):
-            ProgressView(label)
-        case .home(let current):
-            HomeView(current: current)
+        Group {
+            switch appState.phase {
+            case .welcome:
+                WelcomeView(appState: appState)
+            case .working(let label):
+                ProgressView(label)
+            case .home(let current):
+                HomeView(current: current)
+            }
         }
+        // Session restore runs exactly once per launch, at the root —
+        // never from WelcomeView appearance (that caused a retry loop).
+        .task { await appState.start() }
     }
 }
 

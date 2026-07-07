@@ -56,8 +56,10 @@ struct HomeView: View {
 
     private func reload() async {
         do {
-            tasks = try await TasksRepository.fetchTasks(
-                householdId: current.household.id)
+            let householdId = current.household.id
+            tasks = try await withTimeout(15) {
+                try await TasksRepository.fetchTasks(householdId: householdId)
+            }
             loading = false
         } catch {
             loading = false
@@ -71,8 +73,11 @@ struct HomeView: View {
         newTitle = ""
         Task {
             do {
-                let created = try await TasksRepository.createTask(
-                    householdId: current.household.id, title: title)
+                let householdId = current.household.id
+                let created = try await withTimeout(15) {
+                    try await TasksRepository.createTask(
+                        householdId: householdId, title: title)
+                }
                 tasks.insert(created, at: 0)
             } catch {
                 errorMessage = String(localized: "Couldn't add the task.")
@@ -84,7 +89,9 @@ struct HomeView: View {
         Task {
             do {
                 let completed = !task.isCompleted
-                try await TasksRepository.setCompleted(task, completed: completed)
+                try await withTimeout(15) {
+                    try await TasksRepository.setCompleted(task, completed: completed)
+                }
                 if let i = tasks.firstIndex(where: { $0.id == task.id }) {
                     tasks[i].status =
                         completed
@@ -103,19 +110,22 @@ private struct TaskRow: View {
     let onToggle: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button(action: onToggle) {
+        // Whole row toggles (audit fix: circle-only was a 22pt target,
+        // below the 44pt HIG minimum).
+        Button(action: onToggle) {
+            HStack(spacing: 12) {
                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(task.isCompleted ? Color.accentColor : .secondary)
+
+                Text(task.title)
+                    .strikethrough(task.isCompleted)
+                    .foregroundStyle(task.isCompleted ? .secondary : .primary)
+
+                Spacer()
             }
-            .buttonStyle(.plain)
-
-            Text(task.title)
-                .strikethrough(task.isCompleted)
-                .foregroundStyle(task.isCompleted ? .secondary : .primary)
-
-            Spacer()
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
