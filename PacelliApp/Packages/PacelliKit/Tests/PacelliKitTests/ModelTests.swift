@@ -211,6 +211,32 @@ struct ModelMapTests {
         #expect(minimal.isChecked == false)
     }
 
+    @Test("ManualEntry map (pre-converted Dates, Dart defaults)")
+    func manualEntry() throws {
+        let now = Date()
+        let full = try #require(
+            ManualEntry(map: [
+                "id": "m-1", "household_id": "hh-1", "title": "Bins",
+                "content": "Green bin Tuesdays", "tags": ["waste"],
+                "is_pinned": true, "created_by": "uid-1",
+                "created_at": now, "updated_at": now,
+                "last_edited_by": "uid-1",
+            ]))
+        #expect(full.title == "Bins")
+        #expect(full.isPinned == true)
+        #expect(full.tags == ["waste"])
+        // Minimal: content/tags default; Dates required (repo converts
+        // Timestamps before mapping).
+        let minimal = try #require(
+            ManualEntry(map: [
+                "id": "m-2", "household_id": "hh-1", "title": "x",
+                "created_by": "uid-1", "created_at": now, "updated_at": now,
+            ]))
+        #expect(minimal.content.isEmpty)
+        #expect(minimal.tags.isEmpty)
+        #expect(minimal.isPinned == false)
+    }
+
     @Test("HouseholdTask tolerates minimal legacy maps")
     func taskMinimal() throws {
         let map: [String: Any] = [

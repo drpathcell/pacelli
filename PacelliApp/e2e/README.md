@@ -23,6 +23,9 @@ maestro --device <SIM-UDID> test PacelliApp/e2e/flow_tasks_e2e.yaml
 - `flow_settings_burn_e2e.yaml` — settings: theme switch → privacy screen →
   ⚠️ REAL burn-all-data (wipes the signed-in account — guest/test only) →
   back-to-Welcome.
+- `flow_household_manual_search_e2e.yaml` — members list → manual entry
+  create → feedback submit → cross-entity search (task + manual hits).
+  Re-runnable (conditional seeding).
 
 Lessons (Maestro 2.5.1 + iOS 27 sim):
 - `back` (edge swipe) and `hideKeyboard` are unreliable with the keyboard
@@ -42,3 +45,7 @@ Lessons (Maestro 2.5.1 + iOS 27 sim):
   the viewport — `scrollUntilVisible` to it instead.
 - `maestro hierarchy` dumps the accessibility tree with bounds — the fastest
   way to debug a failing tap without screenshots.
+- Segmented pickers do NOT render their label text — never assert on it.
+- An app killed by a failed run shows a springboard-only hierarchy while its
+  process may still be resident — `simctl launch` returns the existing pid
+  WITHOUT foregrounding; use stopApp+launchApp to get a deterministic state.

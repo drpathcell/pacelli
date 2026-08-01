@@ -101,7 +101,14 @@ final class AppState {
         errorMessage = nil
         phase = .working(String(localized: "Loading your home…"))
         do {
-            let current = try await withTimeout(20) {
+            let current = try await withTimeout(30) {
+                // A pending email invite takes priority over auto-provisioning
+                // a fresh household (invite-acceptance port + key handshake).
+                if await MembershipService.checkAndAcceptInvite(),
+                   let joined = await HouseholdService.getCurrentHousehold()
+                {
+                    return joined
+                }
                 if let existing = await HouseholdService.getCurrentHousehold() {
                     return existing
                 }

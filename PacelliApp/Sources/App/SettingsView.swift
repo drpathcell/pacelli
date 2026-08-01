@@ -56,6 +56,24 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
+                Section("Household") {
+                    NavigationLink {
+                        HouseholdView(current: current)
+                    } label: {
+                        Label("Members & invites", systemImage: "person.2")
+                    }
+                    NavigationLink {
+                        ManualView(current: current)
+                    } label: {
+                        Label("Household manual", systemImage: "book")
+                    }
+                    NavigationLink {
+                        FeedbackView(current: current)
+                    } label: {
+                        Label("Send feedback", systemImage: "envelope")
+                    }
+                }
+
                 Section("Privacy") {
                     NavigationLink("Privacy & encryption") {
                         PrivacyEncryptionView()

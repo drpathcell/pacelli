@@ -1,0 +1,78 @@
+appId: com.pacelli.pacelli
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+# Seed a task for search (skipped when it already exists — re-runnable)
+- runFlow:
+    when:
+      notVisible: "Fix the fence"
+    commands:
+      - tapOn: "New task"
+      - inputText: "Fix the fence"
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: "Fix the fence"
+          timeout: 20000
+      - hideKeyboard
+# Household members
+- tapOn: "Settings"
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible: "Admin"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_hh_01_members
+- tapOn:
+    id: "BackButton"
+# Manual entry
+- tapOn: "Household manual"
+- extendedWaitUntil:
+    visible: "New entry"
+    timeout: 15000
+- tapOn: "New entry"
+- extendedWaitUntil:
+    visible: "Title"
+    timeout: 15000
+- tapOn: "Title"
+- inputText: "Wifi password"
+- tapOn: "Write it down…"
+- inputText: "Router is under the stairs"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Wifi password"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_hh_02_manual
+- tapOn:
+    id: "BackButton"
+# Feedback
+- tapOn: "Send feedback"
+# (Segmented pickers don't render their label — assert on the field.)
+- extendedWaitUntil:
+    visible: "Tell us more…"
+    timeout: 15000
+- tapOn: "Tell us more…"
+- inputText: "Native app feels great"
+- hideKeyboard
+# The screen title is ALSO "Send feedback" — tap the button by id.
+- tapOn:
+    id: "sendFeedbackButton"
+- extendedWaitUntil:
+    visible: "Thank you!"
+    timeout: 20000
+- tapOn: "OK"
+# Search
+- tapOn: "Search"
+- tapOn: "Search everything"
+- inputText: "fence"
+- extendedWaitUntil:
+    visible: "Fix the fence"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_hh_03_search_task
+- eraseText
+- inputText: "Wifi"
+- extendedWaitUntil:
+    visible: "Wifi password"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_hh_04_search_manual

@@ -59,12 +59,33 @@ struct AuthView: View {
                     Button {
                         runGoogle()
                     } label: {
-                        Text("Continue with Google")
-                            .fontWeight(.medium)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                        HStack(spacing: 10) {
+                            // Google brand "G" (four-colour), drawn in text —
+                            // no bundled asset needed, close to the brand mark.
+                            Text("G")
+                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: Color(red: 0.918, green: 0.263, blue: 0.208), location: 0.0),
+                                            .init(color: Color(red: 0.984, green: 0.737, blue: 0.02), location: 0.35),
+                                            .init(color: Color(red: 0.204, green: 0.659, blue: 0.325), location: 0.65),
+                                            .init(color: Color(red: 0.259, green: 0.522, blue: 0.957), location: 1.0),
+                                        ],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                            Text("Continue with Google")
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                        .background(Color(uiColor: .systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(uiColor: .separator), lineWidth: 1))
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
                     .disabled(busy)
                     .listRowInsets(EdgeInsets())
                 }
