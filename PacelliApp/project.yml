@@ -29,6 +29,8 @@ targets:
       - path: Resources/GoogleService-Info.plist
         buildPhase: resources
       - Resources/Assets.xcassets
+      - path: Resources/Localizable.xcstrings
+        buildPhase: resources
     dependencies:
       - package: PacelliKit
       - package: Firebase

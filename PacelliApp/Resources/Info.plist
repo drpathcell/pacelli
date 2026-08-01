@@ -7,6 +7,13 @@
 	     All other keys come from GENERATE_INFOPLIST_FILE + INFOPLIST_KEY_*. -->
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<!-- Same declared languages as the Flutter listing (build 22 parity). -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+		<string>it</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
