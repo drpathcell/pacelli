@@ -1,0 +1,137 @@
+appId: com.pacelli.pacelli
+---
+# ASC screenshot set (6.9" / iPhone 17 Pro Max, 1320×2868).
+# Seeds a fresh guest household with presentable demo data, then captures.
+# Set the status bar first:
+#   xcrun simctl status_bar <SIM> override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+# ── Seed tasks ──
+- tapOn: "New task"
+- inputText: "Water the plants"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Water the plants"
+    timeout: 15000
+- tapOn: "New task"
+- inputText: "Book dentist appointment"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Book dentist appointment"
+    timeout: 15000
+- tapOn: "New task"
+- inputText: "Weekly food shop"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Weekly food shop"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Water the plants"
+# Task detail: category + subtasks
+- scrollUntilVisible:
+    element: "Add a subtask"
+    direction: DOWN
+- tapOn: "Add a subtask"
+- inputText: "Balcony pots"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Balcony pots"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Add a subtask"
+- inputText: "Kitchen herbs"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Kitchen herbs"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Balcony pots"
+- takeScreenshot: /tmp/asc_02_task_detail
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 15000
+- takeScreenshot: /tmp/asc_01_tasks
+# ── Checklists ──
+- tapOn: "Checklists"
+- tapOn: "New checklist"
+- inputText: "Groceries"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Groceries"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Groceries"
+- extendedWaitUntil:
+    visible: "Add an item"
+    timeout: 15000
+- tapOn: "Add an item"
+- inputText: "Milk"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Milk"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Add an item"
+- inputText: "Eggs"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Eggs"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Add an item"
+- inputText: "Sourdough bread"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Sourdough bread"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Milk"
+- takeScreenshot: /tmp/asc_03_checklist
+# ── Plans ──
+- tapOn: "Plans"
+- tapOn: "New weekly plan"
+- inputText: "This week"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "This week"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "This week"
+- scrollUntilVisible:
+    element: "Entry title"
+    direction: DOWN
+- tapOn: "Entry title"
+- inputText: "Pasta night"
+- pressKey: Enter
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Pasta night"
+    direction: UP
+- takeScreenshot: /tmp/asc_04_plan
+- tapOn:
+    id: "BackButton"
+# ── Search ──
+- tapOn: "Search"
+- tapOn: "Search everything"
+- inputText: "plants"
+- extendedWaitUntil:
+    visible: "Water the plants"
+    timeout: 25000
+- takeScreenshot: /tmp/asc_05_search
+- hideKeyboard
+# ── Privacy screen ──
+- tapOn: "Settings"
+- tapOn: "Privacy & encryption"
+- extendedWaitUntil:
+    visible: "Encrypted before upload"
+    timeout: 15000
+- takeScreenshot: /tmp/asc_06_privacy
