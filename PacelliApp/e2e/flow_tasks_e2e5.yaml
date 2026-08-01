@@ -1,0 +1,27 @@
+appId: com.pacelli.pacelli
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "Buy groceries"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_15_home_badges
+# Swipe-to-delete on a throwaway task
+- tapOn: "New task"
+- inputText: "Throwaway"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Throwaway"
+    timeout: 15000
+- hideKeyboard
+- swipe:
+    from: "Throwaway"
+    direction: LEFT
+- tapOn: "Delete"
+- extendedWaitUntil:
+    notVisible: "Throwaway"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_16_after_delete

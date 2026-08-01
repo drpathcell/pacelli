@@ -76,6 +76,40 @@ struct ModelMapTests {
         #expect(!back.isCompleted)
     }
 
+    @Test("Subtask round-trip + Dart defaults")
+    func subtask() throws {
+        let s = Subtask(
+            id: "st-1", taskId: "t-1", householdId: "hh-1", title: "Eggs",
+            isCompleted: true, sortOrder: 3)
+        let map = s.toMap()
+        #expect(map["task_id"] as? String == "t-1")
+        #expect(map["household_id"] as? String == "hh-1")
+        #expect(map["is_completed"] as? Bool == true)
+        #expect(map["sort_order"] as? Int == 3)
+        let back = try #require(Subtask(map: map))
+        #expect(back == s)
+        // Dart fromMap parity: only id + title required, rest defaults.
+        let minimal = try #require(Subtask(map: ["id": "st-2", "title": "x"]))
+        #expect(minimal.taskId.isEmpty)
+        #expect(minimal.isCompleted == false)
+        #expect(minimal.sortOrder == 0)
+    }
+
+    @Test("TaskCategory round-trip + Dart defaults")
+    func category() throws {
+        let c = TaskCategory(
+            id: "cat-1", householdId: "hh-1", name: "Errands",
+            icon: "cart", color: "#5B8DB8", isDefault: false)
+        let back = try #require(TaskCategory(map: c.toMap()))
+        #expect(back == c)
+        // Dart fromMap parity: only id + name required, rest defaults.
+        let minimal = try #require(TaskCategory(map: ["id": "cat-2", "name": "y"]))
+        #expect(minimal.icon == TaskCategory.defaultIcon)
+        #expect(minimal.color == TaskCategory.defaultColor)
+        #expect(minimal.isDefault == false)
+        #expect(minimal.householdId == nil)
+    }
+
     @Test("HouseholdTask tolerates minimal legacy maps")
     func taskMinimal() throws {
         let map: [String: Any] = [

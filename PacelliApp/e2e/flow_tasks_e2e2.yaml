@@ -1,0 +1,60 @@
+appId: com.pacelli.pacelli
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_e2e_10_home_restored
+# Open detail of the existing task
+- tapOn: "Buy groceries"
+- extendedWaitUntil:
+    visible: "Add a subtask"
+    timeout: 15000
+# Subtasks
+- tapOn: "Add a subtask"
+- inputText: "Milk"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Milk"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Add a subtask"
+- inputText: "Eggs"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Eggs"
+    timeout: 15000
+- hideKeyboard
+- takeScreenshot: /tmp/pacelli_e2e_11_subtasks
+# Toggle first subtask complete
+- tapOn: "Milk"
+- takeScreenshot: /tmp/pacelli_e2e_12_subtask_done
+# Categories: create one
+- tapOn: "Manage categories"
+- extendedWaitUntil:
+    visible: "New category"
+    timeout: 15000
+- tapOn: "Name"
+- inputText: "Errands"
+- hideKeyboard
+- tapOn: "Add category"
+- extendedWaitUntil:
+    visible: "Errands"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_13_category_added
+- back
+# Assign the category
+- extendedWaitUntil:
+    visible: "Category"
+    timeout: 15000
+- tapOn: "Category"
+- tapOn: "Errands"
+- takeScreenshot: /tmp/pacelli_e2e_14_category_assigned
+# Save edits
+- tapOn: "Save"
+# Back to Home, check badges
+- back
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_15_home_badges

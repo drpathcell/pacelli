@@ -1,0 +1,59 @@
+appId: com.pacelli.pacelli
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_e2e_02_home
+# Create a task
+- tapOn: "New task"
+- inputText: "Buy groceries"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Buy groceries"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_03_task_added
+# Open detail
+- tapOn: "Buy groceries"
+- extendedWaitUntil:
+    visible: "Add a subtask"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_04_detail
+# Edit: notes + priority
+- tapOn: "Notes"
+- inputText: "Milk, eggs, bread"
+- tapOn: "Priority"
+- tapOn: "High"
+- takeScreenshot: /tmp/pacelli_e2e_05_priority
+# Due date on
+- tapOn: "Due date"
+# Subtasks
+- tapOn: "Add a subtask"
+- inputText: "Milk"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Milk"
+    timeout: 15000
+- tapOn: "Add a subtask"
+- inputText: "Eggs"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Eggs"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_06_subtasks
+# Toggle first subtask
+- tapOn: "Milk"
+# Save edits
+- tapOn: "Save"
+- takeScreenshot: /tmp/pacelli_e2e_07_saved
+# Back to Home
+- back
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_08_home_badges

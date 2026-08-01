@@ -70,4 +70,59 @@ enum TasksRepository {
             ]
         try await db.collection("tasks").document(task.id).updateData(updates)
     }
+
+    /// Partial update. Mirrors Dart `updateTask` — only provided fields are
+    /// written; `title`/`description` are encrypted. Additionally supports
+    /// explicit clears (`.some(nil)` → Firestore null) for the nullable
+    /// fields, which the Dart API couldn't express; the resulting doc shape
+    /// is identical to a create with those fields null.
+    static func updateTask(
+        _ task: HouseholdTask,
+        title: String? = nil,
+        description: String?? = nil,
+        categoryId: String?? = nil,
+        priority: String? = nil,
+        dueDate: Date?? = nil,
+        startDate: Date?? = nil,
+        recurrence: String? = nil
+    ) async throws {
+        guard let key = await KeyManager.shared.loadHouseholdKey(task.householdId) else {
+            throw PacelliError.missingHouseholdKey
+        }
+        var updates: [String: Any] = [:]
+        if let title { updates["title"] = try PacelliCrypto.encrypt(title, key: key) }
+        if let description {
+            updates["description"] =
+                try description.map { try PacelliCrypto.encrypt($0, key: key) } ?? NSNull()
+        }
+        if let categoryId { updates["category_id"] = categoryId ?? NSNull() }
+        if let priority { updates["priority"] = priority }
+        if let dueDate {
+            updates["due_date"] = dueDate.map(DartISO8601.string(from:)) ?? NSNull()
+        }
+        if let startDate {
+            updates["start_date"] = startDate.map(DartISO8601.string(from:)) ?? NSNull()
+        }
+        if let recurrence { updates["recurrence"] = recurrence }
+
+        guard !updates.isEmpty else { return }
+        try await db.collection("tasks").document(task.id).updateData(updates)
+    }
+
+    /// Deletes a task and its subtasks. Mirrors Dart `deleteTask` — subtask
+    /// query filters on `household_id` (required by the security rules for
+    /// list queries) + `task_id`, then a single batch removes everything.
+    static func deleteTask(_ task: HouseholdTask) async throws {
+        let subtasks = try await db.collection("subtasks")
+            .whereField("household_id", isEqualTo: task.householdId)
+            .whereField("task_id", isEqualTo: task.id)
+            .getDocuments()
+
+        let batch = db.batch()
+        for doc in subtasks.documents {
+            batch.deleteDocument(doc.reference)
+        }
+        batch.deleteDocument(db.collection("tasks").document(task.id))
+        try await batch.commit()
+    }
 }

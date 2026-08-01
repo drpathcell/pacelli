@@ -1,0 +1,28 @@
+appId: com.pacelli.pacelli
+---
+# Continues from: Categories screen open, keyboard up (name field focused).
+- hideKeyboard
+# Nav back chevron (top-left)
+- tapOn:
+    point: "7%,7%"
+- extendedWaitUntil:
+    visible: "Manage categories"
+    timeout: 15000
+# Assign the category via the picker
+- tapOn: "Category"
+- extendedWaitUntil:
+    visible: "Errands"
+    timeout: 15000
+- tapOn: "Errands"
+- extendedWaitUntil:
+    visible: "Manage categories"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_14_category_assigned
+- tapOn: "Save"
+# Back to Home
+- tapOn:
+    point: "7%,7%"
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_e2e_15_home_badges
