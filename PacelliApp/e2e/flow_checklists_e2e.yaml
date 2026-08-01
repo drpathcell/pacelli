@@ -1,0 +1,73 @@
+appId: com.pacelli.pacelli
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+# Switch to the Checklists tab
+- tapOn: "Checklists"
+- extendedWaitUntil:
+    visible: "No checklists yet"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_cl_01_empty
+# Create a checklist
+- tapOn: "New checklist"
+- inputText: "Groceries"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Groceries"
+    timeout: 15000
+- hideKeyboard
+# Open it
+- tapOn: "Groceries"
+- extendedWaitUntil:
+    visible: "Add an item"
+    timeout: 15000
+# Add items
+- tapOn: "Add an item"
+- inputText: "Milk"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Milk"
+    timeout: 15000
+- hideKeyboard
+- tapOn: "Add an item"
+- inputText: "Bread"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Bread"
+    timeout: 15000
+- hideKeyboard
+# Toggle Milk
+- tapOn: "Milk"
+- takeScreenshot: /tmp/pacelli_cl_02_items
+# Push Bread to tasks. A FULL leading swipe executes the action directly
+# (standard iOS behaviour) — no button tap needed.
+- swipe:
+    from: "Bread"
+    direction: RIGHT
+- extendedWaitUntil:
+    notVisible: "Bread"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_cl_03_after_push
+# Relaunch: persistence + cross-feature check
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+# Bread should now be a task on the Tasks tab
+- extendedWaitUntil:
+    visible: "Bread"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_cl_04_task_created
+# Checklist badge survives relaunch
+- tapOn: "Checklists"
+- extendedWaitUntil:
+    visible: "Groceries"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "1/1"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_cl_05_badge

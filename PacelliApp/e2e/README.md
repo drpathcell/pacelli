@@ -15,6 +15,9 @@ maestro --device <SIM-UDID> test PacelliApp/e2e/flow_tasks_e2e.yaml
 - `flow_tasks_e2e3.yaml` — continuation experiment (nav-chevron point tap).
 - `flow_tasks_e2e4.yaml` — category assignment via picker + Save.
 - `flow_tasks_e2e5.yaml` — relaunch persistence check + swipe-to-delete.
+- `flow_checklists_e2e.yaml` — checklists tab: create → items add/toggle →
+  push-item-as-task (full swipe) → relaunch persistence + cross-feature
+  verify (pushed item appears on the Tasks tab).
 
 Lessons (Maestro 2.5.1 + iOS 27 sim):
 - `back` (edge swipe) and `hideKeyboard` are unreliable with the keyboard
@@ -23,3 +26,5 @@ Lessons (Maestro 2.5.1 + iOS 27 sim):
 - `pressKey: Enter` fires `onSubmit` on single-line TextFields (used for
   New task / Add a subtask), but inserts text in multiline fields.
 - Text matching is exact (regex), so "Milk" does not match "Milk, eggs".
+- A full `swipe` across a row EXECUTES the leading/trailing swipe action
+  directly (standard iOS) — don't follow it with a tap on the action label.

@@ -110,6 +110,42 @@ struct ModelMapTests {
         #expect(minimal.householdId == nil)
     }
 
+    @Test("Checklist round-trip (items never serialized)")
+    func checklist() throws {
+        let c = Checklist(
+            id: "cl-1", householdId: "hh-1", title: "Groceries",
+            createdBy: "uid-1", createdAt: Date(), updatedAt: Date(),
+            items: [ChecklistItem(id: "i-1", checklistId: "cl-1", title: "x")])
+        let map = c.toMap()
+        #expect(map["items"] == nil)
+        #expect(map["checklist_items"] == nil)
+        let back = try #require(Checklist(map: map))
+        #expect(back.id == c.id)
+        #expect(back.title == c.title)
+        #expect(back.items.isEmpty)
+        #expect(back.updatedAt != nil)
+    }
+
+    @Test("ChecklistItem round-trip + Dart defaults")
+    func checklistItem() throws {
+        let i = ChecklistItem(
+            id: "i-1", checklistId: "cl-1", householdId: "hh-1", title: "Milk",
+            quantity: "2", isChecked: true, createdBy: "uid-1",
+            createdAt: Date(), checkedAt: Date(), checkedBy: "uid-1")
+        let map = i.toMap()
+        #expect(map["checklist_id"] as? String == "cl-1")
+        #expect(map["is_checked"] as? Bool == true)
+        let back = try #require(ChecklistItem(map: map))
+        #expect(back.title == "Milk")
+        #expect(back.quantity == "2")
+        #expect(back.checkedBy == "uid-1")
+        // Dart fromMap parity: only id + title required.
+        let minimal = try #require(ChecklistItem(map: ["id": "i-2", "title": "y"]))
+        #expect(minimal.checklistId.isEmpty)
+        #expect(minimal.isChecked == false)
+        #expect(minimal.quantity == nil)
+    }
+
     @Test("HouseholdTask tolerates minimal legacy maps")
     func taskMinimal() throws {
         let map: [String: Any] = [

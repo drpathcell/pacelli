@@ -34,7 +34,12 @@ enum TasksRepository {
     }
 
     /// Creates a pending task (encrypting title/description) and returns it.
-    static func createTask(householdId: String, title: String) async throws -> HouseholdTask {
+    /// Optional fields mirror the Dart `createTask` parameters used by the
+    /// checklist → task push (due/start today, shared).
+    static func createTask(
+        householdId: String, title: String,
+        dueDate: Date? = nil, startDate: Date? = nil, isShared: Bool = false
+    ) async throws -> HouseholdTask {
         guard let uid else { throw PacelliError.notSignedIn }
         guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
             throw PacelliError.missingHouseholdKey
@@ -44,6 +49,9 @@ enum TasksRepository {
             id: UUID().uuidString.lowercased(),
             householdId: householdId,
             title: title,
+            dueDate: dueDate,
+            startDate: startDate,
+            isShared: isShared,
             createdBy: uid,
             createdAt: Date())
 
