@@ -161,6 +161,47 @@ enum AuthService {
     static func signOut() throws {
         try Auth.auth().signOut()
     }
+
+    // MARK: - Re-authentication (burn-all-data account deletion)
+
+    /// Firebase requires a recent sign-in before `user.delete()`. These
+    /// mirror the Dart burn screen's re-auth paths (email password prompt,
+    /// Apple, Google).
+    static func reauthenticate(email: String, password: String) async throws {
+        guard let user = Auth.auth().currentUser else { throw AuthError.notSignedIn }
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        _ = try await user.reauthenticate(with: credential)
+    }
+
+    static func reauthenticateWithApple(
+        _ authorization: ASAuthorization, rawNonce: String
+    ) async throws {
+        guard let user = Auth.auth().currentUser else { throw AuthError.notSignedIn }
+        guard let appleID = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let tokenData = appleID.identityToken,
+              let idToken = String(data: tokenData, encoding: .utf8)
+        else { throw AuthError.appleCredentialMissing }
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idToken, rawNonce: rawNonce, fullName: appleID.fullName)
+        _ = try await user.reauthenticate(with: credential)
+    }
+
+    @MainActor
+    static func reauthenticateWithGoogle() async throws {
+        guard let user = Auth.auth().currentUser else { throw AuthError.notSignedIn }
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            throw AuthError.googleConfigMissing
+        }
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        guard let presenter = topViewController() else { throw AuthError.noPresenter }
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw AuthError.googleCredentialMissing
+        }
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken, accessToken: result.user.accessToken.tokenString)
+        _ = try await user.reauthenticate(with: credential)
+    }
 }
 
 enum AuthError: LocalizedError {
@@ -168,6 +209,7 @@ enum AuthError: LocalizedError {
     case googleConfigMissing
     case googleCredentialMissing
     case noPresenter
+    case notSignedIn
 
     var errorDescription: String? {
         switch self {
@@ -179,6 +221,8 @@ enum AuthError: LocalizedError {
             String(localized: "Google didn't return a valid credential. Please try again.")
         case .noPresenter:
             String(localized: "Couldn't open Google Sign-In right now. Please try again.")
+        case .notSignedIn:
+            String(localized: "You're not signed in.")
         }
     }
 }

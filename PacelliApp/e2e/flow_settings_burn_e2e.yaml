@@ -1,0 +1,53 @@
+appId: com.pacelli.pacelli
+---
+# NOTE: the burn section at the end REALLY deletes the signed-in account's
+# household data. Run it only against a guest/test account.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+# Settings tab
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_st_01_settings
+# Switch colour scheme → Claude (menu picker)
+- tapOn: "Colours"
+- tapOn: "Claude"
+- takeScreenshot: /tmp/pacelli_st_02_claude_tint
+# Privacy & encryption screen
+- tapOn: "Privacy & encryption"
+- extendedWaitUntil:
+    visible: "Encrypted before upload"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Not encrypted"
+    direction: DOWN
+- takeScreenshot: /tmp/pacelli_st_03_privacy
+# Maestro's `back` edge-swipe is unreliable — SwiftUI back buttons carry
+# id "BackButton" (labelled with the previous screen's title).
+- tapOn:
+    id: "BackButton"
+# Burn all data (guest account: wipes the sim test data)
+- extendedWaitUntil:
+    visible: "Burn all data"
+    timeout: 15000
+- tapOn: "Burn all data"
+- extendedWaitUntil:
+    visible: "Before you burn"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_st_04_burn_warnings
+# The screen title is ALSO "Burn all data" — target the button by id.
+- tapOn:
+    id: "burnButton"
+- extendedWaitUntil:
+    visible: "Burn all data and delete my account"
+    timeout: 15000
+- tapOn: "Burn all data and delete my account"
+# Wipe runs; app must land back on Welcome with a clean slate.
+- extendedWaitUntil:
+    visible: "Continue as guest"
+    timeout: 60000
+- takeScreenshot: /tmp/pacelli_st_05_back_to_welcome

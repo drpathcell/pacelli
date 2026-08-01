@@ -17,6 +17,9 @@ struct HomeView: View {
             Tab("Plans", systemImage: "calendar") {
                 PlansView(current: current, appState: appState)
             }
+            Tab("Settings", systemImage: "gearshape") {
+                SettingsView(current: current, appState: appState)
+            }
         }
     }
 }

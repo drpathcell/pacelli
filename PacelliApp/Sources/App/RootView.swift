@@ -10,6 +10,12 @@ import SwiftUI
 struct RootView: View {
     @State private var appState = AppState()
 
+    // Theme (local prefs — Flutter SharedPreferences parity).
+    @AppStorage(ThemeStorageKeys.colorScheme) private var schemeRaw =
+        AppColorSchemeChoice.pacelli.rawValue
+    @AppStorage(ThemeStorageKeys.themeMode) private var modeRaw =
+        AppThemeModeChoice.system.rawValue
+
     var body: some View {
         Group {
             switch appState.phase {
@@ -21,6 +27,9 @@ struct RootView: View {
                 HomeView(current: current, appState: appState)
             }
         }
+        .tint((AppColorSchemeChoice(rawValue: schemeRaw) ?? .pacelli).tint)
+        .preferredColorScheme(
+            (AppThemeModeChoice(rawValue: modeRaw) ?? .system).preferredColorScheme)
         // Session restore runs exactly once per launch, at the root —
         // never from WelcomeView appearance (that caused a retry loop).
         .task { await appState.start() }

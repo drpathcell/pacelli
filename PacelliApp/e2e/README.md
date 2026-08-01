@@ -18,6 +18,11 @@ maestro --device <SIM-UDID> test PacelliApp/e2e/flow_tasks_e2e.yaml
 - `flow_checklists_e2e.yaml` — checklists tab: create → items add/toggle →
   push-item-as-task (full swipe) → relaunch persistence + cross-feature
   verify (pushed item appears on the Tasks tab).
+- `flow_plans_e2e.yaml` — plans tab: weekly plan → day entry → checklist →
+  finalise → relaunch persistence.
+- `flow_settings_burn_e2e.yaml` — settings: theme switch → privacy screen →
+  ⚠️ REAL burn-all-data (wipes the signed-in account — guest/test only) →
+  back-to-Welcome.
 
 Lessons (Maestro 2.5.1 + iOS 27 sim):
 - `back` (edge swipe) and `hideKeyboard` are unreliable with the keyboard
@@ -28,3 +33,12 @@ Lessons (Maestro 2.5.1 + iOS 27 sim):
 - Text matching is exact (regex), so "Milk" does not match "Milk, eggs".
 - A full `swipe` across a row EXECUTES the leading/trailing swipe action
   directly (standard iOS) — don't follow it with a tap on the action label.
+- SwiftUI back buttons have id `BackButton` — `tapOn: id: "BackButton"`
+  beats both `back` (flaky edge swipe) and point taps (frame is [16,62]–
+  [60,106]pt; a 7%-height tap lands 1pt above it).
+- When a screen title repeats a button label, `tapOn: <text>` hits the
+  title — give the button an `accessibilityIdentifier` and tap by id.
+- SwiftUI List recycles off-screen rows: an assert can't see a row outside
+  the viewport — `scrollUntilVisible` to it instead.
+- `maestro hierarchy` dumps the accessibility tree with bounds — the fastest
+  way to debug a failing tap without screenshots.

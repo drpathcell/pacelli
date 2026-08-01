@@ -93,6 +93,24 @@ actor KeyManager {
         cachedHouseholdId = nil
         SecureStore.deleteAll()
     }
+
+    /// Deletes this user's wrapped-key doc(s) for a household (burn).
+    /// Mirrors Dart `deleteKeyFromFirestore` — non-fatal on failure.
+    func deleteKeyFromFirestore(_ householdId: String) async {
+        guard let uid else { return }
+        do {
+            let snap = try await db.collection("household_keys")
+                .whereField("household_id", isEqualTo: householdId)
+                .whereField("user_id", isEqualTo: uid)
+                .getDocuments()
+            for doc in snap.documents {
+                try await doc.reference.delete()
+            }
+            print("[KeyManager] deleted key doc(s) for \(householdId)")
+        } catch {
+            print("[KeyManager] deleteKeyFromFirestore failed: \(error)")
+        }
+    }
 }
 
 enum PacelliError: Error {
