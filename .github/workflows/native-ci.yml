@@ -50,6 +50,18 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      # SPM checkout cache — same key scheme as release.yml (shared restore
+      # prefix would cross-pollute signing lanes, so kept per-workflow).
+      - name: Cache SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-ci-${{ runner.os }}-${{ hashFiles('PacelliApp/project.yml', 'PacelliApp/Packages/PacelliKit/Package.swift') }}
+          restore-keys: |
+            spm-ci-${{ runner.os }}-
+
       - name: Generate project
         working-directory: PacelliApp
         run: xcodegen generate

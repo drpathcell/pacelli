@@ -40,9 +40,23 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      # SPM checkout cache — saves ~4 min of grpc.zip + repo clones per run.
+      # Keyed on the dependency pins in project.yml + PacelliKit's manifest
+      # (Package.resolved lives inside the gitignored xcodeproj).
+      - name: Cache SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-release-${{ runner.os }}-${{ hashFiles('PacelliApp/project.yml', 'PacelliApp/Packages/PacelliKit/Package.swift') }}
+          restore-keys: |
+            spm-release-${{ runner.os }}-
+
       # Firebase ships binary SPM targets (grpc.zip from dl.google.com) whose
       # download flakes on runners — pre-resolve with retries so a transient
       # blip doesn't kill the run (v1.0.0+26 first attempt died here).
+      # Kept even with the cache: a cache miss still hits dl.google.com.
       - name: Pre-resolve SPM dependencies (retry ×3)
         working-directory: PacelliApp
         run: |
