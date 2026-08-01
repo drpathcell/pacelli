@@ -1,0 +1,81 @@
+appId: com.pacelli.pacelli
+---
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+# Switch to the Plans tab
+- tapOn: "Plans"
+# Create a weekly plan if none exists yet (flow is re-runnable)
+- runFlow:
+    when:
+      visible: "No plans yet"
+    commands:
+      - tapOn: "New weekly plan"
+      - inputText: "Meal week"
+      - pressKey: Enter
+      - hideKeyboard
+- extendedWaitUntil:
+    visible: "Meal week"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_pl_01_list
+# Open it
+- tapOn: "Meal week"
+# The add-entry section sits below the 7 day sections — scroll to it.
+- scrollUntilVisible:
+    element: "Entry title"
+    direction: DOWN
+- takeScreenshot: /tmp/pacelli_pl_02_detail
+# Add an entry for today (default target day)
+- tapOn: "Entry title"
+- inputText: "Pasta night"
+- pressKey: Enter
+- hideKeyboard
+# The entry lands in its day section (usually far above the add bar) —
+# SwiftUI List recycles off-screen rows, so scroll to verify, then return.
+- scrollUntilVisible:
+    element: "Pasta night"
+    direction: UP
+- scrollUntilVisible:
+    element: "Entry title"
+    direction: DOWN
+# Add a checklist item
+- scrollUntilVisible:
+    element: "Add a checklist item"
+    direction: DOWN
+- tapOn: "Add a checklist item"
+- inputText: "Pasta"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Pasta"
+    timeout: 15000
+- hideKeyboard
+# Toggle it
+- tapOn: "Pasta"
+- takeScreenshot: /tmp/pacelli_pl_03_entry_item
+# Finalise
+- scrollUntilVisible:
+    element: "Mark finalised"
+    direction: DOWN
+- tapOn: "Mark finalised"
+- extendedWaitUntil:
+    visible: "Back to draft"
+    timeout: 15000
+# Relaunch: persistence
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- tapOn: "Plans"
+- extendedWaitUntil:
+    visible: "Meal week"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "Finalised"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "1/1"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_pl_04_badges

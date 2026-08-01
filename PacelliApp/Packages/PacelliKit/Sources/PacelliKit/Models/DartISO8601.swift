@@ -48,3 +48,26 @@ public enum DartISO8601 {
         return nil
     }
 }
+
+/// Date-only codec compatible with Dart's `_dateOnly` helper
+/// (`yyyy-MM-dd`, zero-padded, local time — used for plan
+/// `start_date`/`end_date`/`entry_date`). Dart parses these as local
+/// midnight; so do we.
+public enum DartDateOnly {
+    private static let f: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    public static func string(from date: Date) -> String {
+        f.string(from: date)
+    }
+
+    public static func date(from string: String?) -> Date? {
+        guard let string, !string.isEmpty else { return nil }
+        return f.date(from: string)
+    }
+}

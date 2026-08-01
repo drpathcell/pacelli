@@ -146,6 +146,71 @@ struct ModelMapTests {
         #expect(minimal.quantity == nil)
     }
 
+    @Test("DartDateOnly round-trip (Dart _dateOnly parity)")
+    func dateOnly() throws {
+        let d = try #require(DartDateOnly.date(from: "2026-08-01"))
+        #expect(DartDateOnly.string(from: d) == "2026-08-01")
+        // Zero-padding (Dart pads month/day to 2).
+        let feb = try #require(DartDateOnly.date(from: "2026-02-03"))
+        #expect(DartDateOnly.string(from: feb) == "2026-02-03")
+        #expect(DartDateOnly.date(from: nil) == nil)
+        #expect(DartDateOnly.date(from: "") == nil)
+    }
+
+    @Test("Plan round-trip (date-only fields, children never serialized)")
+    func plan() throws {
+        let start = try #require(DartDateOnly.date(from: "2026-08-01"))
+        let end = try #require(DartDateOnly.date(from: "2026-08-07"))
+        let p = Plan(
+            id: "p-1", householdId: "hh-1", title: "Week plan",
+            startDate: start, endDate: end, createdBy: "uid-1",
+            createdAt: Date(), updatedAt: Date(),
+            entries: [PlanEntry(id: "e-1", planId: "p-1", entryDate: start, title: "x")],
+            checklistItems: [PlanChecklistItem(id: "c-1", planId: "p-1", title: "y")])
+        let map = p.toMap()
+        #expect(map["start_date"] as? String == "2026-08-01")
+        #expect(map["end_date"] as? String == "2026-08-07")
+        #expect(map["plan_entries"] == nil)
+        #expect(map["plan_checklist_items"] == nil)
+        let back = try #require(Plan(map: map))
+        #expect(back.title == p.title)
+        #expect(back.type == Plan.PlanType.weekly)
+        #expect(back.status == Plan.Status.draft)
+        #expect(back.isTemplate == false)
+        #expect(back.entries.isEmpty)
+        #expect(DartDateOnly.string(from: back.startDate) == "2026-08-01")
+    }
+
+    @Test("PlanEntry + PlanChecklistItem round-trips + Dart defaults")
+    func planChildren() throws {
+        let day = try #require(DartDateOnly.date(from: "2026-08-03"))
+        let e = PlanEntry(
+            id: "e-1", planId: "p-1", householdId: "hh-1", entryDate: day,
+            title: "Pasta night", label: "dinner", sortOrder: 2,
+            createdBy: "uid-1", createdAt: Date())
+        let eMap = e.toMap()
+        #expect(eMap["entry_date"] as? String == "2026-08-03")
+        let eBack = try #require(PlanEntry(map: eMap))
+        #expect(eBack.title == "Pasta night")
+        #expect(eBack.label == "dinner")
+        #expect(eBack.sortOrder == 2)
+
+        let c = PlanChecklistItem(
+            id: "c-1", planId: "p-1", householdId: "hh-1", entryId: "e-1",
+            title: "Pasta", quantity: "500g", isChecked: true,
+            createdBy: "uid-1", createdAt: Date(), checkedAt: Date(),
+            checkedBy: "uid-1")
+        let cBack = try #require(PlanChecklistItem(map: c.toMap()))
+        #expect(cBack.entryId == "e-1")
+        #expect(cBack.quantity == "500g")
+        #expect(cBack.isChecked == true)
+        // Dart fromMap parity: only id + title required.
+        let minimal = try #require(PlanChecklistItem(map: ["id": "c-2", "title": "z"]))
+        #expect(minimal.planId.isEmpty)
+        #expect(minimal.entryId == nil)
+        #expect(minimal.isChecked == false)
+    }
+
     @Test("HouseholdTask tolerates minimal legacy maps")
     func taskMinimal() throws {
         let map: [String: Any] = [

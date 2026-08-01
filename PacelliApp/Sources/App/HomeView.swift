@@ -14,6 +14,9 @@ struct HomeView: View {
             Tab("Checklists", systemImage: "list.bullet.rectangle") {
                 ChecklistsView(current: current, appState: appState)
             }
+            Tab("Plans", systemImage: "calendar") {
+                PlansView(current: current, appState: appState)
+            }
         }
     }
 }
