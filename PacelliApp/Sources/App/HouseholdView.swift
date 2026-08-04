@@ -2,10 +2,12 @@ import FirebaseAuth
 import PacelliKit
 import SwiftUI
 
-/// Household management: member list, email invites (with the native key
-/// handshake), pending invites, member removal (admins).
+/// Household management: name (any member can rename), member list, email
+/// invites (with the native key handshake), pending invites, member
+/// removal (admins).
 struct HouseholdView: View {
     let current: CurrentHousehold
+    let appState: AppState
 
     @State private var members: [MembershipService.Member] = []
     @State private var invites: [MembershipService.PendingInvite] = []
@@ -13,12 +15,42 @@ struct HouseholdView: View {
     @State private var loading = true
     @State private var infoMessage: String?
     @State private var errorMessage: String?
+    @State private var householdName: String
+    @State private var savedName: String
+    @State private var savingName = false
+
+    init(current: CurrentHousehold, appState: AppState) {
+        self.current = current
+        self.appState = appState
+        _householdName = State(initialValue: current.household.name)
+        _savedName = State(initialValue: current.household.name)
+    }
 
     private var myUid: String? { Auth.auth().currentUser?.uid }
     private var isAdmin: Bool { current.role == "admin" }
 
+    private var trimmedName: String {
+        householdName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var body: some View {
         List {
+            Section("Household name") {
+                HStack(spacing: 12) {
+                    TextField("Household name", text: $householdName)
+                        .onSubmit(saveName)
+                        .accessibilityIdentifier("household_name_field")
+                    if savingName {
+                        ProgressView()
+                    } else if trimmedName != savedName && !trimmedName.isEmpty {
+                        Button(action: saveName) {
+                            Text("Save").fontWeight(.semibold)
+                        }
+                        .accessibilityIdentifier("household_name_save")
+                    }
+                }
+            }
+
             Section("Members") {
                 if loading {
                     ProgressView()
@@ -87,7 +119,7 @@ struct HouseholdView: View {
                 )
             }
         }
-        .navigationTitle(current.household.name)
+        .navigationTitle(savedName)
         .navigationBarTitleDisplayMode(.inline)
         .task { await reload() }
         .refreshable { await reload() }
@@ -99,6 +131,25 @@ struct HouseholdView: View {
             "Done", isPresented: .constant(infoMessage != nil),
             actions: { Button("OK") { infoMessage = nil } },
             message: { Text(infoMessage ?? "") })
+    }
+
+    private func saveName() {
+        let name = trimmedName
+        guard !name.isEmpty, name != savedName, !savingName else { return }
+        savingName = true
+        Task {
+            defer { savingName = false }
+            do {
+                let householdId = current.household.id
+                try await withTimeout(15) {
+                    try await HouseholdService.renameHousehold(householdId, to: name)
+                }
+                savedName = name
+                appState.householdRenamed(to: name)
+            } catch {
+                errorMessage = String(localized: "Couldn't rename the household.")
+            }
+        }
     }
 
     private func displayName(for member: MembershipService.Member) -> String {

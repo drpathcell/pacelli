@@ -290,10 +290,28 @@ TRANSLATIONS = {
     "😊 Good": ("😊 Bien", "😊 Bene"),
     "😐 Okay": ("😐 Normal", "😐 Così così"),
     "🙁 Bad": ("🙁 Mal", "🙁 Male"),
+    # 1.1 — household rename + data export + generic theme names:
+    "Lavender": ("Lavanda", "Lavanda"),
+    "Ocean": ("Océano", "Oceano"),
+    "Household name": ("Nombre del hogar", "Nome della casa"),
+    "Couldn't rename the household.": (
+        "No se pudo renombrar el hogar.", "Impossibile rinominare la casa."),
+    "Your data": ("Tus datos", "I tuoi dati"),
+    "Export data": ("Exportar datos", "Esporta dati"),
+    "Export": ("Exportar", "Esporta"),
+    "Save a backup of everything in your household as a JSON file.": (
+        "Guarda una copia de seguridad de todo tu hogar en un archivo JSON.",
+        "Salva un backup di tutto ciò che c'è nella tua casa in un file JSON."),
+    "Export a readable copy?": (
+        "¿Exportar una copia legible?", "Esportare una copia leggibile?"),
+    "The exported file contains your household data in readable form — it is not encrypted. Keep it somewhere safe.": (
+        "El archivo exportado contiene los datos de tu hogar en forma legible — no está cifrado. Guárdalo en un lugar seguro.",
+        "Il file esportato contiene i dati della tua casa in forma leggibile — non è cifrato. Conservalo in un luogo sicuro."),
+    "Couldn't export your data. Please check your connection and try again.": (
+        "No se pudieron exportar tus datos. Comprueba tu conexión e inténtalo de nuevo.",
+        "Impossibile esportare i tuoi dati. Controlla la connessione e riprova."),
     # Brand names / identical across locales:
     "Pacelli": ("Pacelli", "Pacelli"),
-    "Claude": ("Claude", "Claude"),
-    "Gemini": ("Gemini", "Gemini"),
 }
 
 catalog = {"sourceLanguage": "en", "strings": {}, "version": "1.0"}

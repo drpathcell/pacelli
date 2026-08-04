@@ -443,9 +443,6 @@
         }
       }
     },
-    "Claude": {
-      "shouldTranslate": false
-    },
     "Colours": {
       "localizations": {
         "es": {
@@ -814,6 +811,22 @@
         }
       }
     },
+    "Couldn't export your data. Please check your connection and try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron exportar tus datos. Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile esportare i tuoi dati. Controlla la connessione e riprova."
+          }
+        }
+      }
+    },
     "Couldn't load checklists.": {
       "localizations": {
         "es": {
@@ -954,6 +967,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossibile rimuovere il membro."
+          }
+        }
+      }
+    },
+    "Couldn't rename the household.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo renombrar el hogar."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile rinominare la casa."
           }
         }
       }
@@ -1640,6 +1669,54 @@
         }
       }
     },
+    "Export": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta"
+          }
+        }
+      }
+    },
+    "Export a readable copy?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Exportar una copia legible?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esportare una copia leggibile?"
+          }
+        }
+      }
+    },
+    "Export data": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar datos"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta dati"
+          }
+        }
+      }
+    },
     "Feature request": {
       "localizations": {
         "es": {
@@ -1687,9 +1764,6 @@
           }
         }
       }
-    },
-    "Gemini": {
-      "shouldTranslate": false
     },
     "General": {
       "localizations": {
@@ -1889,6 +1963,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Conserva qui guide e note della casa: orari dei rifiuti, particolarità degli elettrodomestici, dati del wifi."
+          }
+        }
+      }
+    },
+    "Lavender": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lavanda"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lavanda"
           }
         }
       }
@@ -2306,6 +2396,22 @@
     "OK": {
       "shouldTranslate": false
     },
+    "Ocean": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Océano"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oceano"
+          }
+        }
+      }
+    },
     "Pacelli": {
       "shouldTranslate": false
     },
@@ -2559,6 +2665,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Salva"
+          }
+        }
+      }
+    },
+    "Save a backup of everything in your household as a JSON file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda una copia de seguridad de todo tu hogar en un archivo JSON."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva un backup di tutto ciò che c'è nella tua casa in un file JSON."
           }
         }
       }
@@ -2931,6 +3053,22 @@
         }
       }
     },
+    "The exported file contains your household data in readable form — it is not encrypted. Keep it somewhere safe.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo exportado contiene los datos de tu hogar en forma legible — no está cifrado. Guárdalo en un lugar seguro."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il file esportato contiene i dati della tua casa in forma leggibile — non è cifrato. Conservalo in un luogo sicuro."
+          }
+        }
+      }
+    },
     "Theme": {
       "localizations": {
         "es": {
@@ -3199,6 +3337,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "I tuoi contenuti vengono cifrati su questo dispositivo con AES-256 prima del caricamento. Ogni casa ha la propria chiave casuale; quella chiave è avvolta con una chiave derivata dal tuo account e salvata in modo che solo i membri della casa possano aprirla. Le tue chiavi restano nel portachiavi del dispositivo e non lasciano mai i tuoi dispositivi in chiaro."
+          }
+        }
+      }
+    },
+    "Your data": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus datos"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I tuoi dati"
           }
         }
       }

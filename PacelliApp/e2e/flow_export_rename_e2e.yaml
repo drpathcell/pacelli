@@ -1,0 +1,95 @@
+appId: com.pacelli.pacelli
+---
+# 1.1 features: household rename (any member) + JSON data export.
+# Safe on any account — renames the household (twice, ending on a new
+# name) and exercises the export path through the share sheet.
+# Launch-gate on the tab bar, not the household name — this flow renames
+# the household, so the name is not stable across runs.
+- stopApp
+- launchApp
+# Fresh install / post-burn sim lands on Welcome — enter guest mode first.
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 45000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 15000
+# ── Generic theme names (1.1): Lavender selectable, then revert ─────
+# NOTE: tap the picker only on a fresh Settings open — after scrolling,
+# the tap lands on stale coordinates and the menu never opens.
+- tapOn: "Colours"
+- tapOn: "Lavender"
+- takeScreenshot: /tmp/pacelli_er_00_lavender_tint
+- tapOn: "Colours"
+- tapOn: "Pacelli"
+# ── Rename the household ────────────────────────────────────────────
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible: "Household name"
+    timeout: 15000
+- tapOn:
+    id: "household_name_field"
+- eraseText
+- inputText: "Pacelli E2E Home"
+- tapOn:
+    id: "household_name_save"
+# Nav title reflects the saved name once the write lands.
+- extendedWaitUntil:
+    visible: "Pacelli E2E Home"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_er_01_renamed
+- tapOn:
+    id: "BackButton"
+# The Tasks tab title is keyed off AppState — must show the new name.
+- tapOn: "Tasks"
+- extendedWaitUntil:
+    visible: "Pacelli E2E Home"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_er_02_tasks_title
+# ── Export data ─────────────────────────────────────────────────────
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Export data"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Export data"
+# Plaintext warning must appear first — cancel path…
+- extendedWaitUntil:
+    visible: "Export a readable copy\\?"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_er_03_export_warning
+- tapOn: "Cancel"
+# …then the real path: confirm → share sheet with the dated filename.
+- tapOn: "Export data"
+- extendedWaitUntil:
+    visible: "Export a readable copy\\?"
+    timeout: 15000
+- tapOn: "Export"
+- extendedWaitUntil:
+    visible: "Pacelli export .*"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_er_04_share_sheet
+# Dismiss the share sheet (swipe down), then restore the default name so
+# the flow is idempotent for the other flows' launch gates.
+- swipe:
+    direction: DOWN
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible: "Household name"
+    timeout: 15000
+- tapOn:
+    id: "household_name_field"
+- eraseText
+- inputText: "My Household"
+- tapOn:
+    id: "household_name_save"
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_er_05_renamed_back

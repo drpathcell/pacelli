@@ -175,15 +175,16 @@ platform :ios do
     api_key = asc_api_key
     sync_signing(type: "appstore", readonly: true)
 
-    # Collision-proof build number (same lesson as the Flutter lane):
-    # Flutter ended at 25 → native floor is 26, always above TestFlight max.
+    # Collision-proof build number (same lesson as the Flutter lane).
+    # No version filter: build numbers are globally ascending across
+    # versions (1.0.0 shipped builds 26-34 → 1.1.0 floor is 35), so query
+    # the app-wide TestFlight max, not one version train's.
     latest_tf = (latest_testflight_build_number(
       api_key:        api_key,
-      app_identifier: "com.pacelli.pacelli",
-      version:        "1.0.0"
+      app_identifier: "com.pacelli.pacelli"
     ) rescue 0)
-    build_number = [26, latest_tf.to_i + 1].max
-    UI.message("Native build number: floor=26 latest_testflight=#{latest_tf} -> using #{build_number}")
+    build_number = [35, latest_tf.to_i + 1].max
+    UI.message("Native build number: floor=35 latest_testflight=#{latest_tf} -> using #{build_number}")
 
     # project.yml is the source of truth — regenerate the .xcodeproj.
     sh("cd ../PacelliApp && xcodegen generate")

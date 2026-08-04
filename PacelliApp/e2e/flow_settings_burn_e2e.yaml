@@ -13,10 +13,10 @@ appId: com.pacelli.pacelli
     visible: "Appearance"
     timeout: 15000
 - takeScreenshot: /tmp/pacelli_st_01_settings
-# Switch colour scheme → Claude (menu picker)
+# Switch colour scheme → Lavender (menu picker; generic names since 1.1)
 - tapOn: "Colours"
-- tapOn: "Claude"
-- takeScreenshot: /tmp/pacelli_st_02_claude_tint
+- tapOn: "Lavender"
+- takeScreenshot: /tmp/pacelli_st_02_lavender_tint
 # Privacy & encryption screen
 - tapOn: "Privacy & encryption"
 - extendedWaitUntil:

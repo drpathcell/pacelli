@@ -1,9 +1,10 @@
 import FirebaseAuth
 import PacelliKit
 import SwiftUI
+import UIKit
 
 /// Settings tab: appearance (theme mode + colour scheme), account,
-/// privacy & encryption, and the burn-all-data danger zone.
+/// data export, privacy & encryption, and the burn-all-data danger zone.
 struct SettingsView: View {
     let current: CurrentHousehold
     let appState: AppState
@@ -14,6 +15,10 @@ struct SettingsView: View {
         AppThemeModeChoice.system.rawValue
 
     @State private var showAccount = false
+    @State private var showExportWarning = false
+    @State private var exporting = false
+    @State private var exportItem: ExportShareItem?
+    @State private var exportError: String?
 
     private var isGuest: Bool { Auth.auth().currentUser?.isAnonymous ?? false }
 
@@ -58,7 +63,7 @@ struct SettingsView: View {
 
                 Section("Household") {
                     NavigationLink {
-                        HouseholdView(current: current)
+                        HouseholdView(current: current, appState: appState)
                     } label: {
                         Label("Members & invites", systemImage: "person.2")
                     }
@@ -81,6 +86,50 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        showExportWarning = true
+                    } label: {
+                        HStack {
+                            Label("Export data", systemImage: "square.and.arrow.up")
+                            Spacer()
+                            if exporting { ProgressView() }
+                        }
+                    }
+                    .foregroundStyle(.primary)
+                    .disabled(exporting)
+                    .accessibilityIdentifier("settings_export_button")
+                    // Export presentation lives on the button, not the List —
+                    // stacking a third .alert on the List silently breaks
+                    // alert presentation in SwiftUI.
+                    .alert("Export a readable copy?", isPresented: $showExportWarning) {
+                        Button("Cancel", role: .cancel) {}
+                        Button("Export") { runExport() }
+                    } message: {
+                        Text(
+                            "The exported file contains your household data in readable form — it is not encrypted. Keep it somewhere safe."
+                        )
+                    }
+                    .alert(
+                        "Something went wrong", isPresented: .constant(exportError != nil),
+                        actions: { Button("OK") { exportError = nil } },
+                        message: { Text(exportError ?? "") }
+                    )
+                    .sheet(
+                        item: $exportItem,
+                        onDismiss: cleanUpExports
+                    ) { item in
+                        ExportShareSheet(url: item.url)
+                            .presentationDetents([.medium, .large])
+                    }
+                } header: {
+                    Text("Your data")
+                } footer: {
+                    Text(
+                        "Save a backup of everything in your household as a JSON file."
+                    )
+                }
+
+                Section {
                     NavigationLink {
                         BurnDataView(appState: appState)
                     } label: {
@@ -100,6 +149,54 @@ struct SettingsView: View {
             }
         }
     }
+
+    /// The export is plaintext — don't leave copies in tmp after the share
+    /// sheet closes (pacelli-security-audit §export: temp files auto-deleted).
+    private func cleanUpExports() {
+        let fm = FileManager.default
+        let tmp = fm.temporaryDirectory
+        guard let files = try? fm.contentsOfDirectory(atPath: tmp.path) else { return }
+        for name in files where name.hasPrefix("Pacelli export") {
+            try? fm.removeItem(at: tmp.appendingPathComponent(name))
+        }
+    }
+
+    private func runExport() {
+        guard !exporting else { return }
+        exporting = true
+        Task {
+            defer { exporting = false }
+            do {
+                let url = try await withTimeout(30) {
+                    try await ExportService.exportFile(for: current)
+                }
+                exportItem = ExportShareItem(url: url)
+            } catch {
+                print("[SettingsView] export failed: \(error)")
+                exportError = String(
+                    localized: "Couldn't export your data. Please check your connection and try again.")
+            }
+        }
+    }
+}
+
+private struct ExportShareItem: Identifiable {
+    let url: URL
+    var id: String { url.absoluteString }
+}
+
+/// The system share sheet (no SwiftUI-native equivalent that presents
+/// from an async completion; `ShareLink` needs its item up-front).
+private struct ExportShareSheet: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIActivityViewController, context: Context
+    ) {}
 }
 
 /// The "what is / isn't encrypted" lists MUST match the implementation

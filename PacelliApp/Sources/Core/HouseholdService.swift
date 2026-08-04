@@ -64,6 +64,20 @@ enum HouseholdService {
             .updateData(["full_name": encrypted])
     }
 
+    /// Renames the household (any member — flat-membership model; Firestore
+    /// rules allow `update` for `isMember`). Name is E2E-encrypted with the
+    /// household key before upload, same as `createHousehold`.
+    static func renameHousehold(_ householdId: String, to name: String) async throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
+            throw PacelliError.missingHouseholdKey
+        }
+        let encrypted = try PacelliCrypto.encrypt(trimmed, key: key)
+        try await db.collection("households").document(householdId)
+            .updateData(["name": encrypted])
+    }
+
     /// The current user's household with its key loaded, or nil if none.
     static func getCurrentHousehold() async -> CurrentHousehold? {
         guard let uid else { return nil }

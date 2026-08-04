@@ -124,6 +124,15 @@ final class AppState {
         }
     }
 
+    /// Reflects a household rename in the session state so every view
+    /// keyed off `phase` (e.g. the Tasks nav title) shows the new name.
+    func householdRenamed(to name: String) {
+        guard case .home(let current) = phase else { return }
+        var household = current.household
+        household.name = name
+        phase = .home(CurrentHousehold(household: household, role: current.role))
+    }
+
     /// Explicit sign-out from Home.
     func signOut() async {
         await resetSession()
