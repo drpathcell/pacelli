@@ -45,7 +45,13 @@ final class AppState {
         phase = .working(String(localized: "Loading your home…"))
         do {
             let current = try await withTimeout(15) {
-                await HouseholdService.getCurrentHousehold()
+                // An invite can land AFTER this session was created (the common
+                // case: install, tap through as guest or sign up, get invited
+                // later). postAuth only runs at sign-in, so without this check
+                // an already-signed-in user never joins. No-op — and no
+                // Firestore round trip — for anonymous sessions.
+                let joined = await MembershipService.checkAndAcceptInvite()
+                return await HouseholdService.getCurrentHousehold(preferring: joined)
             }
             if let current {
                 phase = .home(current)
@@ -104,8 +110,9 @@ final class AppState {
             let current = try await withTimeout(30) {
                 // A pending email invite takes priority over auto-provisioning
                 // a fresh household (invite-acceptance port + key handshake).
-                if await MembershipService.checkAndAcceptInvite(),
-                   let joined = await HouseholdService.getCurrentHousehold()
+                if let invitedTo = await MembershipService.checkAndAcceptInvite(),
+                   let joined = await HouseholdService.getCurrentHousehold(
+                       preferring: invitedTo)
                 {
                     return joined
                 }

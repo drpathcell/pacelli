@@ -48,9 +48,11 @@ targets:
         SWIFT_STRICT_CONCURRENCY: complete
         # 1.0 approved & released 2026-08-04 (build 34). 1.1.0 = first
         # update: data export, household rename, generic theme names.
+        # 1.1.1 = household invite acceptance fix (rules denied the accept
+        # batch; invitees silently landed in a fresh empty household).
         # Build numbers stay globally ascending (native floor lives in the
         # Fastfile native_build lane; CI overrides CURRENT_PROJECT_VERSION).
-        MARKETING_VERSION: "1.1.0"
+        MARKETING_VERSION: "1.1.1"
         CURRENT_PROJECT_VERSION: "35"
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Resources/PacelliApp.entitlements   # SIWA

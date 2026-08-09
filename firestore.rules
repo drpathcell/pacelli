@@ -62,7 +62,20 @@ service cloud.firestore {
         isMember(resource.data.household_id)
       );
       allow create: if isAuth() && isMember(request.resource.data.household_id);
+      // Household members manage the invites they issued (revoke, re-issue).
       allow update, delete: if isAuth() && isMember(resource.data.household_id);
+      // Self-acceptance. checkAndAcceptInvite commits the caller's member doc
+      // and this status flip in ONE batch; rules never observe a batch's own
+      // uncommitted writes, so isMember() above is still false here and the
+      // whole batch used to be denied (invite silently never landed).
+      // Narrowest possible grant: the addressed user only, pending -> accepted,
+      // status the only field that may change, single-use (no replay).
+      allow update: if isAuth()
+        && resource.data.invited_email == request.auth.token.email
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['status']);
     }
 
     // ── Household Encryption Keys ────────────────────────────────

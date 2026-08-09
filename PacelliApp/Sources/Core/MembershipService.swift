@@ -125,11 +125,18 @@ enum MembershipService {
     }
 
     /// Port of Dart `checkAndAcceptInvite` + the native key handshake.
-    /// Returns true when an invite was accepted (caller should reload).
-    /// Safe to call for any signed-in user; no-op without a pending invite.
-    static func checkAndAcceptInvite() async -> Bool {
+    /// Returns the joined household id when an invite was accepted, else nil.
+    /// Safe (and cheap) to call for any signed-in user: anonymous/guest
+    /// sessions have no email and bail before touching Firestore.
+    ///
+    /// The status flip and the member doc go in ONE batch. Security rules
+    /// never see a batch's own uncommitted writes, so the invite `update`
+    /// cannot be gated on `isMember()` — firestore.rules carries an explicit
+    /// self-acceptance clause (pending -> accepted, status only). Locked by
+    /// firestore-tests/invites.test.js.
+    static func checkAndAcceptInvite() async -> String? {
         guard let user = Auth.auth().currentUser, let email = user.email?.lowercased()
-        else { return false }
+        else { return nil }
         do {
             let inviteSnap = try await db.collection("household_invites")
                 .whereField("invited_email", isEqualTo: email)
@@ -138,7 +145,7 @@ enum MembershipService {
                 .getDocuments()
             guard let inviteDoc = inviteSnap.documents.first,
                   let householdId = inviteDoc.data()["household_id"] as? String
-            else { return false }
+            else { return nil }
 
             // Member doc + invite status in one batch (Dart parity).
             let batch = db.batch()
@@ -173,10 +180,10 @@ enum MembershipService {
             } else {
                 print("[Membership] legacy invite without key — content stays encrypted until a member shares the key")
             }
-            return true
+            return householdId
         } catch {
             print("[Membership] checkAndAcceptInvite failed: \(error)")
-            return false
+            return nil
         }
     }
 }

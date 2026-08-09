@@ -79,16 +79,34 @@ enum HouseholdService {
     }
 
     /// The current user's household with its key loaded, or nil if none.
-    static func getCurrentHousehold() async -> CurrentHousehold? {
+    /// - Parameter preferring: which household to land in when the user
+    ///   belongs to more than one. Someone who used guest mode before being
+    ///   invited ends up with two member docs; the old `limit(to: 1)` made the
+    ///   winner whichever doc Firestore returned first, so a freshly accepted
+    ///   invite could silently drop them back into their own empty household.
+    ///   Without a preference we now take the most recently joined household,
+    ///   which is at least deterministic.
+    static func getCurrentHousehold(preferring preferredId: String? = nil) async
+        -> CurrentHousehold?
+    {
         guard let uid else { return nil }
         do {
             print("[HouseholdService] membership query for \(uid)…")
             let memberSnap = try await db.collection("household_members")
                 .whereField("user_id", isEqualTo: uid)
-                .limit(to: 1)
                 .getDocuments()
             print("[HouseholdService] membership docs: \(memberSnap.documents.count)")
-            guard let membership = memberSnap.documents.first?.data(),
+
+            let memberships = memberSnap.documents.map { $0.data() }
+            let preferred = preferredId.flatMap { wanted in
+                memberships.first { $0["household_id"] as? String == wanted }
+            }
+            let newest = memberships.max { a, b in
+                let lhs = DartISO8601.date(from: a["joined_at"] as? String) ?? .distantPast
+                let rhs = DartISO8601.date(from: b["joined_at"] as? String) ?? .distantPast
+                return lhs < rhs
+            }
+            guard let membership = preferred ?? newest,
                   let householdId = membership["household_id"] as? String
             else { return nil }
 
