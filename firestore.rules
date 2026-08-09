@@ -48,11 +48,34 @@ service cloud.firestore {
         resource.data.user_id == request.auth.uid ||
         isMember(resource.data.household_id)
       );
-      allow create: if isAuth();
+      // Self-join only. This used to be a bare `isAuth()`, which let any
+      // signed-in user mint a membership for ANYONE in any household.
+      allow create: if isAuth() && request.resource.data.user_id == request.auth.uid;
       allow update, delete: if isAuth() && (
         resource.data.user_id == request.auth.uid ||
         isMember(resource.data.household_id)
       );
+    }
+
+    // ── Household Join Codes ─────────────────────────────────────
+    // Doc ID *is* the code — a bearer secret, never stored in the body.
+    // Exists because email-addressed invites match on the auth token's email,
+    // which for Sign in with Apple + "Hide My Email" is a private-relay
+    // address the inviter cannot know. A code works for any auth provider.
+    match /household_join_codes/{code} {
+      // Bearer lookup: any signed-in user may GET by exact code, and only
+      // while it is live — expiry is enforced here, not just client-side.
+      allow get: if isAuth() && resource.data.expires_at > request.time;
+      // LIST is member-only, so codes can never be enumerated: guessing costs
+      // one read per attempt against a ~39-bit space. Members can list their
+      // own expired codes so the UI can offer "expired — regenerate".
+      allow list: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth()
+        && isMember(request.resource.data.household_id)
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.expires_at > request.time
+        && request.resource.data.expires_at < request.time + duration.value(8, 'd');
+      allow update, delete: if isAuth() && isMember(resource.data.household_id);
     }
 
     // ── Household Invites ────────────────────────────────────────

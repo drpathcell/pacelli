@@ -12,6 +12,10 @@ struct HouseholdView: View {
     @State private var members: [MembershipService.Member] = []
     @State private var invites: [MembershipService.PendingInvite] = []
     @State private var inviteEmail = ""
+    @State private var joinCode: JoinCodeService.JoinCode?
+    @State private var joinCodeBusy = false
+    @State private var enteredCode = ""
+    @State private var joining = false
     @State private var loading = true
     @State private var infoMessage: String?
     @State private var errorMessage: String?
@@ -118,6 +122,71 @@ struct HouseholdView: View {
                     "They join when they sign in to Pacelli with this email. The household key is shared securely as part of the invite."
                 )
             }
+
+            Section {
+                if joinCodeBusy {
+                    ProgressView()
+                } else if let joinCode, !joinCode.isExpired {
+                    HStack(spacing: 12) {
+                        Text(joinCode.formatted)
+                            .font(.system(.title3, design: .monospaced))
+                            .fontWeight(.semibold)
+                            .textSelection(.enabled)
+                            .accessibilityIdentifier("join_code_value")
+                        Spacer()
+                        ShareLink(
+                            item: String(
+                                localized:
+                                    "Join our Pacelli household with this code: \(joinCode.formatted)"
+                            )
+                        ) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                    Text(expiryLabel(joinCode))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Button("Generate a new code", action: regenerateCode)
+                    Button("Turn off the code", role: .destructive, action: revokeCode)
+                } else {
+                    Button(
+                        joinCode == nil
+                            ? String(localized: "Create a join code")
+                            : String(localized: "That code expired — create a new one"),
+                        action: regenerateCode
+                    )
+                    .accessibilityIdentifier("join_code_create")
+                }
+            } header: {
+                Text("Join code")
+            } footer: {
+                Text(
+                    "Read this code out or share it — whoever types it joins straight away, whatever they sign in with. Use this if they sign in with Apple and hide their email, because then nobody can invite that address. Codes last 7 days."
+                )
+            }
+
+            Section {
+                HStack(spacing: 12) {
+                    TextField("Code", text: $enteredCode)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .font(.system(.body, design: .monospaced))
+                        .accessibilityIdentifier("join_code_field")
+                        .onSubmit(joinWithCode)
+                    if joining {
+                        ProgressView()
+                    } else {
+                        Button("Join", action: joinWithCode)
+                            .disabled(
+                                JoinCodeService.normalize(enteredCode).count != 8)
+                            .accessibilityIdentifier("join_code_submit")
+                    }
+                }
+            } header: {
+                Text("Join another household")
+            } footer: {
+                Text("Got a code from someone else? Enter it here to switch to their household.")
+            }
         }
         .navigationTitle(savedName)
         .navigationBarTitleDisplayMode(.inline)
@@ -171,6 +240,10 @@ struct HouseholdView: View {
                     try await MembershipService.fetchPendingInvites(
                         householdId: householdId)
                 }) ?? []
+            joinCode =
+                (try? await withTimeout(15) {
+                    try await JoinCodeService.currentCode(householdId: householdId)
+                }) ?? nil
             loading = false
         } catch {
             loading = false
@@ -209,6 +282,69 @@ struct HouseholdView: View {
                 withAnimation { members.removeAll { $0.id == member.id } }
             } catch {
                 errorMessage = String(localized: "Couldn't remove the member.")
+            }
+        }
+    }
+
+    private func expiryLabel(_ code: JoinCodeService.JoinCode) -> String {
+        let days = max(
+            0,
+            Calendar.current.dateComponents(
+                [.day], from: Date(), to: code.expiresAt).day ?? 0)
+        return days <= 0
+            ? String(localized: "Expires today")
+            : String(localized: "Expires in \(days) days")
+    }
+
+    private func regenerateCode() {
+        guard !joinCodeBusy else { return }
+        joinCodeBusy = true
+        Task {
+            defer { joinCodeBusy = false }
+            do {
+                let householdId = current.household.id
+                joinCode = try await withTimeout(20) {
+                    try await JoinCodeService.regenerate(householdId: householdId)
+                }
+            } catch {
+                errorMessage = String(localized: "Couldn't create a join code.")
+            }
+        }
+    }
+
+    private func revokeCode() {
+        guard !joinCodeBusy else { return }
+        joinCodeBusy = true
+        Task {
+            defer { joinCodeBusy = false }
+            do {
+                let householdId = current.household.id
+                try await withTimeout(15) {
+                    try await JoinCodeService.revokeAll(householdId: householdId)
+                }
+                joinCode = nil
+            } catch {
+                errorMessage = String(localized: "Couldn't turn off the join code.")
+            }
+        }
+    }
+
+    private func joinWithCode() {
+        let code = JoinCodeService.normalize(enteredCode)
+        guard code.count == 8, !joining else { return }
+        joining = true
+        Task {
+            defer { joining = false }
+            do {
+                let joined = try await withTimeout(25) {
+                    try await JoinCodeService.join(code: code)
+                }
+                enteredCode = ""
+                await appState.switchToHousehold(joined)
+            } catch let error as JoinCodeService.JoinError {
+                errorMessage = error.errorDescription
+            } catch {
+                errorMessage = String(localized: "Couldn't join with that code.")
             }
         }
     }

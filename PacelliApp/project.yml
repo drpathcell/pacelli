@@ -50,9 +50,12 @@ targets:
         # update: data export, household rename, generic theme names.
         # 1.1.1 = household invite acceptance fix (rules denied the accept
         # batch; invitees silently landed in a fresh empty household).
+        # 1.2.0 = household join codes — SIWA "Hide My Email" users can never
+        # be reached by an email-addressed invite, so the household publishes
+        # a short bearer code instead.
         # Build numbers stay globally ascending (native floor lives in the
         # Fastfile native_build lane; CI overrides CURRENT_PROJECT_VERSION).
-        MARKETING_VERSION: "1.1.1"
+        MARKETING_VERSION: "1.2.0"
         CURRENT_PROJECT_VERSION: "35"
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Resources/PacelliApp.entitlements   # SIWA

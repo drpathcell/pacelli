@@ -84,6 +84,15 @@ actor KeyManager {
         return householdKey
     }
 
+    /// Caches a household key obtained out of band (join-code redemption),
+    /// so the first screen after joining decrypts without a Firestore round
+    /// trip against a key doc that may not have propagated yet.
+    func adoptHouseholdKey(_ key: String, for householdId: String) {
+        cachedKey = key
+        cachedHouseholdId = householdId
+        SecureStore.write("hk_\(householdId)", value: key)
+    }
+
     /// The currently-cached key (nil until a load/create succeeds).
     var householdKey: String? { cachedKey }
 

@@ -131,6 +131,24 @@ final class AppState {
         }
     }
 
+    /// Lands the session in a household the user just joined by code.
+    /// Passes `preferring:` explicitly — the joiner usually still holds a
+    /// member doc for their own auto-provisioned household, so "most recently
+    /// joined" alone would be a coin flip against clock skew.
+    func switchToHousehold(_ householdId: String) async {
+        phase = .working(String(localized: "Joining…"))
+        let joined = try? await withTimeout(20) {
+            await HouseholdService.getCurrentHousehold(preferring: householdId)
+        }
+        if let joined = joined ?? nil {
+            phase = .home(joined)
+        } else {
+            errorMessage = String(
+                localized: "You joined, but we couldn't open the household. Try reopening Pacelli.")
+            phase = .welcome
+        }
+    }
+
     /// Reflects a household rename in the session state so every view
     /// keyed off `phase` (e.g. the Tasks nav title) shows the new name.
     func householdRenamed(to name: String) {
