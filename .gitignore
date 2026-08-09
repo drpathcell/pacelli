@@ -90,3 +90,4 @@ AUDIT_*.md
 # Native app (XcodeGen generates the project; SPM build artifacts)
 PacelliApp/PacelliApp.xcodeproj/
 PacelliApp/Packages/PacelliKit/.build/
+__pycache__/
