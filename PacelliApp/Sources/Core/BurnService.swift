@@ -99,15 +99,12 @@ enum BurnService {
 
         // Same collection list as Dart _wipeHouseholdData (order irrelevant
         // within the batches; membership doc survives until the final batch).
-        let collections = [
-            "tasks", "checklists", "scratch_plans",
-            "task_categories", "task_attachments", "plan_attachments",
-            "household_invites", "inventory_items", "inventory_categories",
-            "inventory_locations", "inventory_logs", "inventory_attachments",
-            "manual_entries", "manual_categories", "feedback", "diagnostics",
-            "weekly_digests",
-            "subtasks", "checklist_items", "plan_entries", "plan_checklist_items",
-        ]
+        // Single source of truth, shared with HouseholdService.discardOwnEmptyHouseholds:
+        // "what burn deletes" and "what makes a household non-empty" must never
+        // drift apart, or a household could be discarded while still holding data.
+        let collections =
+            HouseholdService.householdContentCollections
+            + ["household_invites", "household_join_codes"]
         for collection in collections {
             let snap = try await db.collection(collection)
                 .whereField("household_id", isEqualTo: householdId)

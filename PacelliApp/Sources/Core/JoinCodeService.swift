@@ -157,17 +157,31 @@ enum JoinCodeService {
             let wrapped = data["encrypted_key"] as? String
         else { throw JoinError.notFound }
 
+        // Deliberately a QUERY, not a document get. `household_members` read is
+        // gated on `resource.data.user_id == request.auth.uid`, and for a get on
+        // a document that does not exist `resource` is null — dereferencing it
+        // is an evaluation error, i.e. PERMISSION_DENIED rather than "no such
+        // doc". A query filtered on user_id is provably safe and returns an
+        // empty set instead of throwing. (Cost this an E2E run on 2026-08-09.)
         let existing = try await db.collection("household_members")
-            .document("\(user.uid)_\(householdId)").getDocument()
-        if existing.exists { throw JoinError.alreadyMember }
+            .whereField("user_id", isEqualTo: user.uid)
+            .whereField("household_id", isEqualTo: householdId)
+            .limit(to: 1)
+            .getDocuments()
+        if !existing.documents.isEmpty { throw JoinError.alreadyMember }
 
         guard
             let householdKey = try? PacelliCrypto.decryptKeyForUser(
                 wrapped, userKey: PacelliCrypto.deriveUserKey(uid: keyMaterial(for: code)))
         else { throw JoinError.keyUnwrapFailed }
 
+        // `joined_via` is the server-verified proof of authorisation: the
+        // rules re-read this code doc and check it names this household and
+        // has not expired. It is only readable by household members, who can
+        // list the code anyway, so it leaks nothing.
         let member = HouseholdMember(
-            userId: user.uid, householdId: householdId, role: "member", joinedAt: Date())
+            userId: user.uid, householdId: householdId, role: "member", joinedAt: Date(),
+            joinedVia: code)
         let rewrapped = try PacelliCrypto.encryptKeyForUser(
             householdKey, userKey: PacelliCrypto.deriveUserKey(uid: user.uid))
 

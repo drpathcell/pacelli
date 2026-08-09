@@ -19,6 +19,43 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
+    // ── Helper: proof that a membership was actually authorised ──
+    // `joined_via` names the household_invites or household_join_codes doc
+    // that let this user in, and we verify it server-side. Without this,
+    // "self-join only" still means anyone who learns a household ID can add
+    // themselves to it. Ordered cheapest-first; `||` short-circuits, so the
+    // common paths stay well inside the per-request document-access limit.
+    function invitedByEmail(householdId, ref) {
+      return exists(/databases/$(database)/documents/household_invites/$(ref))
+        && get(/databases/$(database)/documents/household_invites/$(ref))
+             .data.household_id == householdId
+        && get(/databases/$(database)/documents/household_invites/$(ref))
+             .data.invited_email == request.auth.token.email;
+    }
+
+    function holdsJoinCode(householdId, ref) {
+      return exists(/databases/$(database)/documents/household_join_codes/$(ref))
+        && get(/databases/$(database)/documents/household_join_codes/$(ref))
+             .data.household_id == householdId
+        && get(/databases/$(database)/documents/household_join_codes/$(ref))
+             .data.expires_at > request.time;
+    }
+
+    function joinAuthorised(householdId) {
+      // Founding: createHousehold writes the household doc and the member doc
+      // in ONE batch, and rules never see a batch's own uncommitted writes —
+      // so at evaluation time the household genuinely does not exist yet.
+      // Once it is committed this branch is closed to everyone, and the IDs
+      // are UUIDs, so it cannot be squatted ahead of time.
+      return !exists(/databases/$(database)/documents/households/$(householdId))
+        || (('joined_via' in request.resource.data)
+            && request.resource.data.joined_via is string
+            && (invitedByEmail(householdId, request.resource.data.joined_via)
+                || holdsJoinCode(householdId, request.resource.data.joined_via)))
+        || get(/databases/$(database)/documents/households/$(householdId))
+             .data.created_by == request.auth.uid;
+    }
+
     // ── Profiles ─────────────────────────────────────────────────
     // Any authenticated user can read profiles (needed for household
     // member display). Users can only write their own profile.
@@ -33,7 +70,10 @@ service cloud.firestore {
     // Any authenticated user can create a household.
     // Only members can read or update.
     match /households/{householdId} {
-      allow create: if isAuth();
+      // created_by must be the caller: joinAuthorised()'s founder branch trusts
+      // this field, so a household attributed to someone else would hand them a
+      // way in.
+      allow create: if isAuth() && request.resource.data.created_by == request.auth.uid;
       allow read, update: if isMember(householdId);
       allow delete: if isMember(householdId);
     }
@@ -48,9 +88,13 @@ service cloud.firestore {
         resource.data.user_id == request.auth.uid ||
         isMember(resource.data.household_id)
       );
-      // Self-join only. This used to be a bare `isAuth()`, which let any
-      // signed-in user mint a membership for ANYONE in any household.
-      allow create: if isAuth() && request.resource.data.user_id == request.auth.uid;
+      // Self-join only, AND the join has to have been authorised: a bare
+      // `isAuth()` here let any signed-in user mint a membership for ANYONE
+      // in any household; self-only alone still let anyone who learned a
+      // household ID walk in.
+      allow create: if isAuth()
+        && request.resource.data.user_id == request.auth.uid
+        && joinAuthorised(request.resource.data.household_id);
       allow update, delete: if isAuth() && (
         resource.data.user_id == request.auth.uid ||
         isMember(resource.data.household_id)

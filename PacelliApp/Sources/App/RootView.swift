@@ -40,6 +40,7 @@ struct WelcomeView: View {
     let appState: AppState
 
     @State private var showSignIn = false
+    @State private var showJoin = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -83,10 +84,93 @@ struct WelcomeView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
+
+            // A joiner's first run. Without this they sign in, get an empty
+            // auto-provisioned household, and have to go hunting in Household
+            // settings for the code field — and with Sign in with Apple hiding
+            // their email, an emailed invite could never have reached them.
+            Button {
+                showJoin = true
+            } label: {
+                Text("I have a join code")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.large)
+            .accessibilityIdentifier("welcome_join_code")
         }
         .padding(24)
         .sheet(isPresented: $showSignIn) {
             AuthView(mode: .signIn, appState: appState)
+        }
+        .sheet(isPresented: $showJoin) {
+            JoinHouseholdView(appState: appState)
+        }
+    }
+}
+
+/// Redeem a join code with no account and no setup — the joiner's entry
+/// point. Signing in is not required: `AppState.joinWithCode` creates an
+/// anonymous session if there isn't one, matching the guest-first invariant.
+struct JoinHouseholdView: View {
+    let appState: AppState
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var code = ""
+    @State private var joining = false
+
+    private var normalized: String { JoinCodeService.normalize(code) }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("K7QP-4M2X", text: $code)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .font(.system(.title3, design: .monospaced))
+                        .accessibilityIdentifier("join_sheet_field")
+                        .onSubmit(join)
+                } header: {
+                    Text("Join code")
+                } footer: {
+                    Text(
+                        "Ask someone already in the household to open Household → Join code. You don't need an account — you can add one later."
+                    )
+                }
+
+                Section {
+                    Button(action: join) {
+                        if joining {
+                            ProgressView()
+                        } else {
+                            Text("Join household")
+                        }
+                    }
+                    .disabled(normalized.count != 8 || joining)
+                    .accessibilityIdentifier("join_sheet_submit")
+                }
+            }
+            .navigationTitle("Join a household")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func join() {
+        guard normalized.count == 8, !joining else { return }
+        joining = true
+        Task {
+            defer { joining = false }
+            let joined = await appState.joinWithCode(normalized)
+            // On failure AppState puts the message on the Welcome screen, so
+            // dismiss either way rather than showing it in two places.
+            dismiss()
+            _ = joined
         }
     }
 }

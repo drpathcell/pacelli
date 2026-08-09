@@ -44,14 +44,24 @@ public struct HouseholdMember: Equatable, Sendable {
     public let householdId: String
     public var role: String  // "admin" | "member"
     public let joinedAt: Date?
+    /// Document ID of the `household_invites` or `household_join_codes` doc
+    /// that authorised this membership. Security rules require it on create
+    /// (except when founding a household) and verify it server-side — it is
+    /// what stops any signed-in user from adding themselves to a household
+    /// whose ID they happen to know. Nil for founders and legacy docs.
+    public let joinedVia: String?
 
     public var documentID: String { "\(userId)_\(householdId)" }
 
-    public init(userId: String, householdId: String, role: String, joinedAt: Date?) {
+    public init(
+        userId: String, householdId: String, role: String, joinedAt: Date?,
+        joinedVia: String? = nil
+    ) {
         self.userId = userId
         self.householdId = householdId
         self.role = role
         self.joinedAt = joinedAt
+        self.joinedVia = joinedVia
     }
 
     public init?(map: [String: Any]) {
@@ -60,7 +70,8 @@ public struct HouseholdMember: Equatable, Sendable {
             userId: userId,
             householdId: map["household_id"] as? String ?? "",
             role: map["role"] as? String ?? "member",
-            joinedAt: DartISO8601.date(from: map["joined_at"] as? String))
+            joinedAt: DartISO8601.date(from: map["joined_at"] as? String),
+            joinedVia: map["joined_via"] as? String)
     }
 
     public func toMap() -> [String: Any] {
@@ -70,6 +81,7 @@ public struct HouseholdMember: Equatable, Sendable {
             "role": role,
         ]
         if let joinedAt { map["joined_at"] = DartISO8601.string(from: joinedAt) }
+        if let joinedVia { map["joined_via"] = joinedVia }
         return map
     }
 }

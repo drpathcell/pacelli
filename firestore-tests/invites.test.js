@@ -68,7 +68,12 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await setDoc(doc(db, 'households', HH), { id: HH, name: 'enc:blob' });
+    await setDoc(doc(db, 'households', HH), {
+      id: HH,
+      name: 'enc:blob',
+      created_by: OWNER_UID,
+      created_at: '2026-08-01T10:00:00.000Z',
+    });
     await setDoc(doc(db, 'household_members', `${OWNER_UID}_${HH}`), {
       user_id: OWNER_UID,
       household_id: HH,
@@ -113,6 +118,7 @@ function acceptBatch(db) {
     household_id: HH,
     role: 'member',
     joined_at: '2026-08-09T11:00:00.000Z',
+    joined_via: INVITE_ID,
   });
   batch.update(doc(db, 'household_invites', INVITE_ID), { status: 'accepted' });
   return batch.commit();
@@ -150,6 +156,19 @@ describe('household_invites — acceptance (the shipped batch)', () => {
   test('invitee CAN create their own member doc on its own', async () => {
     const db = invitee();
     await assertSucceeds(
+      setDoc(doc(db, 'household_members', `${INVITEE_UID}_${HH}`), {
+        user_id: INVITEE_UID,
+        household_id: HH,
+        role: 'member',
+        joined_at: '2026-08-09T11:00:00.000Z',
+        joined_via: INVITE_ID,
+      })
+    );
+  });
+
+  test('invitee CANNOT create a member doc WITHOUT naming the invite', async () => {
+    const db = invitee();
+    await assertFails(
       setDoc(doc(db, 'household_members', `${INVITEE_UID}_${HH}`), {
         user_id: INVITEE_UID,
         household_id: HH,

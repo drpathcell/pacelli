@@ -53,6 +53,107 @@ enum HouseholdService {
             role: "admin")
     }
 
+
+    /// Content collections that make a household non-empty. Same list as
+    /// `BurnService.wipeHousehold` — if a household-scoped collection is added,
+    /// it must be added in both places or an "empty" household could still
+    /// hold data when it is discarded.
+    static let householdContentCollections = [
+        "tasks", "checklists", "scratch_plans",
+        "task_categories", "task_attachments", "plan_attachments",
+        "inventory_items", "inventory_categories",
+        "inventory_locations", "inventory_logs", "inventory_attachments",
+        "manual_entries", "manual_categories", "feedback", "diagnostics",
+        "weekly_digests",
+        "subtasks", "checklist_items", "plan_entries", "plan_checklist_items",
+    ]
+
+    /// Deletes the caller's own auto-provisioned households that are provably
+    /// empty, keeping `keep`. Returns how many were discarded.
+    ///
+    /// Someone who used the app before being invited is left holding a second,
+    /// empty household forever; they accumulate, and every extra membership is
+    /// another way for `getCurrentHousehold` to pick wrong. Deliberately
+    /// strict: it discards only a household the caller created, with no other
+    /// member, and zero documents in EVERY content collection. Any doubt and
+    /// it leaves the household alone. Non-fatal throughout — failing to tidy
+    /// up must never break a successful join.
+    @discardableResult
+    static func discardOwnEmptyHouseholds(except keep: String) async -> Int {
+        guard let uid else { return 0 }
+        var discarded = 0
+        do {
+            let memberships = try await db.collection("household_members")
+                .whereField("user_id", isEqualTo: uid)
+                .getDocuments()
+            for memberDoc in memberships.documents {
+                guard let hid = memberDoc.data()["household_id"] as? String,
+                      hid != keep, !hid.isEmpty
+                else { continue }
+                if await isDiscardable(hid, uid: uid) {
+                    await discard(hid, uid: uid)
+                    discarded += 1
+                }
+            }
+        } catch {
+            print("[HouseholdService] discardOwnEmptyHouseholds failed: \(error)")
+        }
+        return discarded
+    }
+
+    private static func isDiscardable(_ householdId: String, uid: String) async -> Bool {
+        do {
+            let household = try await db.collection("households")
+                .document(householdId).getDocument()
+            // Never touch a household someone else created.
+            guard household.exists,
+                  household.data()?["created_by"] as? String == uid
+            else { return false }
+
+            let members = try await db.collection("household_members")
+                .whereField("household_id", isEqualTo: householdId)
+                .getDocuments()
+            guard members.documents.count == 1 else { return false }
+
+            // A pending invite means somebody is expected — not abandoned.
+            let invites = try await db.collection("household_invites")
+                .whereField("household_id", isEqualTo: householdId)
+                .limit(to: 1)
+                .getDocuments()
+            guard invites.documents.isEmpty else { return false }
+
+            for collection in householdContentCollections {
+                let snap = try await db.collection(collection)
+                    .whereField("household_id", isEqualTo: householdId)
+                    .limit(to: 1)
+                    .getDocuments()
+                guard snap.documents.isEmpty else { return false }
+            }
+            return true
+        } catch {
+            print("[HouseholdService] isDiscardable(\(householdId)) failed: \(error)")
+            return false
+        }
+    }
+
+    private static func discard(_ householdId: String, uid: String) async {
+        do {
+            // Join codes first: they are the only thing that could let someone
+            // else walk into a household we are about to delete.
+            try? await JoinCodeService.revokeAll(householdId: householdId)
+            await KeyManager.shared.deleteKeyFromFirestore(householdId)
+            let batch = db.batch()
+            batch.deleteDocument(
+                db.collection("household_members").document("\(uid)_\(householdId)"))
+            batch.deleteDocument(db.collection("households").document(householdId))
+            try await batch.commit()
+            SecureStore.delete("hk_\(householdId)")
+            print("[HouseholdService] discarded empty household \(householdId)")
+        } catch {
+            print("[HouseholdService] discard(\(householdId)) failed: \(error)")
+        }
+    }
+
     /// Reads the Keychain-cached profile name, encrypts it with the
     /// household key, writes it to `profiles/{uid}`. Non-fatal on failure.
     private static func encryptProfileName(uid: String, householdKey: String) async {

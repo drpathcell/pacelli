@@ -73,6 +73,12 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
+    await setDoc(doc(db, 'households', HH), {
+      id: HH,
+      name: 'enc:blob',
+      created_by: OWNER_UID,
+      created_at: '2026-08-01T10:00:00.000Z',
+    });
     await setDoc(doc(db, 'household_members', `${OWNER_UID}_${HH}`), {
       user_id: OWNER_UID,
       household_id: HH,
@@ -227,6 +233,7 @@ describe('join redemption — the shipped batch', () => {
       household_id: HH,
       role: 'member',
       joined_at: '2026-08-09T12:00:00.000Z',
+      joined_via: CODE,
     });
     batch.set(doc(db, 'household_keys', 'joiner-key'), {
       household_id: HH,
@@ -240,13 +247,14 @@ describe('join redemption — the shipped batch', () => {
 });
 
 describe('household_members — self-join only', () => {
-  test('a user CAN create their own member doc', async () => {
+  test('a user CAN create their own member doc when a code authorises it', async () => {
     await assertSucceeds(
       setDoc(doc(joiner(), 'household_members', `${JOINER_UID}_${HH}`), {
         user_id: JOINER_UID,
         household_id: HH,
         role: 'member',
         joined_at: '2026-08-09T12:00:00.000Z',
+        joined_via: CODE,
       })
     );
   });
@@ -258,6 +266,7 @@ describe('household_members — self-join only', () => {
         household_id: HH,
         role: 'member',
         joined_at: '2026-08-09T12:00:00.000Z',
+        joined_via: CODE,
       })
     );
   });
@@ -269,6 +278,7 @@ describe('household_members — self-join only', () => {
         household_id: HH,
         role: 'admin',
         joined_at: '2026-08-09T12:00:00.000Z',
+        joined_via: CODE,
       })
     );
   });

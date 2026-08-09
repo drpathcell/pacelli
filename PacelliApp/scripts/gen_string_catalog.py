@@ -310,6 +310,64 @@ TRANSLATIONS = {
     "Couldn't export your data. Please check your connection and try again.": (
         "No se pudieron exportar tus datos. Comprueba tu conexión e inténtalo de nuevo.",
         "Impossibile esportare i tuoi dati. Controlla la connessione e riprova."),
+    # ── Join codes (1.2.0) ────────────────────────────────────────────
+    "I have a join code": ("Tengo un código de acceso", "Ho un codice di accesso"),
+    "Join a household": ("Unirse a un hogar", "Unisciti a una casa"),
+    "Join another household": ("Unirse a otro hogar", "Unisciti a un'altra casa"),
+    "Join household": ("Unirse al hogar", "Unisciti alla casa"),
+    "Join code": ("Código de acceso", "Codice di accesso"),
+    "Join": ("Unirse", "Unisciti"),
+    "Joining…": ("Uniéndose…", "Accesso in corso…"),
+    "Code": ("Código", "Codice"),
+    "Create a join code": ("Crear un código de acceso", "Crea un codice di accesso"),
+    "Generate a new code": ("Generar un código nuevo", "Genera un nuovo codice"),
+    "That code expired — create a new one": (
+        "Ese código caducó — crea uno nuevo",
+        "Quel codice è scaduto — creane uno nuovo"),
+    "Turn off the code": ("Desactivar el código", "Disattiva il codice"),
+    "Expires today": ("Caduca hoy", "Scade oggi"),
+    "Expires in %lld days": ("Caduca en %lld días", "Scade tra %lld giorni"),
+    "Read this code out or share it — whoever types it joins straight away, whatever they sign in with. Use this if they sign in with Apple and hide their email, because then nobody can invite that address. Codes last 7 days.": (
+        "Lee este código en voz alta o compártelo — quien lo escriba entra al instante, sea cual sea su forma de iniciar sesión. Úsalo si inician sesión con Apple y ocultan su correo, porque entonces nadie puede invitar esa dirección. Los códigos duran 7 días.",
+        "Leggi questo codice ad alta voce o condividilo — chi lo digita entra subito, qualunque sia il suo metodo di accesso. Usalo se accedono con Apple nascondendo l'email, perché in quel caso nessuno può invitare quell'indirizzo. I codici durano 7 giorni."),
+    "Got a code from someone else? Enter it here to switch to their household.": (
+        "¿Alguien te dio un código? Escríbelo aquí para cambiarte a su hogar.",
+        "Hai ricevuto un codice? Inseriscilo qui per passare alla loro casa."),
+    "Ask someone already in the household to open Household → Join code. You don't need an account — you can add one later.": (
+        "Pide a alguien que ya esté en el hogar que abra Hogar → Código de acceso. No necesitas una cuenta — puedes crearla más tarde.",
+        "Chiedi a chi è già nella casa di aprire Casa → Codice di accesso. Non serve un account — puoi crearlo più tardi."),
+    "Join our Pacelli household with this code: %@": (
+        "Únete a nuestro hogar en Pacelli con este código: %@",
+        "Unisciti alla nostra casa su Pacelli con questo codice: %@"),
+    "Couldn't create a join code.": (
+        "No se pudo crear el código de acceso.", "Impossibile creare il codice di accesso."),
+    "Couldn't turn off the join code.": (
+        "No se pudo desactivar el código de acceso.",
+        "Impossibile disattivare il codice di accesso."),
+    "Couldn't join with that code.": (
+        "No se pudo unir con ese código.", "Impossibile unirsi con quel codice."),
+    "Couldn't join with that code. Check it and try again.": (
+        "No se pudo unir con ese código. Compruébalo e inténtalo de nuevo.",
+        "Impossibile unirsi con quel codice. Controllalo e riprova."),
+    "That code isn't valid any more. Ask for a new one — codes expire after 7 days.": (
+        "Ese código ya no es válido. Pide uno nuevo — los códigos caducan a los 7 días.",
+        "Quel codice non è più valido. Chiedine uno nuovo — i codici scadono dopo 7 giorni."),
+    "That code didn't unlock the household. Ask for a freshly generated one.": (
+        "Ese código no desbloqueó el hogar. Pide uno recién generado.",
+        "Quel codice non ha sbloccato la casa. Chiedine uno appena generato."),
+    "You're already a member of that household.": (
+        "Ya eres miembro de ese hogar.", "Fai già parte di quella casa."),
+    "You joined, but we couldn't open the household. Try reopening Pacelli.": (
+        "Te uniste, pero no pudimos abrir el hogar. Prueba a reabrir Pacelli.",
+        "Ti sei unito, ma non siamo riusciti ad aprire la casa. Prova a riaprire Pacelli."),
+    "There's an invite waiting for you, but we couldn't join that household. Ask whoever invited you for a join code instead.": (
+        "Hay una invitación esperándote, pero no pudimos unirte a ese hogar. Pide a quien te invitó un código de acceso.",
+        "C'è un invito che ti aspetta, ma non siamo riusciti a unirti a quella casa. Chiedi a chi ti ha invitato un codice di accesso."),
+    "You've been invited to a household, but we couldn't join it. Ask whoever invited you for a join code and use “I have a join code” below.": (
+        "Te han invitado a un hogar, pero no pudimos unirte. Pide a quien te invitó un código de acceso y usa «Tengo un código de acceso» abajo.",
+        "Sei stato invitato in una casa, ma non siamo riusciti a unirti. Chiedi a chi ti ha invitato un codice di accesso e usa «Ho un codice di accesso» qui sotto."),
+    # Sample code shown as a field placeholder — identical in every locale.
+    "K7QP-4M2X": ("K7QP-4M2X", "K7QP-4M2X"),
     # Brand names / identical across locales:
     "Pacelli": ("Pacelli", "Pacelli"),
 }

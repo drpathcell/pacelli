@@ -44,14 +44,25 @@ final class AppState {
         }
         phase = .working(String(localized: "Loading your home…"))
         do {
-            let current = try await withTimeout(15) {
+            let outcome = try await withTimeout(15) {
                 // An invite can land AFTER this session was created (the common
                 // case: install, tap through as guest or sign up, get invited
                 // later). postAuth only runs at sign-in, so without this check
                 // an already-signed-in user never joins. No-op — and no
                 // Firestore round trip — for anonymous sessions.
-                let joined = await MembershipService.checkAndAcceptInvite()
-                return await HouseholdService.getCurrentHousehold(preferring: joined)
+                let invite = await MembershipService.checkAndAcceptInvite()
+                let preferred: String? = if case .joined(let id) = invite { id } else { nil }
+                return (
+                    invite,
+                    await HouseholdService.getCurrentHousehold(preferring: preferred)
+                )
+            }
+            let current = outcome.1
+            if case .failed = outcome.0 {
+                errorMessage = String(
+                    localized:
+                        "There's an invite waiting for you, but we couldn't join that household. Ask whoever invited you for a join code instead."
+                )
             }
             if let current {
                 phase = .home(current)
@@ -107,27 +118,91 @@ final class AppState {
         errorMessage = nil
         phase = .working(String(localized: "Loading your home…"))
         do {
-            let current = try await withTimeout(30) {
+            let outcome = try await withTimeout(30) {
                 // A pending email invite takes priority over auto-provisioning
                 // a fresh household (invite-acceptance port + key handshake).
-                if let invitedTo = await MembershipService.checkAndAcceptInvite(),
-                   let joined = await HouseholdService.getCurrentHousehold(
-                       preferring: invitedTo)
+                let invite = await MembershipService.checkAndAcceptInvite()
+                if case .joined(let invitedTo) = invite,
+                    let joined = await HouseholdService.getCurrentHousehold(
+                        preferring: invitedTo)
                 {
-                    return joined
+                    return (invite, joined)
                 }
                 if let existing = await HouseholdService.getCurrentHousehold() {
-                    return existing
+                    return (invite, existing)
                 }
-                return try await HouseholdService.createHousehold(
-                    named: String(localized: "My Household"))
+                // An invite we KNOW exists but couldn't accept must not be
+                // papered over with a fresh empty household — that is exactly
+                // how the 1.1.0 failure stayed invisible for a week.
+                if case .failed = invite {
+                    throw MembershipService.InviteJoinFailed()
+                }
+                return (
+                    invite,
+                    try await HouseholdService.createHousehold(
+                        named: String(localized: "My Household"))
+                )
             }
-            phase = .home(current)
+            if case .failed = outcome.0 {
+                errorMessage = String(
+                    localized:
+                        "There's an invite waiting for you, but we couldn't join that household. Ask whoever invited you for a join code instead."
+                )
+            }
+            phase = .home(outcome.1)
+        } catch is MembershipService.InviteJoinFailed {
+            print("[AppState] postAuth: invite found but join denied")
+            errorMessage = String(
+                localized:
+                    "You've been invited to a household, but we couldn't join it. Ask whoever invited you for a join code and use “I have a join code” below."
+            )
+            phase = .welcome
         } catch {
             print("[AppState] postAuth failed: \(error)")
             errorMessage = String(
                 localized: "Signed in, but we couldn't load your home. Please try again.")
             phase = .welcome
+        }
+    }
+
+    /// First-run join: redeem a code with no account and no setup.
+    ///
+    /// Guest-first (Guideline 5.1.1(v)) applies here too — a joiner should not
+    /// have to make an account to accept a household invitation. If there is
+    /// no session we sign in anonymously and redeem straight away, and
+    /// crucially we do NOT auto-provision a household first, so a joiner never
+    /// creates the orphan empty household that used to be left behind.
+    func joinWithCode(_ code: String) async -> String? {
+        errorMessage = nil
+        let hadSession = Auth.auth().currentUser != nil
+        phase = .working(String(localized: "Joining…"))
+        do {
+            if !hadSession { try await Auth.auth().signInAnonymously() }
+            let joined = try await withTimeout(25) {
+                try await JoinCodeService.join(code: code)
+            }
+            await discardEmptyHouseholdsAfterJoining(joined)
+            await switchToHousehold(joined)
+            return joined
+        } catch {
+            print("[AppState] joinWithCode failed: \(error)")
+            // Don't strand a session we only created to redeem a code.
+            if !hadSession { await resetSession() }
+            errorMessage =
+                (error as? JoinCodeService.JoinError)?.errorDescription
+                ?? String(localized: "Couldn't join with that code. Check it and try again.")
+            phase = .welcome
+            return nil
+        }
+    }
+
+    /// After joining, drop the household this user was parked in if it was
+    /// their own auto-provisioned one and is provably empty. Strictly
+    /// guarded and non-fatal — see `HouseholdService.discardIfEmpty`.
+    private func discardEmptyHouseholdsAfterJoining(_ keep: String) async {
+        let discarded = await HouseholdService.discardOwnEmptyHouseholds(except: keep)
+        if discarded > 0 {
+            print("[AppState] discarded \(discarded) empty household(s) after joining")
         }
     }
 

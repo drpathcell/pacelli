@@ -20,6 +20,10 @@ enum MembershipService {
     private static var db: Firestore { Firestore.firestore() }
     private static var uid: String? { Auth.auth().currentUser?.uid }
 
+    /// Thrown when a pending invite was found but could not be accepted, so
+    /// callers can refuse to auto-provision a fresh household over the top.
+    struct InviteJoinFailed: Error {}
+
     struct Member: Identifiable, Sendable {
         let id: String  // member doc id: {uid}_{householdId}
         let userId: String
@@ -124,8 +128,17 @@ enum MembershipService {
         try await db.collection("household_invites").document(invite.id).delete()
     }
 
+    /// What a pending-invite check found. Distinguishing `none` from `failed`
+    /// is the whole point: 1.1.0 collapsed both into `false`, so a permission
+    /// error looked exactly like "no invite" and the caller quietly
+    /// auto-provisioned a fresh household over the top of it.
+    enum InviteOutcome: Sendable {
+        case none
+        case joined(String)
+        case failed
+    }
+
     /// Port of Dart `checkAndAcceptInvite` + the native key handshake.
-    /// Returns the joined household id when an invite was accepted, else nil.
     /// Safe (and cheap) to call for any signed-in user: anonymous/guest
     /// sessions have no email and bail before touching Firestore.
     ///
@@ -134,9 +147,10 @@ enum MembershipService {
     /// cannot be gated on `isMember()` — firestore.rules carries an explicit
     /// self-acceptance clause (pending -> accepted, status only). Locked by
     /// firestore-tests/invites.test.js.
-    static func checkAndAcceptInvite() async -> String? {
+    static func checkAndAcceptInvite() async -> InviteOutcome {
         guard let user = Auth.auth().currentUser, let email = user.email?.lowercased()
-        else { return nil }
+        else { return .none }
+        var sawInvite = false
         do {
             let inviteSnap = try await db.collection("household_invites")
                 .whereField("invited_email", isEqualTo: email)
@@ -145,13 +159,17 @@ enum MembershipService {
                 .getDocuments()
             guard let inviteDoc = inviteSnap.documents.first,
                   let householdId = inviteDoc.data()["household_id"] as? String
-            else { return nil }
+            else { return .none }
+            sawInvite = true
 
             // Member doc + invite status in one batch (Dart parity).
             let batch = db.batch()
+            // `joined_via` is the server-verified proof that this membership
+            // was authorised — firestore.rules re-reads this invite doc and
+            // checks it names this household and this caller's email.
             let member = HouseholdMember(
                 userId: user.uid, householdId: householdId, role: "member",
-                joinedAt: Date())
+                joinedAt: Date(), joinedVia: inviteDoc.documentID)
             batch.setData(
                 member.toMap(),
                 forDocument: db.collection("household_members")
@@ -180,10 +198,10 @@ enum MembershipService {
             } else {
                 print("[Membership] legacy invite without key — content stays encrypted until a member shares the key")
             }
-            return householdId
+            return .joined(householdId)
         } catch {
             print("[Membership] checkAndAcceptInvite failed: \(error)")
-            return nil
+            return sawInvite ? .failed : .none
         }
     }
 }

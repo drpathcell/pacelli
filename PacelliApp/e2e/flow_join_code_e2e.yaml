@@ -1,0 +1,119 @@
+appId: com.pacelli.pacelli
+---
+# Join code E2E — the whole loop on one simulator, two real accounts.
+#
+# Account A (guest) creates a household, seeds a task, mints a join code.
+# We copy the code off the screen, sign A out, and let the Welcome-screen
+# join path create account B and redeem it.
+#
+# The proof is the LAST assertion: account B sees account A's task title in
+# plaintext. That can only happen if the member doc, the security-rules
+# authorisation, and the household-key unwrap/re-wrap all worked — nothing
+# short of the full chain produces a decrypted title for a different uid.
+#
+# Runs against real Firebase (pacelli-35621) with throwaway anonymous
+# accounts. Ends by burning account B's data, which takes the shared
+# household with it.
+
+- stopApp
+- launchApp
+
+# ── Account A: guest session with a household ─────────────────────────
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+# Seed a task whose title must survive the key handshake.
+- runFlow:
+    when:
+      notVisible: "Fix the fence"
+    commands:
+      - tapOn: "New task"
+      - inputText: "Fix the fence"
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: "Fix the fence"
+          timeout: 20000
+      - hideKeyboard
+
+# ── Mint a join code ──────────────────────────────────────────────────
+- tapOn: "Settings"
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible: "Admin"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Join code"
+    centerElement: true
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: "join_code_create"
+    commands:
+      - tapOn:
+          id: "join_code_create"
+- extendedWaitUntil:
+    visible:
+      id: "join_code_value"
+    timeout: 25000
+- takeScreenshot: /tmp/pacelli_join_01_code
+- copyTextFrom:
+    id: "join_code_value"
+
+# ── Sign account A out ────────────────────────────────────────────────
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "Account"
+    timeout: 15000
+- tapOn: "Guest — create an account"
+- extendedWaitUntil:
+    visible: "Sign out"
+    timeout: 15000
+- tapOn: "Sign out"
+- extendedWaitUntil:
+    visible: "I have a join code"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_join_02_welcome
+
+# ── Account B: redeem from the Welcome screen, no account required ────
+- tapOn:
+    id: "welcome_join_code"
+- extendedWaitUntil:
+    visible:
+      id: "join_sheet_field"
+    timeout: 15000
+- tapOn:
+    id: "join_sheet_field"
+- inputText: "${maestro.copiedText}"
+- hideKeyboard
+- tapOn:
+    id: "join_sheet_submit"
+
+# THE assertion: account A's encrypted task title, decrypted by account B.
+- extendedWaitUntil:
+    visible: "Fix the fence"
+    timeout: 60000
+- takeScreenshot: /tmp/pacelli_join_03_joined
+- assertVisible: "Fix the fence"
+- assertNotVisible: "[encrypted]"
+
+# ── Cleanup: burn the throwaway household ─────────────────────────────
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Burn all data"
+    centerElement: true
+    timeout: 20000
+- tapOn: "Burn all data"
+- extendedWaitUntil:
+    visible: "Before you burn"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_join_04_burn

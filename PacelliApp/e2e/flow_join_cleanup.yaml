@@ -1,0 +1,31 @@
+appId: com.pacelli.pacelli
+---
+# Cleanup for flow_join_code_e2e: burns the throwaway household created
+# against real Firebase so prod isn't left holding test data.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 45000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Burn all data"
+    centerElement: true
+    timeout: 20000
+- tapOn: "Burn all data"
+- extendedWaitUntil:
+    visible: "Before you burn"
+    timeout: 20000
+# The screen's own destructive button (the Settings row shares its label,
+# so tap by id), then the confirmation alert.
+- tapOn:
+    id: "burnButton"
+- extendedWaitUntil:
+    visible: "Burn all data and delete my account"
+    timeout: 15000
+- tapOn: "Burn all data and delete my account"
+- extendedWaitUntil:
+    visible: "Continue as guest"
+    timeout: 90000
+- takeScreenshot: /tmp/pacelli_join_05_burned
