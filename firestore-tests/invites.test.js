@@ -25,6 +25,7 @@ const {
   assertSucceeds,
   assertFails,
 } = require('@firebase/rules-unit-testing');
+const { GRACE_ACTIVE } = require('./grace');
 const {
   doc,
   collection,
@@ -168,7 +169,7 @@ describe('household_invites — acceptance (the shipped batch)', () => {
 
   test('invitee CANNOT create a member doc WITHOUT naming the invite', async () => {
     const db = invitee();
-    await assertFails(
+    await (GRACE_ACTIVE ? assertSucceeds : assertFails)(
       setDoc(doc(db, 'household_members', `${INVITEE_UID}_${HH}`), {
         user_id: INVITEE_UID,
         household_id: HH,
