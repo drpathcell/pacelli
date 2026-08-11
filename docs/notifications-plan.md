@@ -32,7 +32,7 @@ reason this design is safe to ship.
 
 ## Phases
 
-### Phase A — local notifications (unblocked, no Apple steps)
+### Phase A — local notifications — DONE (1.3.0, build 39)
 
 Delivers the core value on its own and ships even if push slips.
 
@@ -51,7 +51,7 @@ reminders usable. Either add it, or drop the "at due" option entirely.
 **iOS allows ~64 pending local notifications per app.** Schedule the nearest N
 by due date and top up on launch and on every mutation.
 
-### Phase B — push transport (blocked on the APNs key)
+### Phase B — push transport — DONE (2026-08-11, untagged on main)
 
 - Push Notifications capability on the App ID; `aps-environment` entitlement;
   match profiles regenerated.
@@ -80,6 +80,11 @@ by due date and top up on launch and on every mutation.
   package, so `PacelliCrypto` is reusable as-is — no crypto is reimplemented).
 - Extension decrypts `enc_title`, rewrites `bestAttemptContent.body`, falls
   back to the generic body on any failure or timeout.
+
+## What only Juan could do — DONE 2026-08-11
+
+APNs key `TJ273J69AU` created (Sandbox & Production, Team Scoped) and uploaded
+to both Firebase slots. See `docs/apns-key-runbook.md`. Original notes below.
 
 ## What only Juan can do
 
@@ -113,7 +118,18 @@ entitlements, code, functions, rules, tests — is scriptable from here.
   device token**, or a wiped account keeps buzzing. Add it to the burn
   checklist and to the audit.
 
-## Gates before shipping 1.3.0
+## Gates — status
+
+- [x] Rules tests for `device_tokens` (self-only, not listable) — 14 tests.
+- [x] E2E: the other person adds a task, this device buzzes —
+      `scripts/check_push_e2e.sh`, which asserts the opt-in negative first.
+- [x] pacelli-security-audit addendum — `AUDIT_2026-08-11_push_addendum.md`.
+- [ ] Phase C: NSE decrypt test + its own audit addendum (access group).
+
+Note: the payload round-trip test named below is superseded — the delivered
+payload was inspected directly and carried `enc_title` verbatim.
+
+## Original gates before shipping 1.3.0
 
 - Rules tests for `device_tokens` (self-only, not listable).
 - A PacelliKit test that a payload ciphertext round-trips through
