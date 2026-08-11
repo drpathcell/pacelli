@@ -43,25 +43,25 @@ three-way enums, useful for triage, revealing essentially nothing.
 | Public key | embedded in `FeedbackRepository.publicKeyBase64` |
 | Private key | `~/.config/jarvis/secrets/pacelli_feedback_x25519.key` (0600, outside every repo) |
 
-### The private key is not backed up — and that is a problem
+### Where the private key lives
 
-**If it is lost, all sealed feedback becomes unreadable.** Checked on
-2026-08-11, not assumed:
+**Keychain is the source of truth**, item `pacelli-feedback-x25519` /
+account `pacelli`, with `security` granted persistent access so scripts can
+read it without a prompt. `read_feedback.py` tries the Keychain first and falls
+back to `~/.config/jarvis/secrets/pacelli_feedback_x25519.key` (0600, outside
+every repo) — the same arrangement as the rest of that directory, where
+`sync_secrets.sh` treats the files as derived copies.
 
-- `~/.config/jarvis/secrets/` is *derived*. Everything else in it
-  (`credentials.env`) is regenerated from Keychain by
-  `~/.config/jarvis/lib/sync_secrets.sh`, so losing the directory costs
-  nothing. This key is the only file in there that cannot be regenerated.
-- `secrets/` is gitignored in the jarvis repo (correctly — it must not be
-  committed), so the repo does not carry it.
-- `~/.dr-mirror` does not cover it either.
+Proven by moving the file aside and reading feedback anyway, not assumed.
 
-So the only copy is that single file on one Mac. Put it in Keychain or a
-password manager. Storing it in Keychain would also match how the rest of that
-directory works — Keychain as source of truth, file as derived copy — and
-`read_feedback.py` could then read it from there. That was not done
-automatically because adding a Keychain item needs someone at the machine to
-approve the access prompt.
+**If both copies are lost, all sealed feedback becomes unreadable forever.**
+It is the one non-regenerable secret in the system: `secrets/` is gitignored
+in the jarvis repo (correctly) and `~/.dr-mirror` does not cover it, so
+Keychain — and whatever backs Keychain up — is the real safety net.
+
+Without an "Always Allow" ACL entry, `security` opens a GUI prompt and waits
+indefinitely; in a scheduled run that looks exactly like a hang. Hence the
+10-second timeout on the Keychain lookup.
 
 ## Reading it
 

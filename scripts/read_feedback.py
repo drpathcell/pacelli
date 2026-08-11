@@ -24,6 +24,7 @@ import argparse
 import base64
 import json
 import pathlib
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -31,10 +32,36 @@ import urllib.request
 PROJECT = "pacelli-35621"
 BASE = f"https://firestore.googleapis.com/v1/projects/{PROJECT}/databases/(default)/documents"
 DEFAULT_KEY = pathlib.Path.home() / ".config/jarvis/secrets/pacelli_feedback_x25519.key"
+KEYCHAIN_SERVICE = "pacelli-feedback-x25519"
+KEYCHAIN_ACCOUNT = "pacelli"
 PREFIX = "pfb1:"
 HKDF_INFO = b"pacelli-feedback-v1"
 
 RED, GREEN, DIM, BOLD, OFF = "\033[31m", "\033[32m", "\033[2m", "\033[1m", "\033[0m"
+
+
+def private_key() -> bytes:
+    """Keychain first, file second.
+
+    Keychain is the source of truth — same arrangement as the rest of
+    ~/.config/jarvis/secrets/, where sync_secrets.sh treats the files as
+    derived copies. The file stays as a fallback so this keeps working on a
+    machine where the Keychain item has not been restored yet.
+
+    Timed out rather than left to block: without an "Always Allow" ACL entry
+    `security` opens a GUI prompt and waits forever, which in a scheduled run
+    looks exactly like a hang.
+    """
+    try:
+        r = subprocess.run(
+            ["security", "find-generic-password",
+             "-s", KEYCHAIN_SERVICE, "-a", KEYCHAIN_ACCOUNT, "-w"],
+            capture_output=True, text=True, timeout=10)
+        if r.returncode == 0 and r.stdout.strip():
+            return base64.b64decode(r.stdout.strip())
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass  # fall through to the file
+    return None
 
 
 def access_token() -> str:
@@ -101,10 +128,14 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     a = ap.parse_args()
 
-    if not a.key.exists():
-        sys.exit(f"private key not found: {a.key}\n"
-                 "Without it sealed feedback cannot be read by anyone, including you.")
-    private_key_raw = base64.b64decode(a.key.read_text().strip())
+    private_key_raw = private_key()
+    if private_key_raw is None:
+        if not a.key.exists():
+            sys.exit(
+                f"private key not found — not in the Keychain "
+                f"({KEYCHAIN_SERVICE}) and no file at {a.key}.\n"
+                "Without it sealed feedback cannot be read by anyone, including you.")
+        private_key_raw = base64.b64decode(a.key.read_text().strip())
 
     docs = fetch(access_token(), a.limit)
     out, legacy = [], 0
