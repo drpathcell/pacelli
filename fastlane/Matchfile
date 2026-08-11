@@ -2,7 +2,9 @@ git_url("https://github.com/drpathcell/pacelli-match-certs.git")
 storage_mode("git")
 
 type("appstore")
-app_identifier(["com.pacelli.pacelli"])
+# The notification extension is a separate bundle id and needs its own
+# profile — an app extension cannot be covered by the containing app's.
+app_identifier(["com.pacelli.pacelli", "com.pacelli.pacelli.NotificationService"])
 username("juancarlos.celis@outlook.com")
 
 # Branch where match stores encrypted certs (default = master, but new repos use main)

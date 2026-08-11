@@ -160,6 +160,17 @@ platform :ios do
     )
   end
 
+  desc "Create any missing App Store profiles (CI only — needs a writable match repo)"
+  lane :sync_appstore_signing do
+    # appstore ONLY, deliberately. `regenerate_signing` also syncs the
+    # development type, which would mint a development certificate we do not
+    # need; there are already 2 distribution certs against Apple's limit of 3,
+    # and burning a slot to create a profile would be a poor trade. readonly is
+    # false so match CREATES the missing extension profile, but nothing is
+    # forced — an existing valid cert is reused, never revoked.
+    sync_signing(type: "appstore", readonly: false)
+  end
+
   desc "Regenerate certs/profiles (CI: set readonly=false + MATCH_GIT_URL writable)"
   lane :regenerate_signing do
     sync_signing(type: "appstore",     readonly: false)
@@ -199,6 +210,19 @@ platform :ios do
       targets:               ["PacelliApp"]
     )
 
+    # The notification extension signs separately — an app extension is its own
+    # bundle id and cannot ride the containing app's profile. Miss this and the
+    # archive fails at export, not at build, which is a slow way to find out.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path:                  "PacelliApp/PacelliApp.xcodeproj",
+      bundle_identifier:     "com.pacelli.pacelli.NotificationService",
+      team_id:               "5PCNU95W9V",
+      code_sign_identity:    "Apple Distribution",
+      profile_name:          "match AppStore com.pacelli.pacelli.NotificationService",
+      targets:               ["PacelliNotificationService"]
+    )
+
     build_app(
       project:          "PacelliApp/PacelliApp.xcodeproj",
       scheme:           "PacelliApp",
@@ -209,7 +233,9 @@ platform :ios do
       xcargs:           "CURRENT_PROJECT_VERSION=#{build_number}",
       export_options:   {
         provisioningProfiles: {
-          "com.pacelli.pacelli" => "match AppStore com.pacelli.pacelli"
+          "com.pacelli.pacelli" => "match AppStore com.pacelli.pacelli",
+          "com.pacelli.pacelli.NotificationService" =>
+            "match AppStore com.pacelli.pacelli.NotificationService"
         }
       }
     )

@@ -1,0 +1,57 @@
+# Creates any missing App Store provisioning profiles via match.
+#
+# Manual only. MATCH_PASSWORD — the passphrase that decrypts the certs repo —
+# exists as a GitHub secret and nowhere else, so match cannot be run from a
+# laptop without someone handling that secret by hand. Running it here keeps it
+# where it belongs.
+#
+# Needed whenever a new bundle id appears: an app extension is its own bundle
+# id and cannot ride the containing app's profile.
+name: Signing (match)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync App Store profiles
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Sanity-check signing secrets
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: |
+          : "${MATCH_GIT_URL:?MATCH_GIT_URL secret is empty}"
+          : "${MATCH_PASSWORD:?MATCH_PASSWORD secret is empty}"
+          echo "Signing secrets present."
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Create build keychain
+        env:
+          KEY_PWD: ${{ secrets.MATCH_KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEY_PWD" build_keychain
+          security default-keychain -s build_keychain
+          security unlock-keychain -p "$KEY_PWD" build_keychain
+          security set-keychain-settings -lut 21600 build_keychain
+          security list-keychains -s build_keychain login.keychain
+
+      - name: Run fastlane ios sync_appstore_signing
+        env:
+          MATCH_GIT_URL:      ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
+          ASC_KEY_ID:         ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID:      ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT:    ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_KEYCHAIN_NAME: build_keychain
+          MATCH_KEYCHAIN_PASSWORD: ${{ secrets.MATCH_KEYCHAIN_PASSWORD }}
+        run: bundle exec fastlane ios sync_appstore_signing
