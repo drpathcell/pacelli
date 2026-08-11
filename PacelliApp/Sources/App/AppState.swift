@@ -23,10 +23,27 @@ final class AppState {
         case home(CurrentHousehold)
     }
 
-    var phase: Phase = .welcome
+    var phase: Phase = .welcome {
+        didSet {
+            // Rebuild reminders whenever we land in a household — foregrounding
+            // alone is not enough. `.onChange(of: scenePhase)` in RootView does
+            // not fire for the initial `.active` value on a COLD launch, and
+            // even when it did fire it ran while `phase` was still `.welcome`,
+            // so `reconcileReminders()` bailed on its own guard. Net effect
+            // before this: force-quit Pacelli and the pending set was never
+            // rebuilt until the next background→foreground round trip.
+            // Caught by scripts/check_reminders_e2e.sh, 2026-08-11.
+            guard case .home = phase else { return }
+            reminderReconcile?.cancel()
+            reminderReconcile = Task { await reconcileReminders() }
+        }
+    }
     var errorMessage: String?
 
     private var didStart = false
+    /// Held so two rapid `.home` assignments can't interleave a `cancelAll`
+    /// from one reconcile with the `add` calls of another.
+    private var reminderReconcile: Task<Void, Never>?
 
     /// Single launch entry point. Restores an existing session if it can be
     /// made usable quickly; otherwise resets to a clean Welcome.

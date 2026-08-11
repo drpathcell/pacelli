@@ -1,0 +1,21 @@
+appId: com.pacelli.pacelli
+---
+# Reminders E2E, 3 of 3 — the runner has just flipped the reminders switch,
+# which fires requestAuthorizationIfNeeded(). Grant it.
+
+# Wait for the alert unconditionally. A `runFlow: when: visible: "Allow"`
+# evaluates before the async authorization request has put it on screen —
+# it reports SKIPPED and the flow then fails on the next assertion.
+- extendedWaitUntil:
+    visible:
+      text: "^Allow$"
+    timeout: 20000
+# Anchored regex: bare "Allow" also matches "Don't Allow", which would deny
+# the app and let the flow pass green.
+- tapOn:
+    text: "^Allow$"
+- extendedWaitUntil:
+    visible: "Remind me at"
+    timeout: 15000
+- assertVisible: "Also remind me the day before"
+- takeScreenshot: /tmp/pacelli_rem_02_settings

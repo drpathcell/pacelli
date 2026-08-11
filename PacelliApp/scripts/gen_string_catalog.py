@@ -368,6 +368,31 @@ TRANSLATIONS = {
         "Sei stato invitato in una casa, ma non siamo riusciti a unirti. Chiedi a chi ti ha invitato un codice di accesso e usa «Ho un codice di accesso» qui sotto."),
     # Sample code shown as a field placeholder — identical in every locale.
     "K7QP-4M2X": ("K7QP-4M2X", "K7QP-4M2X"),
+    # ── Reminders (1.3.0) ─────────────────────────────────────────────
+    "Reminders": ("Recordatorios", "Promemoria"),
+    "Task reminders": ("Recordatorios de tareas", "Promemoria attività"),
+    "Remind me at": ("Recordarme a las", "Ricordamelo alle"),
+    "Also remind me the day before": (
+        "Recordármelo también el día anterior", "Ricordamelo anche il giorno prima"),
+    "Reminder at a set time": ("Recordatorio a una hora concreta", "Promemoria a un'ora precisa"),
+    "Due": ("Vence", "Scadenza"),
+    "Due today": ("Vence hoy", "Scade oggi"),
+    "Due tomorrow": ("Vence mañana", "Scade domani"),
+    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it.": (
+        "Las tareas con fecha de vencimiento te avisan a esta hora ese día. Cada tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él.",
+        "Le attività con una scadenza ti avvisano a quest'ora quel giorno. Ogni attività può avere un orario proprio. I promemoria vengono creati su questo dispositivo e non lo lasciano mai."),
+    "Reminds you at %@, your default time.": (
+        "Te avisa a las %@, tu hora predeterminada.",
+        "Ti avvisa alle %@, il tuo orario predefinito."),
+    "Turn on reminders in Settings to be notified.": (
+        "Activa los recordatorios en Ajustes para recibir avisos.",
+        "Attiva i promemoria nelle Impostazioni per ricevere avvisi."),
+    "Notifications are off": ("Las notificaciones están desactivadas", "Le notifiche sono disattivate"),
+    "Pacelli can't send reminders until you allow notifications in iOS Settings.": (
+        "Pacelli no puede enviar recordatorios hasta que permitas las notificaciones en los Ajustes de iOS.",
+        "Pacelli non può inviare promemoria finché non consenti le notifiche nelle Impostazioni di iOS."),
+    "Open Settings": ("Abrir Ajustes", "Apri Impostazioni"),
+    "Not now": ("Ahora no", "Non ora"),
     # Brand names / identical across locales:
     "Pacelli": ("Pacelli", "Pacelli"),
 }

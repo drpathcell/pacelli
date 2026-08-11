@@ -1,0 +1,26 @@
+appId: com.pacelli.pacelli
+---
+# Reminders E2E, 2 of 3 — the due date is now on. Check that turning it on
+# revealed the per-task reminder override, save, and park on the reminders
+# toggle in Settings for the next tap_switch.
+#
+# The task deliberately keeps the household-wide default time rather than
+# setting its own: the runner moves that default to a couple of minutes out,
+# which is what makes a real fired-notification assertion possible in a test.
+# The per-task override's resolution rules are pinned in ReminderTests.
+
+- extendedWaitUntil:
+    visible:
+      id: "task_custom_reminder"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_rem_01_task
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Buy milk"
+    timeout: 20000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings_reminders_toggle"
+    centerElement: true
+    timeout: 20000

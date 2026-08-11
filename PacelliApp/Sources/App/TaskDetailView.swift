@@ -16,6 +16,8 @@ struct TaskDetailView: View {
     @State private var categoryId: String?
     @State private var hasDueDate: Bool
     @State private var dueDate: Date
+    @State private var customReminder: Bool
+    @State private var reminderTime: Date
 
     @State private var categories: [TaskCategory] = []
     @State private var subtasks: [Subtask] = []
@@ -34,6 +36,10 @@ struct TaskDetailView: View {
         _categoryId = State(initialValue: t.categoryId)
         _hasDueDate = State(initialValue: t.dueDate != nil)
         _dueDate = State(initialValue: t.dueDate ?? Calendar.current.startOfDay(for: Date()))
+        _customReminder = State(initialValue: t.reminderTime != nil)
+        _reminderTime = State(
+            initialValue: (t.reminderTime.flatMap(TimeOfDay.init(raw:))
+                ?? ReminderPrefs.current.defaultTime).date)
     }
 
     private var isDirty: Bool {
@@ -43,6 +49,7 @@ struct TaskDetailView: View {
             || priority != task.priority
             || categoryId != task.categoryId
             || dueDateValue != task.dueDate
+            || reminderValue != task.reminderTime
     }
 
     private var notesValue: String? {
@@ -50,7 +57,23 @@ struct TaskDetailView: View {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    private var defaultReminderNote: String {
+        let prefs = ReminderPrefs.current
+        guard prefs.enabled else {
+            return String(localized: "Turn on reminders in Settings to be notified.")
+        }
+        return String(localized: "Reminds you at \(prefs.defaultTime.raw), your default time.")
+    }
+
     private var dueDateValue: Date? { hasDueDate ? dueDate : nil }
+
+    /// Nil means "use the device default" — the override is deliberately
+    /// opt-in so the common case stays a single toggle.
+    private var reminderValue: String? {
+        guard hasDueDate, customReminder else { return nil }
+        let c = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+        return TimeOfDay(hour: c.hour ?? 12, minute: c.minute ?? 0).raw
+    }
 
     var body: some View {
         Form {
@@ -98,6 +121,18 @@ struct TaskDetailView: View {
                 if hasDueDate {
                     DatePicker(
                         "Due", selection: $dueDate, displayedComponents: .date)
+
+                    Toggle("Reminder at a set time", isOn: $customReminder.animation())
+                        .accessibilityIdentifier("task_custom_reminder")
+                    if customReminder {
+                        DatePicker(
+                            "Remind me at", selection: $reminderTime,
+                            displayedComponents: .hourAndMinute)
+                    } else {
+                        Text(defaultReminderNote)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -186,13 +221,16 @@ struct TaskDetailView: View {
                             ? .some(categoryId) : nil,
                         priority: priority != task.priority ? priority : nil,
                         dueDate: dueDateValue != task.dueDate
-                            ? .some(dueDateValue) : nil)
+                            ? .some(dueDateValue) : nil,
+                        reminderTime: reminderValue != task.reminderTime
+                            ? .some(reminderValue) : nil)
                 }
                 task.title = trimmed
                 task.description = notesValue
                 task.categoryId = categoryId
                 task.priority = priority
                 task.dueDate = dueDateValue
+                task.reminderTime = reminderValue
             } catch {
                 print("[TaskDetailView] save failed: \(error)")
                 errorMessage = String(localized: "Couldn't save your changes.")

@@ -23,6 +23,12 @@ maestro --device <SIM-UDID> test PacelliApp/e2e/flow_tasks_e2e.yaml
 - `flow_settings_burn_e2e.yaml` — settings: theme switch → privacy screen →
   ⚠️ REAL burn-all-data (wipes the signed-in account — guest/test only) →
   back-to-Welcome.
+- `flow_reminders_01_task.yaml` / `_02_settings.yaml` / `_03_grant.yaml` —
+  task reminders. Split into three because the runner has to flip SwiftUI
+  switches between them (see below). Driven by
+  `scripts/check_reminders_e2e.sh`, which owns the fresh install and the
+  assertions Maestro cannot make: that iOS accepted the schedule with the
+  real task title, and that it actually fired.
 - `flow_household_manual_search_e2e.yaml` — members list → manual entry
   create → feedback submit → cross-entity search (task + manual hits).
   Re-runnable (conditional seeding).
@@ -49,3 +55,38 @@ Lessons (Maestro 2.5.1 + iOS 27 sim):
 - An app killed by a failed run shows a springboard-only hierarchy while its
   process may still be resident — `simctl launch` returns the existing pid
   WITHOUT foregrounding; use stopApp+launchApp to get a deterministic state.
+
+Lessons (reminders, 2026-08-11 — Maestro 2.5.1 + iOS 26.2 sim):
+- **Maestro cannot flip a SwiftUI `Toggle` in a `List`.** SwiftUI publishes
+  the row as ONE accessibility element spanning its full width, so `tapOn`
+  hits the centre — the label — and a List Toggle only responds to a hit on
+  the switch itself. The tap reports COMPLETED and nothing happens: no
+  @AppStorage write, no state change, no log line, no error. Cost two full
+  runs on two different toggles. `tap_switch` in `check_reminders_e2e.sh`
+  reads the label's bounds and aims at the trailing edge instead.
+- Compute the screen width from the FIRST node with real bounds, not
+  `max()` over every node — some accessibility frames extend past the
+  screen and put the tap off-canvas, where it also silently does nothing.
+- A conditional `runFlow: when: visible: "Allow"` races the async
+  `requestAuthorization`: it evaluates before the alert is on screen,
+  reports SKIPPED, and the flow fails on the next assertion.
+  `extendedWaitUntil` on the alert instead — and anchor the regex, because
+  bare `Allow` also matches `Don't Allow`, which denies the app and lets
+  the flow pass green.
+- Notification authorisation resets to `notDetermined` on
+  `simctl uninstall` + `install`. There is no `simctl privacy notifications`
+  service — `reminders` in that list is EventKit, not UNUserNotificationCenter.
+- The app's `UserDefaults` live in the app DATA CONTAINER, not the
+  device-wide preferences domain. `simctl spawn <sim> defaults write
+  <bundle-id> ...` writes the device-wide domain, which the app never reads.
+- Write prefs through the SIMULATOR's cfprefsd — `simctl spawn <sim>
+  defaults write <container-path> ...`. A host-side `plutil -replace` on the
+  same file changes the bytes and the running app still sees its cached
+  copy. Read them back with `plutil -extract`, though: host `defaults read
+  <path> <key>` reports "does not exist" for keys plainly in the file.
+- `data/Library/UserNotifications/<uuid>/PendingNotifications.plist` and
+  `DeliveredNotifications.plist` are the ground truth for "did iOS accept
+  this / did it fire", and both carry the title. Far better than screenshots.
+- `set -euo pipefail` + `X="$(grep ... | head -1)"` kills the script with no
+  message when grep finds nothing — pipefail propagates grep's exit 1.
+  Append `|| true` or you get a silent abort that reads like a hang.

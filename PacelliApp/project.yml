@@ -55,7 +55,7 @@ targets:
         # a short bearer code instead.
         # Build numbers stay globally ascending (native floor lives in the
         # Fastfile native_build lane; CI overrides CURRENT_PROJECT_VERSION).
-        MARKETING_VERSION: "1.2.0"
+        MARKETING_VERSION: "1.3.0"
         CURRENT_PROJECT_VERSION: "35"
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Resources/PacelliApp.entitlements   # SIWA

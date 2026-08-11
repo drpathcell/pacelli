@@ -1,0 +1,42 @@
+appId: com.pacelli.pacelli
+---
+# Reminders E2E, 1 of 3 — create the task and open its detail.
+#
+# Driven by scripts/check_reminders_e2e.sh, which owns the fresh install, the
+# switch taps (see below) and the assertion Maestro cannot make: did iOS
+# actually fire the reminder, with the real task title?
+#
+# Every `Toggle` in this app is a SwiftUI List row, and Maestro CANNOT flip
+# one. SwiftUI exposes the row as a single accessibility element spanning its
+# full width, so `tapOn` lands on the label — and a List Toggle only responds
+# to a hit on the switch itself. The tap reports COMPLETED and changes
+# nothing: no @AppStorage write, no state change, no error. Hence the runner's
+# tap_switch helper, which aims at the trailing edge. (Cost the 2026-08-11
+# runs twice, on two different toggles.)
+#
+# Parks on the task detail with "Due date" visible, ready for tap_switch.
+
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+- runFlow:
+    when:
+      notVisible: "Buy milk"
+    commands:
+      - tapOn: "New task"
+      - inputText: "Buy milk"
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: "Buy milk"
+          timeout: 20000
+- tapOn: "Buy milk"
+- extendedWaitUntil:
+    visible: "Due date"
+    timeout: 15000

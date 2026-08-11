@@ -187,6 +187,22 @@
         }
       }
     },
+    "Also remind me the day before": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordármelo también el día anterior"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricordamelo anche il giorno prima"
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "es": {
@@ -1643,6 +1659,22 @@
         }
       }
     },
+    "Due": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vence"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scadenza"
+          }
+        }
+      }
+    },
     "Due date": {
       "localizations": {
         "es": {
@@ -1655,6 +1687,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scadenza"
+          }
+        }
+      }
+    },
+    "Due today": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vence hoy"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scade oggi"
+          }
+        }
+      }
+    },
+    "Due tomorrow": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vence mañana"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scade domani"
           }
         }
       }
@@ -2684,6 +2748,22 @@
         }
       }
     },
+    "Not now": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora no"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non ora"
+          }
+        }
+      }
+    },
     "Notes": {
       "localizations": {
         "es": {
@@ -2696,6 +2776,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Note"
+          }
+        }
+      }
+    },
+    "Notifications are off": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las notificaciones están desactivadas"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le notifiche sono disattivate"
           }
         }
       }
@@ -2719,8 +2815,40 @@
         }
       }
     },
+    "Open Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Impostazioni"
+          }
+        }
+      }
+    },
     "Pacelli": {
       "shouldTranslate": false
+    },
+    "Pacelli can't send reminders until you allow notifications in iOS Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pacelli no puede enviar recordatorios hasta que permitas las notificaciones en los Ajustes de iOS."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pacelli non può inviare promemoria finché non consenti le notifiche nelle Impostazioni di iOS."
+          }
+        }
+      }
     },
     "Password": {
       "localizations": {
@@ -2924,6 +3052,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Leggi questo codice ad alta voce o condividilo — chi lo digita entra subito, qualunque sia il suo metodo di accesso. Usalo se accedono con Apple nascondendo l'email, perché in quel caso nessuno può invitare quell'indirizzo. I codici durano 7 giorni."
+          }
+        }
+      }
+    },
+    "Remind me at": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordarme a las"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricordamelo alle"
+          }
+        }
+      }
+    },
+    "Reminder at a set time": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorio a una hora concreta"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promemoria a un'ora precisa"
+          }
+        }
+      }
+    },
+    "Reminders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorios"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promemoria"
+          }
+        }
+      }
+    },
+    "Reminds you at %@, your default time.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Te avisa a las %@, tu hora predeterminada."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ti avvisa alle %@, il tuo orario predefinito."
           }
         }
       }
@@ -3280,6 +3472,22 @@
         }
       }
     },
+    "Task reminders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorios de tareas"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promemoria attività"
+          }
+        }
+      }
+    },
     "Task titles and notes": {
       "localizations": {
         "es": {
@@ -3308,6 +3516,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Attività"
+          }
+        }
+      }
+    },
+    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las tareas con fecha de vencimiento te avisan a esta hora ese día. Cada tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le attività con una scadenza ti avvisano a quest'ora quel giorno. Ogni attività può avere un orario proprio. I promemoria vengono creati su questo dispositivo e non lo lasciano mai."
           }
         }
       }
@@ -3612,6 +3836,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disattiva il codice"
+          }
+        }
+      }
+    },
+    "Turn on reminders in Settings to be notified.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa los recordatorios en Ajustes para recibir avisos."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva i promemoria nelle Impostazioni per ricevere avvisi."
           }
         }
       }

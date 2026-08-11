@@ -59,15 +59,10 @@ enum NotificationService {
 
     // MARK: - Scheduling
 
-    /// When a task's reminder should fire: its own time if it has one,
-    /// otherwise the household-wide default.
+    /// Delegates to `HouseholdTask.reminderFireDate` in PacelliKit, which is
+    /// where the resolution rules are unit-tested.
     static func fireDate(for task: HouseholdTask, prefs: ReminderPrefs) -> Date? {
-        guard let due = task.dueDate, !task.isCompleted else { return nil }
-        let time = task.reminderTime.flatMap(TimeOfDay.init(raw:)) ?? prefs.defaultTime
-        var comps = Calendar.current.dateComponents([.year, .month, .day], from: due)
-        comps.hour = time.hour
-        comps.minute = time.minute
-        return Calendar.current.date(from: comps)
+        task.reminderFireDate(defaultTime: prefs.defaultTime)
     }
 
     /// Replaces any existing reminders for this task.
@@ -136,7 +131,10 @@ enum NotificationService {
                 guard let fire = fireDate(for: task, prefs: prefs) else { return nil }
                 return (task, fire)
             }
-            .filter { $0.1 > Date() || (prefs.dayBefore && $0.1 > Date()) }
+            // Only the on-day time is tested: the day-before nudge is always
+            // earlier, so a task whose on-day fire has passed has nothing
+            // left to schedule either.
+            .filter { $0.1 > Date() }
             .sorted { $0.1 < $1.1 }
 
         // Each task can occupy two slots when the day-before nudge is on.
@@ -152,37 +150,6 @@ enum NotificationService {
 }
 
 // MARK: - Preferences
-
-/// Time of day as `HH:mm`, stored unencrypted alongside `due_date`.
-/// It is structural metadata of the same class as the due date itself —
-/// encrypting it would be inconsistent and would protect nothing the due date
-/// does not already reveal.
-public struct TimeOfDay: Equatable, Sendable {
-    public let hour: Int
-    public let minute: Int
-
-    public init(hour: Int, minute: Int) {
-        self.hour = min(max(hour, 0), 23)
-        self.minute = min(max(minute, 0), 59)
-    }
-
-    public init?(raw: String) {
-        let parts = raw.split(separator: ":")
-        guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]),
-            (0...23).contains(h), (0...59).contains(m)
-        else { return nil }
-        self.init(hour: h, minute: m)
-    }
-
-    public var raw: String { String(format: "%02d:%02d", hour, minute) }
-
-    public var date: Date {
-        Calendar.current.date(
-            from: DateComponents(hour: hour, minute: minute)) ?? Date()
-    }
-
-    public static let noon = TimeOfDay(hour: 12, minute: 0)
-}
 
 /// Reminder settings, local to the device (SharedPreferences parity — these
 /// are a per-device preference, not household state).

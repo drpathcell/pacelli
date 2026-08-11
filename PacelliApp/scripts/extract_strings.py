@@ -28,6 +28,7 @@ PATTERNS = [
     r'\.navigationTitle\(\s*"((?:[^"\\]|\\.)*)"',
     r'ContentUnavailableView\(\s*\n?\s*"((?:[^"\\]|\\.)*)"',
     r'\bTab\(\s*"((?:[^"\\]|\\.)*)"',
+    r'\bDatePicker\(\s*\n?\s*"((?:[^"\\]|\\.)*)"',
     r'prompt:\s*"((?:[^"\\]|\\.)*)"',
     r'\.alert\(\s*\n?\s*"((?:[^"\\]|\\.)*)"',
     r'confirmationDialog\(\s*\n?\s*"((?:[^"\\]|\\.)*)"',

@@ -20,7 +20,32 @@ struct SettingsView: View {
     @State private var exportItem: ExportShareItem?
     @State private var exportError: String?
 
+    // Reminder prefs are per-device (a phone, not a household, gets reminded),
+    // so they live in UserDefaults rather than Firestore.
+    @AppStorage(ReminderPrefs.storageEnabled) private var remindersEnabled = false
+    @AppStorage(ReminderPrefs.storageTime) private var reminderTimeRaw = TimeOfDay.noon.raw
+    @AppStorage(ReminderPrefs.storageDayBefore) private var reminderDayBefore = false
+    @State private var reminderDeniedNotice = false
+
     private var isGuest: Bool { Auth.auth().currentUser?.isAnonymous ?? false }
+
+    /// Ask for permission at the moment reminders are switched on — never at
+    /// launch. If the user has previously denied it at the system level the
+    /// toggle cannot work, so flip it back rather than leaving a switch that
+    /// silently does nothing.
+    private func remindersChanged(_ isOn: Bool) async {
+        guard isOn else {
+            NotificationService.cancelAll()
+            return
+        }
+        let granted = await NotificationService.requestAuthorizationIfNeeded()
+        if granted {
+            await appState.reconcileReminders()
+        } else {
+            remindersEnabled = false
+            reminderDeniedNotice = true
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -78,6 +103,63 @@ struct SettingsView: View {
                         Label("Send feedback", systemImage: "envelope")
                     }
                 }
+
+                Section {
+                    Toggle("Task reminders", isOn: $remindersEnabled)
+                        .accessibilityIdentifier("settings_reminders_toggle")
+
+                    if remindersEnabled {
+                        DatePicker(
+                            "Remind me at",
+                            selection: Binding(
+                                get: { (TimeOfDay(raw: reminderTimeRaw) ?? .noon).date },
+                                set: { newValue in
+                                    let c = Calendar.current.dateComponents(
+                                        [.hour, .minute], from: newValue)
+                                    reminderTimeRaw = TimeOfDay(
+                                        hour: c.hour ?? 12, minute: c.minute ?? 0).raw
+                                }),
+                            displayedComponents: .hourAndMinute
+                        )
+                        .accessibilityIdentifier("settings_reminder_time")
+
+                        Toggle("Also remind me the day before", isOn: $reminderDayBefore)
+                    }
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text(
+                        "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it."
+                    )
+                }
+                .onChange(of: remindersEnabled) { _, isOn in
+                    Task { await remindersChanged(isOn) }
+                }
+                .onChange(of: reminderTimeRaw) { _, _ in
+                    Task { await appState.reconcileReminders() }
+                }
+                .onChange(of: reminderDayBefore) { _, _ in
+                    Task { await appState.reconcileReminders() }
+                }
+                // Attached to THIS section, not the List: the export alerts
+                // already occupy the List's chain, and a third .alert there
+                // silently breaks presentation for all of them (build 32).
+                .alert(
+                    "Notifications are off", isPresented: $reminderDeniedNotice,
+                    actions: {
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        Button("Not now", role: .cancel) {}
+                    },
+                    message: {
+                        Text(
+                            "Pacelli can't send reminders until you allow notifications in iOS Settings."
+                        )
+                    }
+                )
 
                 Section("Privacy") {
                     NavigationLink("Privacy & encryption") {
