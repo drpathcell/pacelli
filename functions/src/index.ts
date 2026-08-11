@@ -18,6 +18,10 @@ import * as inventory from "./functions/inventory";
 import * as search from "./functions/search";
 import * as feedback from "./functions/feedback";
 
+// Firestore-triggered push. Exported straight through — these are triggers,
+// not HTTP handlers, so they do not go via apiHandler.
+export { onTaskCreated, onMemberJoined } from "./functions/push";
+
 // Initialise Firebase Admin SDK
 admin.initializeApp();
 

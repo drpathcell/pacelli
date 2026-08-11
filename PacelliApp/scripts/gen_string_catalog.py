@@ -18,6 +18,13 @@ OUT = pathlib.Path(__file__).resolve().parent.parent / "Resources" / "Localizabl
 TRANSLATIONS = {
     "A peaceful, organised home": ("Un hogar tranquilo y organizado", "Una casa serena e organizzata"),
     "Access control": ("Control de acceso", "Controllo degli accessi"),
+    "Notifications": ("Notificaciones", "Notifiche"),
+    "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we.": (
+        "Los recordatorios de tus propias tareas se crean en este dispositivo y nunca salen de él. Cuando la otra persona añade una tarea, se envía una notificación a través de Apple: solo dice que se añadió una tarea, y el título viaja con ella todavía cifrado. Apple nunca tiene la clave de tu hogar, así que no puede leerlo, y nosotros tampoco.",
+        "I promemoria delle tue attività sono creati su questo dispositivo e non lo lasciano mai. Quando l'altra persona aggiunge un'attività, viene inviata una notifica tramite Apple: dice solo che un'attività è stata aggiunta, e il titolo viaggia con essa ancora cifrato. Apple non ha mai la chiave della tua casa, quindi non può leggerlo, e nemmeno noi."),
+    "Feedback you send us is encrypted on this device so that only the Pacelli developer can read it — not with your household key, which never leaves your devices.": (
+        "Los comentarios que nos envías se cifran en este dispositivo para que solo el desarrollador de Pacelli pueda leerlos, no con la clave de tu hogar, que nunca sale de tus dispositivos.",
+        "I feedback che ci invii sono cifrati su questo dispositivo in modo che solo lo sviluppatore di Pacelli possa leggerli, non con la chiave della tua casa, che non lascia mai i tuoi dispositivi."),
     "Account": ("Cuenta", "Account"),
     "Account deletion was cancelled. Your data has already been wiped; sign-in state is unchanged.": (
         "Se canceló la eliminación de la cuenta. Tus datos ya se han borrado; la sesión no ha cambiado.",
@@ -384,9 +391,12 @@ TRANSLATIONS = {
     "Due": ("Vence", "Scadenza"),
     "Due today": ("Vence hoy", "Scade oggi"),
     "Due tomorrow": ("Vence mañana", "Scade domani"),
-    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it.": (
-        "Las tareas con fecha de vencimiento te avisan a esta hora ese día. Cada tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él.",
-        "Le attività con una scadenza ti avvisano a quest'ora quel giorno. Ogni attività può avere un orario proprio. I promemoria vengono creati su questo dispositivo e non lo lasciano mai."),
+    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it. Task alerts from the other person are sent through Apple, and what they say is encrypted.": (
+        "Las tareas con fecha te avisan a esta hora ese día. Una tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él. Los avisos de tareas de la otra persona se envían a través de Apple, y su contenido va cifrado.",
+        "Le attività con una data ti avvisano a quest'ora quel giorno. Un'attività può avere un orario suo. I promemoria sono creati su questo dispositivo e non lo lasciano mai. Gli avvisi di attività dell'altra persona passano da Apple e il loro contenuto è cifrato."),
+    "Tell me when someone adds a task": (
+        "Avisarme cuando alguien añada una tarea",
+        "Avvisami quando qualcuno aggiunge un'attività"),
     "Reminds you at %@, your default time.": (
         "Te avisa a las %@, tu hora predeterminada.",
         "Ti avvisa alle %@, il tuo orario predefinito."),

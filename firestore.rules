@@ -258,6 +258,41 @@ service cloud.firestore {
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
+    // ── Device tokens (push) ──────────────────────────────────
+    match /device_tokens/{token} {
+      // The doc id IS the FCM token. Self-only in both directions: a token
+      // row says "send this household's activity to this device", so being
+      // able to enumerate or write someone else's is the whole attack.
+      allow get, list: if isAuth() && resource.data.user_id == request.auth.uid;
+
+      // isMember is the load-bearing clause. Without it any signed-in user
+      // could register their own device against someone else's household_id
+      // and be pushed that household's activity — the one way push can leak
+      // what the encryption otherwise protects.
+      allow create: if isAuth()
+        && request.resource.data.user_id == request.auth.uid
+        && isMember(request.resource.data.household_id)
+        && request.resource.data.keys().hasOnly([
+             'token', 'user_id', 'household_id', 'platform',
+             'app_version', 'activity_push', 'updated_at']);
+
+      // Both sides checked: the row must already be theirs AND stay theirs.
+      // Checking only request.resource would let someone who learned another
+      // device's token overwrite the row and silently take over its pushes.
+      allow update: if isAuth()
+        && resource.data.user_id == request.auth.uid
+        && request.resource.data.user_id == request.auth.uid
+        && isMember(request.resource.data.household_id)
+        && request.resource.data.keys().hasOnly([
+             'token', 'user_id', 'household_id', 'platform',
+             'app_version', 'activity_push', 'updated_at']);
+
+      // Sign-out and burn both delete while still authenticated — see
+      // PushService.unregister(). A token that outlives its session keeps
+      // pushing a household's activity to a phone that has left it.
+      allow delete: if isAuth() && resource.data.user_id == request.auth.uid;
+    }
+
     // ── Feedback ──────────────────────────────────────────────
     match /feedback/{feedbackId} {
       // Create is NOT tied to household membership. Feedback is the one thing

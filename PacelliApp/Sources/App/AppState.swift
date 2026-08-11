@@ -33,9 +33,14 @@ final class AppState {
             // before this: force-quit Pacelli and the pending set was never
             // rebuilt until the next background→foreground round trip.
             // Caught by scripts/check_reminders_e2e.sh, 2026-08-11.
-            guard case .home = phase else { return }
+            guard case .home(let current) = phase else { return }
             reminderReconcile?.cancel()
             reminderReconcile = Task { await reconcileReminders() }
+            // Re-registered on every landing, not just the first: the token
+            // carries household_id, so someone who joins a different
+            // household must stop receiving the old one's activity.
+            let householdId = current.household.id
+            Task { await PushService.register(householdId: householdId) }
         }
     }
     var errorMessage: String?
@@ -223,6 +228,12 @@ final class AppState {
         }
     }
 
+    /// Re-write this device's push registration from the current preferences.
+    func refreshPushRegistration() async {
+        guard case .home(let current) = phase else { return }
+        await PushService.register(householdId: current.household.id)
+    }
+
     /// Rebuild pending reminders from the current tasks.
     ///
     /// Local notifications have no idea what the other member did. Without
@@ -277,6 +288,11 @@ final class AppState {
 
     private func resetSession() async {
         NotificationService.cancelAll()
+        // BEFORE signOut(): the device_tokens rules require
+        // `user_id == request.auth.uid`, so deleting the row afterwards is
+        // denied and the token lives on — quietly pushing this household's
+        // activity to a phone that has signed out of it.
+        await PushService.unregister()
         try? Auth.auth().signOut()
         await KeyManager.shared.clearKeys()
     }

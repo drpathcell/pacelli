@@ -26,6 +26,7 @@ struct SettingsView: View {
     @AppStorage(ReminderPrefs.storageTime) private var reminderTimeRaw = TimeOfDay.noon.raw
     @AppStorage(ReminderPrefs.storageDayBefore) private var reminderDayBefore = false
     @State private var reminderDeniedNotice = false
+    @AppStorage(PushService.storageActivityPush) private var activityPush = false
 
     private var isGuest: Bool { Auth.auth().currentUser?.isAnonymous ?? false }
 
@@ -123,13 +124,16 @@ struct SettingsView: View {
                         )
                         .accessibilityIdentifier("settings_reminder_time")
 
-                        Toggle("Also remind me the day before", isOn: $reminderDayBefore)
+                            Toggle("Also remind me the day before", isOn: $reminderDayBefore)
                     }
+
+                    Toggle("Tell me when someone adds a task", isOn: $activityPush)
+                        .accessibilityIdentifier("settings_activity_push_toggle")
                 } header: {
                     Text("Reminders")
                 } footer: {
                     Text(
-                        "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it."
+                        "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it. Task alerts from the other person are sent through Apple, and what they say is encrypted."
                     )
                 }
                 .onChange(of: remindersEnabled) { _, isOn in
@@ -140,6 +144,15 @@ struct SettingsView: View {
                 }
                 .onChange(of: reminderDayBefore) { _, _ in
                     Task { await appState.reconcileReminders() }
+                }
+                // Re-register so the SERVER sees the change. The preference
+                // lives on the device_tokens row — leaving it local would mean
+                // the push still gets sent and the phone still wakes up.
+                .onChange(of: activityPush) { _, isOn in
+                    Task {
+                        if isOn { await NotificationService.requestAuthorizationIfNeeded() }
+                        await appState.refreshPushRegistration()
+                    }
                 }
                 // Attached to THIS section, not the List: the export alerts
                 // already occupy the List's chain, and a third .alert there
@@ -318,6 +331,20 @@ struct PrivacyEncryptionView: View {
                 Text(
                     "These fields stay readable so the app can query, sort and enforce access rules on the server. They contain no free-text content."
                 )
+            }
+
+            // The claims on this screen have to stay literally true, and push
+            // introduced two new facts about where data goes. Saying nothing
+            // would have left the screen quietly inaccurate.
+            Section("Notifications") {
+                Text(
+                    "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we."
+                )
+                .font(.callout)
+                Text(
+                    "Feedback you send us is encrypted on this device so that only the Pacelli developer can read it — not with your household key, which never leaves your devices."
+                )
+                .font(.callout)
             }
 
             Section("Access control") {

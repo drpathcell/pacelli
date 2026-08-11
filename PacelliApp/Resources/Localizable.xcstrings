@@ -1957,6 +1957,22 @@
         }
       }
     },
+    "Feedback you send us is encrypted on this device so that only the Pacelli developer can read it — not with your household key, which never leaves your devices.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los comentarios que nos envías se cifran en este dispositivo para que solo el desarrollador de Pacelli pueda leerlos, no con la clave de tu hogar, que nunca sale de tus dispositivos."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I feedback che ci invii sono cifrati su questo dispositivo in modo che solo lo sviluppatore di Pacelli possa leggerli, non con la chiave della tua casa, che non lascia mai i tuoi dispositivi."
+          }
+        }
+      }
+    },
     "Files saved to Google Drive are NOT deleted — remove those in Drive yourself.": {
       "localizations": {
         "es": {
@@ -2796,6 +2812,22 @@
         }
       }
     },
+    "Notifications": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifiche"
+          }
+        }
+      }
+    },
     "Notifications are off": {
       "localizations": {
         "es": {
@@ -3132,6 +3164,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Promemoria"
+          }
+        }
+      }
+    },
+    "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los recordatorios de tus propias tareas se crean en este dispositivo y nunca salen de él. Cuando la otra persona añade una tarea, se envía una notificación a través de Apple: solo dice que se añadió una tarea, y el título viaja con ella todavía cifrado. Apple nunca tiene la clave de tu hogar, así que no puede leerlo, y nosotros tampoco."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I promemoria delle tue attività sono creati su questo dispositivo e non lo lasciano mai. Quando l'altra persona aggiunge un'attività, viene inviata una notifica tramite Apple: dice solo che un'attività è stata aggiunta, e il titolo viaggia con essa ancora cifrato. Apple non ha mai la chiave della tua casa, quindi non può leggerlo, e nemmeno noi."
           }
         }
       }
@@ -3552,18 +3600,18 @@
         }
       }
     },
-    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it.": {
+    "Tasks with a due date remind you at this time on the day. A task can set its own time. Reminders are created on this device and never leave it. Task alerts from the other person are sent through Apple, and what they say is encrypted.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Las tareas con fecha de vencimiento te avisan a esta hora ese día. Cada tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él."
+            "value": "Las tareas con fecha te avisan a esta hora ese día. Una tarea puede tener su propia hora. Los recordatorios se crean en este dispositivo y nunca salen de él. Los avisos de tareas de la otra persona se envían a través de Apple, y su contenido va cifrado."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le attività con una scadenza ti avvisano a quest'ora quel giorno. Ogni attività può avere un orario proprio. I promemoria vengono creati su questo dispositivo e non lo lasciano mai."
+            "value": "Le attività con una data ti avvisano a quest'ora quel giorno. Un'attività può avere un orario suo. I promemoria sono creati su questo dispositivo e non lo lasciano mai. Gli avvisi di attività dell'altra persona passano da Apple e il loro contenuto è cifrato."
           }
         }
       }
@@ -3580,6 +3628,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Attività, liste, piani e il manuale — tutto viene cercato dopo la decifratura, su questo dispositivo."
+          }
+        }
+      }
+    },
+    "Tell me when someone adds a task": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avisarme cuando alguien añada una tarea"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvisami quando qualcuno aggiunge un'attività"
           }
         }
       }

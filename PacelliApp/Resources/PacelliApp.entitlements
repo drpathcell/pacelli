@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Substituted per configuration: development for Debug, production for
+	     Release. The App Store match profile already carries
+	     aps-environment=production (verified 2026-08-11), so this does not
+	     break signing on the release pipeline. -->
+	<key>aps-environment</key>
+	<string>$(APS_ENVIRONMENT)</string>
 	<key>com.apple.developer.applesignin</key>
 	<array>
 		<string>Default</string>

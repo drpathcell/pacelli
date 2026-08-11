@@ -1,0 +1,19 @@
+appId: com.pacelli.pacelli
+---
+# Push E2E, part 2 — the runner has just flipped the activity toggle, which
+# asks for notification permission on a fresh install. Grant it.
+#
+# Anchored regex: a bare "Allow" also matches "Don't Allow", which would deny
+# the app and let the flow pass green.
+
+- runFlow:
+    when:
+      visible:
+        text: "^Allow$"
+    commands:
+      - tapOn:
+          text: "^Allow$"
+- extendedWaitUntil:
+    visible: "Tell me when someone adds a task"
+    timeout: 15000
+- takeScreenshot: /tmp/pacelli_push_01_settings

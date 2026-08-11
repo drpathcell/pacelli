@@ -187,6 +187,13 @@ enum BurnService {
         NotificationService.cancelAll()
         await log("Pending reminders cancelled")
 
+        // Also while still signed in — the rules key deletion to
+        // `user_id == request.auth.uid`, so a token deleted after signOut()
+        // is a token that never gets deleted. A wiped account that keeps
+        // buzzing is the exact failure a burn is supposed to prevent.
+        await PushService.unregisterAllDevices()
+        await log("Push tokens revoked on all devices")
+
         await KeyManager.shared.clearKeys()
         await log("Keychain cleared")
 

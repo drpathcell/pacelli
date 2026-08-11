@@ -1,0 +1,24 @@
+appId: com.pacelli.pacelli
+---
+# Push E2E, part 1 — opt in to household activity pushes.
+#
+# Parks on the toggle so the runner can flip it: Maestro cannot flip a SwiftUI
+# List Toggle (it taps the row's single accessibility element, i.e. the label,
+# reports COMPLETED and changes nothing). See e2e/README.md.
+
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings_activity_push_toggle"
+    centerElement: true
+    timeout: 20000

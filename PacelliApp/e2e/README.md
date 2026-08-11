@@ -90,3 +90,20 @@ Lessons (reminders, 2026-08-11 — Maestro 2.5.1 + iOS 26.2 sim):
 - `set -euo pipefail` + `X="$(grep ... | head -1)"` kills the script with no
   message when grep finds nothing — pipefail propagates grep's exit 1.
   Append `|| true` or you get a silent abort that reads like a hang.
+
+Push (2026-08-11):
+- `flow_push_optin.yaml` / `flow_push_grant.yaml` + `scripts/check_push_e2e.sh`
+  — the other person adds a task, this device buzzes. One simulator plays the
+  recipient; a Firestore write with a different `created_by` plays the other
+  member, which is the only way a single device can test a feature whose whole
+  point is that SOMEONE ELSE did something.
+- The check asserts the negative first: with activity pushes off, nothing must
+  arrive. A push feature that ignores its own opt-in passes every other test.
+- **Apple Silicon simulators do receive real APNs pushes.** Worth knowing
+  before reaching for a physical device — the full FCM → APNs → device chain
+  was verified on the simulator.
+- `DeliveredNotifications.plist` again beats screenshots: it holds the full
+  payload, so `enc_title` and `mutable-content` can be asserted directly.
+- `set -euo pipefail` + `X="$(grep ... | wc -l)"` aborts silently when grep
+  matches nothing — and "nothing delivered yet" is the NORMAL starting state
+  for a push check. Same trap as the reminders script, walked into twice.
