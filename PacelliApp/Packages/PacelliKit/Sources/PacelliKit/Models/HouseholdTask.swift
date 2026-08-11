@@ -31,6 +31,11 @@ public struct HouseholdTask: Identifiable, Equatable, Sendable {
     public var priority: String
     public var status: String
     public var dueDate: Date?
+    /// Per-task reminder time as "HH:mm", overriding the device default.
+    /// NOT encrypted — structural metadata of the same class as `dueDate`,
+    /// which is also plain. Encrypting it would be inconsistent and would
+    /// protect nothing the due date does not already reveal.
+    public var reminderTime: String?
     public var startDate: Date?
     public var assignedTo: String?
     public var isShared: Bool
@@ -45,7 +50,8 @@ public struct HouseholdTask: Identifiable, Equatable, Sendable {
     public init(
         id: String, householdId: String, title: String, description: String? = nil,
         categoryId: String? = nil, priority: String = Priority.medium,
-        status: String = Status.pending, dueDate: Date? = nil, startDate: Date? = nil,
+        status: String = Status.pending, dueDate: Date? = nil,
+        reminderTime: String? = nil, startDate: Date? = nil,
         assignedTo: String? = nil, isShared: Bool = false, recurrence: String = "none",
         createdBy: String, createdAt: Date, completedAt: Date? = nil,
         completedBy: String? = nil
@@ -58,6 +64,7 @@ public struct HouseholdTask: Identifiable, Equatable, Sendable {
         self.priority = priority
         self.status = status
         self.dueDate = dueDate
+        self.reminderTime = reminderTime
         self.startDate = startDate
         self.assignedTo = assignedTo
         self.isShared = isShared
@@ -84,6 +91,7 @@ public struct HouseholdTask: Identifiable, Equatable, Sendable {
             priority: map["priority"] as? String ?? Priority.medium,
             status: map["status"] as? String ?? Status.pending,
             dueDate: DartISO8601.date(from: map["due_date"] as? String),
+            reminderTime: map["reminder_time"] as? String,
             startDate: DartISO8601.date(from: map["start_date"] as? String),
             assignedTo: map["assigned_to"] as? String,
             isShared: map["is_shared"] as? Bool ?? false,
@@ -106,6 +114,7 @@ public struct HouseholdTask: Identifiable, Equatable, Sendable {
             "priority": priority,
             "status": status,
             "due_date": dueDate.map(DartISO8601.string(from:)) ?? NSNull(),
+            "reminder_time": reminderTime ?? NSNull(),
             "start_date": startDate.map(DartISO8601.string(from:)) ?? NSNull(),
             "assigned_to": assignedTo ?? NSNull(),
             "is_shared": isShared,

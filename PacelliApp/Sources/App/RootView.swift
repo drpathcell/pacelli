@@ -9,6 +9,7 @@ import SwiftUI
 /// never a gate.
 struct RootView: View {
     @State private var appState = AppState()
+    @Environment(\.scenePhase) private var scenePhase
 
     // Theme (local prefs — Flutter SharedPreferences parity).
     @AppStorage(ThemeStorageKeys.colorScheme) private var schemeRaw =
@@ -33,6 +34,12 @@ struct RootView: View {
         // Session restore runs exactly once per launch, at the root —
         // never from WelcomeView appearance (that caused a retry loop).
         .task { await appState.start() }
+        // Reminders are rebuilt whenever the app comes forward, so the
+        // schedule reflects what the household actually looks like now.
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            Task { await appState.reconcileReminders() }
+        }
     }
 }
 

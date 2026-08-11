@@ -181,6 +181,12 @@ enum BurnService {
     /// Sign-out is implicit when the account was just deleted; called
     /// defensively anyway.
     static func clearLocalState(log: @escaping @MainActor (String) -> Void) async {
+        // Before anything else: pending reminders carry real task titles, so a
+        // burned account that keeps buzzing would leak the very content the
+        // wipe was meant to destroy.
+        NotificationService.cancelAll()
+        await log("Pending reminders cancelled")
+
         await KeyManager.shared.clearKeys()
         await log("Keychain cleared")
 

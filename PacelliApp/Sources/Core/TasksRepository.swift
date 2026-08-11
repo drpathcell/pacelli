@@ -38,7 +38,8 @@ enum TasksRepository {
     /// checklist → task push (due/start today, shared).
     static func createTask(
         householdId: String, title: String,
-        dueDate: Date? = nil, startDate: Date? = nil, isShared: Bool = false
+        dueDate: Date? = nil, reminderTime: String? = nil,
+        startDate: Date? = nil, isShared: Bool = false
     ) async throws -> HouseholdTask {
         guard let uid else { throw PacelliError.notSignedIn }
         guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
@@ -50,6 +51,7 @@ enum TasksRepository {
             householdId: householdId,
             title: title,
             dueDate: dueDate,
+            reminderTime: reminderTime,
             startDate: startDate,
             isShared: isShared,
             createdBy: uid,
@@ -59,6 +61,7 @@ enum TasksRepository {
         map["title"] = try PacelliCrypto.encrypt(title, key: key)
 
         try await db.collection("tasks").document(task.id).setData(map)
+        await NotificationService.schedule(task, prefs: ReminderPrefs.current)
         return task
     }
 
@@ -77,6 +80,15 @@ enum TasksRepository {
                 "completed_by": NSNull(),
             ]
         try await db.collection("tasks").document(task.id).updateData(updates)
+
+        // A completed task must stop nagging; un-completing restores it.
+        if completed {
+            NotificationService.cancel(task.id)
+        } else {
+            var reopened = task
+            reopened.status = HouseholdTask.Status.pending
+            await NotificationService.schedule(reopened, prefs: ReminderPrefs.current)
+        }
     }
 
     /// Partial update. Mirrors Dart `updateTask` — only provided fields are
@@ -91,6 +103,7 @@ enum TasksRepository {
         categoryId: String?? = nil,
         priority: String? = nil,
         dueDate: Date?? = nil,
+        reminderTime: String?? = nil,
         startDate: Date?? = nil,
         recurrence: String? = nil
     ) async throws {
@@ -108,6 +121,7 @@ enum TasksRepository {
         if let dueDate {
             updates["due_date"] = dueDate.map(DartISO8601.string(from:)) ?? NSNull()
         }
+        if let reminderTime { updates["reminder_time"] = reminderTime ?? NSNull() }
         if let startDate {
             updates["start_date"] = startDate.map(DartISO8601.string(from:)) ?? NSNull()
         }
@@ -115,6 +129,15 @@ enum TasksRepository {
 
         guard !updates.isEmpty else { return }
         try await db.collection("tasks").document(task.id).updateData(updates)
+
+        // Reschedule from the post-update values: a due date or reminder time
+        // that moved must move its reminder with it, and clearing the due date
+        // must cancel it.
+        var updated = task
+        if let title { updated.title = title }
+        if let dueDate { updated.dueDate = dueDate }
+        if let reminderTime { updated.reminderTime = reminderTime }
+        await NotificationService.schedule(updated, prefs: ReminderPrefs.current)
     }
 
     /// Deletes a task and its subtasks. Mirrors Dart `deleteTask` — subtask
@@ -132,5 +155,6 @@ enum TasksRepository {
         }
         batch.deleteDocument(db.collection("tasks").document(task.id))
         try await batch.commit()
+        NotificationService.cancel(task.id)
     }
 }

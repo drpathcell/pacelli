@@ -206,6 +206,24 @@ final class AppState {
         }
     }
 
+    /// Rebuild pending reminders from the current tasks.
+    ///
+    /// Local notifications have no idea what the other member did. Without
+    /// this, Chloe ticking off "Buy milk" still leaves Juan's phone scheduled
+    /// to remind him about it. Called on every foreground.
+    func reconcileReminders() async {
+        guard case .home(let current) = phase else { return }
+        let prefs = ReminderPrefs.current
+        guard prefs.enabled else {
+            NotificationService.cancelAll()
+            return
+        }
+        guard let tasks = try? await TasksRepository.fetchTasks(
+            householdId: current.household.id)
+        else { return }
+        await NotificationService.reconcile(tasks: tasks, prefs: prefs)
+    }
+
     /// Lands the session in a household the user just joined by code.
     /// Passes `preferring:` explicitly — the joiner usually still holds a
     /// member doc for their own auto-provisioned household, so "most recently
@@ -241,6 +259,7 @@ final class AppState {
     }
 
     private func resetSession() async {
+        NotificationService.cancelAll()
         try? Auth.auth().signOut()
         await KeyManager.shared.clearKeys()
     }
