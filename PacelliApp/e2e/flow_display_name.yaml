@@ -1,0 +1,56 @@
+appId: com.pacelli.pacelli
+---
+# Sets a display name and checks it comes back.
+#
+# The name existed nowhere before 1.4.1: encryptProfileName ran ONLY inside
+# createHousehold, so anyone who joined a household showed as "Member" forever,
+# and Sign in with Apple hands back a name only on the very first
+# authorization, so most founders had none either.
+
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Members & invites"
+    centerElement: true
+    timeout: 20000
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible:
+      id: "household_my_name"
+    timeout: 20000
+- tapOn:
+    id: "household_my_name"
+- inputText: "Juan"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Juan (you)"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_name_01_set
+
+# Survives a relaunch — proves it reached Firestore rather than only @State.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Members & invites"
+    centerElement: true
+    timeout: 20000
+- tapOn: "Members & invites"
+- extendedWaitUntil:
+    visible: "Juan (you)"
+    timeout: 25000
+- takeScreenshot: /tmp/pacelli_name_02_persisted

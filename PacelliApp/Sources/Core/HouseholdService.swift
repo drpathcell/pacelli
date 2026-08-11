@@ -156,13 +156,64 @@ enum HouseholdService {
 
     /// Reads the Keychain-cached profile name, encrypts it with the
     /// household key, writes it to `profiles/{uid}`. Non-fatal on failure.
-    private static func encryptProfileName(uid: String, householdKey: String) async {
+    ///
+    /// Was `private` and called only from `createHousehold`, which meant a
+    /// name could only ever reach Firestore for the person who FOUNDED a
+    /// household. Anyone who joined by code or invite stayed nameless forever
+    /// and showed up in the members list as "Member". Now also called on join
+    /// and whenever a session lands in a household.
+    static func encryptProfileName(uid: String, householdKey: String) async {
         guard let localName = SecureStore.read("profile_name_\(uid)"),
               !localName.isEmpty,
               let encrypted = try? PacelliCrypto.encrypt(localName, key: householdKey)
         else { return }
         try? await db.collection("profiles").document(uid)
             .updateData(["full_name": encrypted])
+    }
+
+    /// Set (or change) the name other members see.
+    ///
+    /// Sign in with Apple hands back a name only on the very FIRST
+    /// authorization, ever — sign in a second time and Apple returns nothing,
+    /// permanently, unless the user revokes the app in iOS Settings. Relying
+    /// on it meant most people could never have a name at all. This is the
+    /// path that always works.
+    ///
+    /// Encrypted with the household key like every other piece of content, so
+    /// the server never sees it. Cached in the Keychain too, so it survives
+    /// into any household joined later.
+    static func setDisplayName(_ name: String, householdId: String) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { throw PacelliError.notSignedIn }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
+            throw PacelliError.missingHouseholdKey
+        }
+
+        if trimmed.isEmpty {
+            SecureStore.delete("profile_name_\(uid)")
+            try await db.collection("profiles").document(uid)
+                .setData(["full_name": ""], merge: true)
+            return
+        }
+        SecureStore.write("profile_name_\(uid)", value: trimmed)
+        let encrypted = try PacelliCrypto.encrypt(trimmed, key: key)
+        // merge:true, not updateData — a profile doc can be missing for an
+        // account created before profiles existed, and updateData would throw.
+        try await db.collection("profiles").document(uid)
+            .setData(["full_name": encrypted], merge: true)
+    }
+
+    /// The current user's own name, decrypted, for pre-filling the field.
+    static func currentDisplayName(householdId: String) async -> String {
+        guard let uid = Auth.auth().currentUser?.uid else { return "" }
+        if let cached = SecureStore.read("profile_name_\(uid)"), !cached.isEmpty {
+            return cached
+        }
+        guard let key = await KeyManager.shared.loadHouseholdKey(householdId),
+              let data = try? await db.collection("profiles").document(uid).getDocument().data(),
+              let encrypted = data["full_name"] as? String, !encrypted.isEmpty
+        else { return "" }
+        return (try? PacelliCrypto.decrypt(encrypted, key: key)) ?? ""
     }
 
     /// Renames the household (any member — flat-membership model; Firestore

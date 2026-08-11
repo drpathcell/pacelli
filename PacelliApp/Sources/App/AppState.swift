@@ -41,6 +41,16 @@ final class AppState {
             // household must stop receiving the old one's activity.
             let householdId = current.household.id
             Task { await PushService.register(householdId: householdId) }
+            // Backfill the display name. encryptProfileName used to run only
+            // in createHousehold, so anyone who JOINED a household could never
+            // have a name and showed up as "Member" forever. Idempotent and
+            // non-fatal — it no-ops when there is nothing cached.
+            Task {
+                guard let uid = Auth.auth().currentUser?.uid,
+                      let key = await KeyManager.shared.loadHouseholdKey(householdId)
+                else { return }
+                await HouseholdService.encryptProfileName(uid: uid, householdKey: key)
+            }
         }
     }
     var errorMessage: String?

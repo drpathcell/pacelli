@@ -38,6 +38,11 @@ PUSH_KEYS = {
 TRANSLATIONS = {
     "A peaceful, organised home": ("Un hogar tranquilo y organizado", "Una casa serena e organizzata"),
     "Access control": ("Control de acceso", "Controllo degli accessi"),
+    "Your name": ("Tu nombre", "Il tuo nome"),
+    "Saving…": ("Guardando…", "Salvataggio…"),
+    "This is how you appear to the other people in your household. It's encrypted with your household key, like everything else.": (
+        "Así es como te ven las demás personas de tu hogar. Se cifra con la clave de tu hogar, igual que todo lo demás.",
+        "È così che ti vedono le altre persone della tua casa. È cifrato con la chiave della tua casa, come tutto il resto."),
     "Notifications": ("Notificaciones", "Notifiche"),
     "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we.": (
         "Los recordatorios de tus propias tareas se crean en este dispositivo y nunca salen de él. Cuando la otra persona añade una tarea, se envía una notificación a través de Apple: solo dice que se añadió una tarea, y el título viaja con ella todavía cifrado. Apple nunca tiene la clave de tu hogar, así que no puede leerlo, y nosotros tampoco.",

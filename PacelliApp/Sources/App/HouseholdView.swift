@@ -9,6 +9,9 @@ struct HouseholdView: View {
     let current: CurrentHousehold
     let appState: AppState
 
+    @State private var myName = ""
+    // `savingName` was already taken by the household-name save below.
+    @State private var savingMyName = false
     @State private var members: [MembershipService.Member] = []
     @State private var invites: [MembershipService.PendingInvite] = []
     @State private var inviteEmail = ""
@@ -53,6 +56,26 @@ struct HouseholdView: View {
                         .accessibilityIdentifier("household_name_save")
                     }
                 }
+            }
+
+            Section {
+                TextField("Your name", text: $myName)
+                    .accessibilityIdentifier("household_my_name")
+                    .textContentType(.name)
+                    .submitLabel(.done)
+                    .onSubmit { Task { await saveMyName() } }
+                if savingMyName {
+                    Text("Saving…").font(.caption).foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Your name")
+            } footer: {
+                // Says why the field exists at all. Sign in with Apple returns
+                // a name only on the very first authorization, so for most
+                // people this is the only way one ever gets set.
+                Text(
+                    "This is how you appear to the other people in your household. It's encrypted with your household key, like everything else."
+                )
             }
 
             Section("Members") {
@@ -221,6 +244,13 @@ struct HouseholdView: View {
         }
     }
 
+    private func saveMyName() async {
+        savingMyName = true
+        defer { savingMyName = false }
+        try? await HouseholdService.setDisplayName(myName, householdId: current.household.id)
+        await reload()
+    }
+
     private func displayName(for member: MembershipService.Member) -> String {
         if member.userId == myUid {
             return member.displayName.map { "\($0) (you)" }
@@ -231,6 +261,11 @@ struct HouseholdView: View {
 
     private func reload() async {
         let householdId = current.household.id
+        // Prefilled so the field shows what is actually stored, rather than
+        // looking empty and inviting someone to retype what they already set.
+        if !savingMyName {
+            myName = await HouseholdService.currentDisplayName(householdId: householdId)
+        }
         do {
             members = try await withTimeout(15) {
                 try await MembershipService.fetchMembers(householdId: householdId)

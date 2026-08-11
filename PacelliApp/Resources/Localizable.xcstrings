@@ -3280,6 +3280,22 @@
         }
       }
     },
+    "Saving…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvataggio…"
+          }
+        }
+      }
+    },
     "Search": {
       "localizations": {
         "es": {
@@ -3888,6 +3904,22 @@
         }
       }
     },
+    "This is how you appear to the other people in your household. It's encrypted with your household key, like everything else.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Así es como te ven las demás personas de tu hogar. Se cifra con la clave de tu hogar, igual que todo lo demás."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "È così che ti vedono le altre persone della tua casa. È cifrato con la chiave della tua casa, come tutto il resto."
+          }
+        }
+      }
+    },
     "This permanently deletes your tasks, checklists, plans, categories, household and account.": {
       "localizations": {
         "es": {
@@ -4236,6 +4268,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il tuo messaggio viene cifrato su questo dispositivo in modo che solo lo sviluppatore di Pacelli possa leggerlo. Nessun altro, nemmeno chi potesse accedere al database, può farlo."
+          }
+        }
+      }
+    },
+    "Your name": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu nombre"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il tuo nome"
           }
         }
       }
