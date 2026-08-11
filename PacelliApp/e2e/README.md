@@ -121,3 +121,17 @@ Phase C — on-device decryption (2026-08-11):
   not keychain access-group isolation. That needs a device.
 - `UID` is a read-only shell variable — `UID=$(...)` silently keeps 501 and
   every downstream command gets the wrong value. Name it anything else.
+
+Localised push bodies (2026-08-11):
+- The body is an APNs `loc-key`; a Cloud Function is a trigger, not a session,
+  and has no idea what language the recipient reads. iOS resolves the key
+  against the app's own compiled strings.
+- **A missing loc-key does not degrade — iOS DROPS the notification entirely**,
+  silently, with no error on either side. An incremental build that skipped
+  recompiling the String Catalog was enough to cause it: pushes just stopped
+  arriving. `check_push_e2e.sh` step 0 now asserts the keys are in the built
+  bundle before testing anything else.
+- The Admin SDK spells it `locKey` (camelCase) and maps it to the wire's
+  `loc-key`; writing the wire spelling is a TypeScript error.
+- Loc-keys need an explicit `en` value. The key is an identifier, not English
+  text, so without one an English reader sees "push_task_created".

@@ -84,6 +84,25 @@ delivered_count() {
   grep -rl "$BODY" "$UN"/*/DeliveredNotifications.plist 2>/dev/null | wc -l | tr -d ' ' || true
 }
 
+# The push body is an APNs `loc-key`, resolved on the device against the app's
+# own compiled strings. If the key is missing from the bundle, iOS does not
+# fall back to showing the key — it DROPS THE NOTIFICATION ENTIRELY, with no
+# error anywhere. An incremental build that skipped recompiling the string
+# catalog is enough to cause it, which is exactly what happened on 2026-08-11:
+# every push silently stopped arriving and the only symptom was silence.
+say "0/5  The loc-keys exist in the build (a missing one silently drops pushes)"
+for key in push_task_created push_member_joined; do
+  found=0
+  for d in "$APP"/*.lproj; do
+    [[ -f "$d/Localizable.strings" ]] || continue
+    if plutil -extract "$key" raw -o - "$d/Localizable.strings" >/dev/null 2>&1; then
+      found=1; break
+    fi
+  done
+  [[ "$found" == "1" ]] || fail "$key is not in the built app — every push using it will be dropped, silently. Rebuild after regenerating the string catalog."
+done
+ok "loc-keys present in $(ls -d "$APP"/*.lproj 2>/dev/null | wc -l | tr -d ' ') localisations"
+
 say "1/5  Fresh install (notification authorisation back to notDetermined)"
 xcrun simctl uninstall "$SIM" "$BUNDLE" >/dev/null 2>&1 || true
 xcrun simctl install  "$SIM" "$APP"
