@@ -43,8 +43,25 @@ three-way enums, useful for triage, revealing essentially nothing.
 | Public key | embedded in `FeedbackRepository.publicKeyBase64` |
 | Private key | `~/.config/jarvis/secrets/pacelli_feedback_x25519.key` (0600, outside every repo) |
 
-**If that private key is lost, all sealed feedback becomes unreadable.** It is
-the one irreplaceable secret in this system. Back it up.
+### The private key is not backed up — and that is a problem
+
+**If it is lost, all sealed feedback becomes unreadable.** Checked on
+2026-08-11, not assumed:
+
+- `~/.config/jarvis/secrets/` is *derived*. Everything else in it
+  (`credentials.env`) is regenerated from Keychain by
+  `~/.config/jarvis/lib/sync_secrets.sh`, so losing the directory costs
+  nothing. This key is the only file in there that cannot be regenerated.
+- `secrets/` is gitignored in the jarvis repo (correctly — it must not be
+  committed), so the repo does not carry it.
+- `~/.dr-mirror` does not cover it either.
+
+So the only copy is that single file on one Mac. Put it in Keychain or a
+password manager. Storing it in Keychain would also match how the rest of that
+directory works — Keychain as source of truth, file as derived copy — and
+`read_feedback.py` could then read it from there. That was not done
+automatically because adding a Keychain item needs someone at the machine to
+approve the access prompt.
 
 ## Reading it
 
