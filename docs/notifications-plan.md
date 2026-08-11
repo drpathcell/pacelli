@@ -68,7 +68,7 @@ by due date and top up on launch and on every mutation.
 - Every body generic; entity IDs in the payload for deep linking — the standing
   standard in the pacelli-security-audit skill.
 
-### Phase C — on-device decryption (the NSE)
+### Phase C — on-device decryption (the NSE) — BUILT & PROVEN, not yet shippable
 
 - App Group + **Keychain access group**, so the extension can read
   `hk_<householdId>`.
@@ -124,7 +124,16 @@ entitlements, code, functions, rules, tests — is scriptable from here.
 - [x] E2E: the other person adds a task, this device buzzes —
       `scripts/check_push_e2e.sh`, which asserts the opt-in negative first.
 - [x] pacelli-security-audit addendum — `AUDIT_2026-08-11_push_addendum.md`.
-- [ ] Phase C: NSE decrypt test + its own audit addendum (access group).
+- [x] Phase C: NSE decrypt test (`scripts/check_push_decrypt_e2e.sh`, both
+      directions) + audit addendum (`AUDIT_2026-08-11_phasec_addendum.md`).
+- [ ] Phase C signing: App ID `com.pacelli.pacelli.NotificationService` +
+      match appstore profile (needs the certs repo writable). Until then the
+      extension exists only in simulator builds.
+- [ ] Access-group ISOLATION on a device — the simulator does not enforce
+      entitlements, so decryption is proven but the boundary is not.
+- [ ] Push bodies are English regardless of the user's language. Fix is
+      `loc-key`/`title-loc-key` in the APNs payload so iOS localises from the
+      app's own strings.
 
 Note: the payload round-trip test named below is superseded — the delivered
 payload was inspected directly and carried `enc_title` verbatim.

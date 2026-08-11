@@ -107,3 +107,17 @@ Push (2026-08-11):
 - `set -euo pipefail` + `X="$(grep ... | wc -l)"` aborts silently when grep
   matches nothing — and "nothing delivered yet" is the NORMAL starting state
   for a push check. Same trap as the reminders script, walked into twice.
+
+Phase C — on-device decryption (2026-08-11):
+- `scripts/check_push_decrypt_e2e.sh` — encrypts a title with the household's
+  REAL key (unwrapped by deriving the user key from the uid, as a client does)
+  and asserts the notification body is the plaintext; then sends a title this
+  household cannot open and asserts the body stays generic.
+- **Read the archived `body` field, do not grep.** A delivered payload contains
+  BOTH the decrypted title and the generic fallback (the latter as the original
+  request), so `grep "Buy milk"` passes on a broken extension. Parse the
+  NSKeyedArchiver plist and read the value under the `body` key.
+- The simulator does NOT enforce entitlements, so this proves decryption but
+  not keychain access-group isolation. That needs a device.
+- `UID` is a read-only shell variable — `UID=$(...)` silently keeps 501 and
+  every downstream command gets the wrong value. Name it anything else.
