@@ -4240,6 +4240,50 @@
         }
       }
     },
+    "push_member_joined": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Someone joined your household"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alguien se unió a tu hogar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualcuno si è unito alla tua casa"
+          }
+        }
+      }
+    },
+    "push_task_created": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A new task was added to your household"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se añadió una tarea nueva a tu hogar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una nuova attività è stata aggiunta alla tua casa"
+          }
+        }
+      }
+    },
     "😊 Good": {
       "localizations": {
         "es": {

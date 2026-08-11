@@ -61,20 +61,31 @@ async function targets(
  */
 async function sendAll(
   targetList: Target[],
-  notification: { title: string; body: string },
+  bodyLocKey: string,
   data: Record<string, string>
 ): Promise<void> {
   if (targetList.length === 0) return;
 
   const res = await admin.messaging().sendEachForMulticast({
     tokens: targetList.map((t) => t.token),
-    notification,
     data,
     apns: {
       payload: {
         aps: {
+          // `loc-key`, not literal text. This function has no idea what
+          // language the recipient reads — it is a trigger, not a session —
+          // so iOS resolves the key against the app's own Localizable
+          // strings on the device. Sending English would have given every
+          // Spanish and Italian user English notifications, and after the
+          // extension lands, an English FALLBACK whenever decryption fails.
+          // `locKey`, camelCase: the Admin SDK maps it to the wire's
+          // `loc-key`. Writing the wire spelling here is a type error.
+          alert: {
+            title: "Pacelli",
+            locKey: bodyLocKey,
+          },
           // Lets the Notification Service Extension rewrite the body with the
-          // decrypted title. Harmless before that extension exists.
+          // decrypted title. On failure iOS keeps the localised loc-key text.
           "mutable-content": 1,
           sound: "default",
         },
@@ -122,7 +133,7 @@ export const onTaskCreated = onDocumentCreated(
     const list = await targets(householdId, author, true);
     await sendAll(
       list,
-      { title: "Pacelli", body: "A new task was added to your household" },
+      "push_task_created",
       {
         // The title travels as the SAME ciphertext already at rest in
         // Firestore. The server holds no key and performs no crypto.
@@ -158,7 +169,7 @@ export const onMemberJoined = onDocumentCreated(
     const list = await targets(householdId, joiner, false);
     await sendAll(
       list,
-      { title: "Pacelli", body: "Someone joined your household" },
+      "push_member_joined",
       { kind: "member_joined", household_id: householdId }
     );
   }

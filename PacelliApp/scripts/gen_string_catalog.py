@@ -14,6 +14,26 @@ import pathlib
 
 OUT = pathlib.Path(__file__).resolve().parent.parent / "Resources" / "Localizable.xcstrings"
 
+# Push bodies are composed by a Cloud Function, which has no idea what
+# language the recipient reads. So the payload carries an APNs `loc-key` and
+# iOS resolves it against these entries in the app's own bundle.
+#
+# Unlike TRANSLATIONS below, the key is an IDENTIFIER, not the English text —
+# so English needs an explicit value here. Without one iOS falls back to the
+# key and an English user would read "push_task_created".
+#
+# key -> (en, es, it)
+PUSH_KEYS = {
+    "push_task_created": (
+        "A new task was added to your household",
+        "Se añadió una tarea nueva a tu hogar",
+        "Una nuova attività è stata aggiunta alla tua casa"),
+    "push_member_joined": (
+        "Someone joined your household",
+        "Alguien se unió a tu hogar",
+        "Qualcuno si è unito alla tua casa"),
+}
+
 # en key -> (es, it)
 TRANSLATIONS = {
     "A peaceful, organised home": ("Un hogar tranquilo y organizado", "Una casa serena e organizzata"),
@@ -424,6 +444,15 @@ for key, (es, it) in sorted(TRANSLATIONS.items()):
         entry = {"shouldTranslate": False}
     catalog["strings"][key] = entry
 
+# Push keys carry an explicit `en` value — the key is an identifier, so iOS
+# would otherwise display "push_task_created" to an English reader.
+for key, (en, es, it) in sorted(PUSH_KEYS.items()):
+    catalog["strings"][key] = {"localizations": {
+        lang: {"stringUnit": {"state": "translated", "value": val}}
+        for lang, val in (("en", en), ("es", es), ("it", it))
+    }}
+
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
-print(f"Wrote {OUT} with {len(TRANSLATIONS)} strings")
+print(f"Wrote {OUT} with {len(TRANSLATIONS) + len(PUSH_KEYS)} strings "
+      f"({len(PUSH_KEYS)} push loc-keys)")
