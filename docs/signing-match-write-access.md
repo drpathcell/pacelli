@@ -1,4 +1,10 @@
-# Releases are blocked on one credential
+# Releases were blocked on one credential — RESOLVED 2026-08-11
+
+**Resolved.** A deploy key scoped to `pacelli-match-certs` now gives match
+write access; both profiles are stored in the repo and build 41 — the first
+build containing the notification extension — signed, uploaded and validated.
+
+Kept as the record of how it failed, because the failure shape recurs.
 
 **Symptom:** a tagged release fails at `match` with
 
@@ -38,15 +44,19 @@ account-level reach. Already done:
 - `MATCH_GIT_URL` removed from both workflows: if it is set it overrides the
   Matchfile and the credential-less HTTPS URL comes back
 
-Remaining, for Juan — the private key has to reach GitHub, and entering a
-credential is his to do:
+The private half was stored as the repo secret `MATCH_DEPLOY_KEY`:
 
 ```bash
 gh secret set MATCH_DEPLOY_KEY < ~/.ssh/pacelli_match_deploy
 ```
 
-Then: Actions → **Signing (match)** → Run workflow. Once it stores both
-profiles, tag the release.
+Verified by cloning the certs repo and listing its contents — not by reading a
+job's exit status, which is what hid this twice:
+
+```
+profiles/appstore/AppStore_com.pacelli.pacelli.mobileprovision
+profiles/appstore/AppStore_com.pacelli.pacelli.NotificationService.mobileprovision
+```
 
 ## Worth remembering
 
