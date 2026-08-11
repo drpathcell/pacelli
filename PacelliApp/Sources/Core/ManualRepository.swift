@@ -112,11 +112,23 @@ enum ManualRepository {
     }
 }
 
-/// Feedback submission. Parity with Dart `feedback_service.dart` —
-/// `feedback/{uuid}`, encrypted message/context (plaintext fallback when no
-/// key, Dart parity), ISO dates. Submit-only in the app; entries are read
-/// by the developer, not the UI.
+/// Feedback submission.
+///
+/// Sealed to a Pacelli public key, NOT the household key. Until 2026-08-11
+/// this used `loadHouseholdKey` — a key generated on the sender's device and
+/// never leaves their Keychain — so every message ever sent was ciphertext
+/// nobody could read, including us. Four were sitting unreadable in Firestore
+/// when it was found. See `FeedbackSeal` for the format and why.
+///
+/// Submit-only in the app: it holds no private key and cannot read back what
+/// it sends. Retrieval is `scripts/read_feedback.py`.
 enum FeedbackRepository {
+
+    /// X25519 public key, raw 32 bytes, base64. The private half never ships
+    /// and lives only on the maintainer's machine
+    /// (`~/.config/jarvis/secrets/pacelli_feedback_x25519.key`). Safe to
+    /// publish — sealing to it is all this key can do.
+    static let publicKeyBase64 = "isahawcJ3hRgBAUrgUHItXWrQvQh2gTrtaE/Y0cNvmQ="
     private static var db: Firestore { Firestore.firestore() }
 
     enum FeedbackType: String, CaseIterable, Identifiable {
@@ -146,17 +158,31 @@ enum FeedbackRepository {
         }
     }
 
-    /// Mirrors Dart `submitFeedback` doc shape.
+    /// Everything a human would want to read is sealed into one blob so no
+    /// single field leaks content. `type` and `rating` stay plaintext: they
+    /// are three-way enums useful for triage and reveal essentially nothing.
     static func submit(
         householdId: String, type: FeedbackType, rating: FeedbackRating,
-        message: String
+        message: String, replyEmail: String? = nil
     ) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else {
+        guard let user = Auth.auth().currentUser else {
             throw PacelliError.notSignedIn
         }
-        let key = await KeyManager.shared.loadHouseholdKey(householdId)
-        let encryptedMessage =
-            key.flatMap { try? PacelliCrypto.encrypt(message, key: $0) } ?? message
+
+        let email = replyEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload: [String: Any] = [
+            "message": message,
+            "email": (email?.isEmpty == false ? email! : NSNull()) as Any,
+            // Context worth having when someone reports a bug, and worth
+            // sealing rather than storing plainly next to it.
+            "app_version": Self.appVersion,
+            "os": Self.osVersion,
+            "locale": Locale.current.identifier,
+            "is_guest": user.isAnonymous,
+        ]
+        let json = try JSONSerialization.data(withJSONObject: payload)
+        let sealed = try FeedbackSeal.seal(
+            String(decoding: json, as: UTF8.self), to: publicKeyBase64)
 
         let id = UUID().uuidString.lowercased()
         try await db.collection("feedback").document(id).setData([
@@ -164,10 +190,24 @@ enum FeedbackRepository {
             "household_id": householdId,
             "type": type.rawValue,
             "rating": rating.rawValue,
-            "message": encryptedMessage,
+            "message": sealed,
             "context": NSNull(),
-            "created_by": uid,
+            "created_by": user.uid,
             "created_at": DartISO8601.string(from: Date()),
         ])
+    }
+
+    /// ProcessInfo rather than UIDevice: `UIDevice.current` is main-actor
+    /// isolated and this runs off the main actor.
+    private static var osVersion: String {
+        let v = ProcessInfo.processInfo.operatingSystemVersion
+        return "iOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
+    }
+
+    private static var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(build))"
     }
 }

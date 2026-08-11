@@ -283,6 +283,7 @@ struct FeedbackView: View {
     @State private var type: FeedbackRepository.FeedbackType = .general
     @State private var rating: FeedbackRepository.FeedbackRating = .neutral
     @State private var message = ""
+    @State private var replyEmail = ""
     @State private var sending = false
     @State private var sent = false
     @State private var errorMessage: String?
@@ -302,13 +303,32 @@ struct FeedbackView: View {
             .pickerStyle(.segmented)
             TextField("Tell us more…", text: $message, axis: .vertical)
                 .lineLimit(5...12)
+            // Optional on purpose. Someone reporting a bug anonymously should
+            // not have to identify themselves to be heard — but without this
+            // there was no way to reply to anyone, ever.
+            Section {
+                TextField("Email (only if you'd like a reply)", text: $replyEmail)
+                    .accessibilityIdentifier("feedbackReplyEmail")
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            } footer: {
+                Text("Optional. Leave it blank to stay anonymous.")
+            }
             Section {
                 Button(sending ? "Sending…" : "Send feedback") { send() }
                     .accessibilityIdentifier("sendFeedbackButton")
                     .disabled(
                         message.trimmingCharacters(in: .whitespaces).isEmpty || sending)
             } footer: {
-                Text("Your message is encrypted like the rest of your household data.")
+                // Precise rather than reassuring. The old copy said "encrypted
+                // like the rest of your household data", which was true and
+                // was exactly the bug: it was encrypted to a key only the
+                // sender held, so nobody could ever read it.
+                Text(
+                    "Your message is encrypted on this device so that only the Pacelli developer can read it. Nobody else, including anyone who could reach the database, can."
+                )
             }
         }
         .navigationTitle("Send feedback")
@@ -333,10 +353,11 @@ struct FeedbackView: View {
                 let householdId = current.household.id
                 let type = type
                 let rating = rating
+                let email = replyEmail
                 try await withTimeout(15) {
                     try await FeedbackRepository.submit(
                         householdId: householdId, type: type, rating: rating,
-                        message: text)
+                        message: text, replyEmail: email)
                 }
                 sent = true
             } catch {

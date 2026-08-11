@@ -12,6 +12,9 @@ import * as admin from "firebase-admin";
 
 const getDb = () => admin.firestore();
 
+/** Wire prefix of a developer-sealed feedback envelope (FeedbackSeal.swift). */
+const FEEDBACK_SEAL_PREFIX = "pfb1:";
+
 // ═══════════════════════════════════════════════════════════════════
 //  FEEDBACK
 // ═══════════════════════════════════════════════════════════════════
@@ -36,12 +39,20 @@ export async function listFeedback(
 
   return snap.docs.map((d) => {
     const data = d.data();
+    const raw: string = data.message ?? "";
+    // Since 2026-08-11 feedback is sealed to the Pacelli public key, not the
+    // household key — see FeedbackSeal.swift. A household holds no key that
+    // opens it, so decrypting here would hand back "[encrypted]" and read as
+    // a decryption fault rather than what it is: a message addressed to the
+    // developer, not to this household. Say so instead.
+    const sealed = raw.startsWith(FEEDBACK_SEAL_PREFIX);
     return {
       id: d.id,
       type: data.type,
       rating: data.rating,
-      message: dec(data.message),
-      context: decN(data.context),
+      message: sealed ? null : dec(raw),
+      sealedForDeveloper: sealed,
+      context: sealed ? null : decN(data.context),
       createdBy: data.created_by,
       createdAt: data.created_at,
     };

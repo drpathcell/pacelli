@@ -1,0 +1,64 @@
+appId: com.pacelli.pacelli
+---
+# Feedback E2E — "a stranger downloads the app and sends feedback".
+#
+# The write path was never the problem; the READ path was. Until 2026-08-11
+# feedback was encrypted with the sender's household key, which never leaves
+# their device, so every message ever sent was unreadable — including by us.
+#
+# This flow only proves the app can send. The half that matters is asserted by
+# scripts/check_feedback_e2e.sh, which reads the message back in plaintext with
+# scripts/read_feedback.py. A flow that stopped at "Thank you!" would have
+# passed green for the entire time the feature was broken.
+#
+# MESSAGE is passed in by the runner so the assertion can find this exact
+# submission rather than any older one.
+
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Send feedback"
+    centerElement: true
+    timeout: 20000
+- tapOn: "Send feedback"
+- extendedWaitUntil:
+    visible: "Tell us more…"
+    timeout: 15000
+
+- tapOn: "Tell us more…"
+- inputText: ${MESSAGE}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "feedbackReplyEmail"
+    centerElement: true
+    timeout: 15000
+- tapOn:
+    id: "feedbackReplyEmail"
+- inputText: "stranger@example.com"
+- hideKeyboard
+- takeScreenshot: /tmp/pacelli_fb_01_form
+
+- scrollUntilVisible:
+    element:
+      id: "sendFeedbackButton"
+    centerElement: true
+    timeout: 15000
+- tapOn:
+    id: "sendFeedbackButton"
+- extendedWaitUntil:
+    visible: "Thank you!"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_fb_02_sent
+- tapOn: "OK"

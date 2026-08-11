@@ -281,9 +281,15 @@ TRANSLATIONS = {
     "Your household data, encryption keys and account will be permanently deleted. This can't be undone.": (
         "Los datos de tu hogar, las claves de cifrado y tu cuenta se eliminarán permanentemente. No se puede deshacer.",
         "I dati della tua casa, le chiavi di cifratura e il tuo account saranno eliminati definitivamente. Non si può annullare."),
-    "Your message is encrypted like the rest of your household data.": (
-        "Tu mensaje se cifra como el resto de los datos de tu hogar.",
-        "Il tuo messaggio è cifrato come il resto dei dati della tua casa."),
+    "Your message is encrypted on this device so that only the Pacelli developer can read it. Nobody else, including anyone who could reach the database, can.": (
+        "Tu mensaje se cifra en este dispositivo para que solo el desarrollador de Pacelli pueda leerlo. Nadie más, ni siquiera quien pudiera acceder a la base de datos, puede hacerlo.",
+        "Il tuo messaggio viene cifrato su questo dispositivo in modo che solo lo sviluppatore di Pacelli possa leggerlo. Nessun altro, nemmeno chi potesse accedere al database, può farlo."),
+    "Email (only if you'd like a reply)": (
+        "Correo electrónico (solo si quieres respuesta)",
+        "Email (solo se desideri una risposta)"),
+    "Optional. Leave it blank to stay anonymous.": (
+        "Opcional. Déjalo en blanco para permanecer anónimo.",
+        "Facoltativo. Lascialo vuoto per restare anonimo."),
     "Deletion verification found %lld surviving record(s). Nothing has been hidden — please retry.": (
         "La verificación encontró %lld registro(s) sin eliminar. No se ha ocultado nada — reinténtalo.",
         "La verifica ha trovato %lld record non eliminati. Nulla è stato nascosto — riprova."),

@@ -1,0 +1,18 @@
+{
+  "_comment" : "Produced by Swift (CryptoKit). scripts\/check_feedback_crypto.py must open every one. Regenerate with PACELLI_WRITE_FEEDBACK_VECTORS=1 swift test.",
+  "format" : "pfb1:",
+  "vectors" : [
+    {
+      "plaintext" : "{\"message\":\"the join code screen is confusing\",\"email\":null,\"app_version\":\"1.3.0 (39)\",\"os\":\"iOS 26.2\",\"locale\":\"en_IE\",\"is_guest\":true}",
+      "sealed" : "pfb1:5dt9YwaBUuQabMrclBy9TRQ1\/NsT6VJ++mVNb92DZWT4c\/8Yd1RxzLF\/JtCcxLpBuEBYxwPLnNHMdqVMCOjVLeq8LW2EwKGYn899b7rSmTQR0G\/EJ8eoRGfxdzYPMQDrBQbyrrYdFys2VPG9xqQZAMZ3u\/HjxgzUeFJZPlC\/x7X+xRpx7q\/gMHwCQLLS33trX0nmIrgKMPX8dzl8dCTEioNFjTmytbljWwxAoW\/W54iaEgbFdLJbbyVTzur82D65OJfYKg=="
+    },
+    {
+      "plaintext" : "{\"message\":\"crashed 🙁 when I tapped Save\\nevery time\",\"email\":\"someone@example.com\",\"app_version\":\"1.3.0 (39)\",\"os\":\"iOS 26.2\",\"locale\":\"it_IT\",\"is_guest\":false}",
+      "sealed" : "pfb1:dqNVj6dHzFhiJPEJRfoctZw3NtIxwhEyoHazvhiOCQO9OZCmnxCFsDEUzLIMIWDB9m87JiTcq7KM\/pUYwnCYAh5p6yn7oHhluDm2s7cEaXrqZshpes\/hYU3V2OB6vPHuYdtFWgqln35zhpjMXLR3eUz9\/RlFLCsp\/jiBRagUcNtN+TenGnvyUgDTCuqswGuyo0YB+Y0h538J5rpJwGas\/mDlg9NbnHew3FZmtA6vNrExdt+az81hCXLEUdrHvkUM2oStn3u4k6isI0FL4xgVjSehgQMzz1nU\/ixUeE\/rH5U="
+    },
+    {
+      "plaintext" : "{\"message\":\"\",\"email\":null,\"app_version\":\"1.3.0 (39)\",\"os\":\"iOS 26.2\",\"locale\":\"es_ES\",\"is_guest\":true}",
+      "sealed" : "pfb1:NUUHK0CXHoxsoecuOtbCN2Q3OYIvTTe6qxIiN1sp9FlGWr06uZ38is0gCzZ92und5mRMLg2SFyim0KVYQlOq1mwZQE\/vRkZo0suK2Q5ssK4teHzoOhzY5Aoe4M9wyluUdo3ikjGb2tX0e0vi+KyEJ2MRaIlrGTe1H\/4sjbw4YXluddw6xtA4bVAqgQw+gMc5jtk9MoFa65aSIKvgrid57xbPMg=="
+    }
+  ]
+}

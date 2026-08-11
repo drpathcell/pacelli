@@ -1733,6 +1733,22 @@
         }
       }
     },
+    "Email (only if you'd like a reply)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo electrónico (solo si quieres respuesta)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email (solo se desideri una risposta)"
+          }
+        }
+      }
+    },
     "Email address": {
       "localizations": {
         "es": {
@@ -2827,6 +2843,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apri Impostazioni"
+          }
+        }
+      }
+    },
+    "Optional. Leave it blank to stay anonymous.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Déjalo en blanco para permanecer anónimo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facoltativo. Lascialo vuoto per restare anonimo."
           }
         }
       }
@@ -4128,18 +4160,18 @@
         }
       }
     },
-    "Your message is encrypted like the rest of your household data.": {
+    "Your message is encrypted on this device so that only the Pacelli developer can read it. Nobody else, including anyone who could reach the database, can.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tu mensaje se cifra como el resto de los datos de tu hogar."
+            "value": "Tu mensaje se cifra en este dispositivo para que solo el desarrollador de Pacelli pueda leerlo. Nadie más, ni siquiera quien pudiera acceder a la base de datos, puede hacerlo."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il tuo messaggio è cifrato come il resto dei dati della tua casa."
+            "value": "Il tuo messaggio viene cifrato su questo dispositivo in modo che solo lo sviluppatore di Pacelli possa leggerlo. Nessun altro, nemmeno chi potesse accedere al database, può farlo."
           }
         }
       }

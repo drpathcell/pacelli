@@ -260,8 +260,44 @@ service cloud.firestore {
 
     // ── Feedback ──────────────────────────────────────────────
     match /feedback/{feedbackId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
-      allow create: if isAuth() && isMember(request.resource.data.household_id);
+      // Create is NOT tied to household membership. Feedback is the one thing
+      // a stranger sends TO us, and requiring isMember() made a fresh
+      // install's ability to report a bug depend on household state that may
+      // not have settled yet. created_by is pinned instead, so entries stay
+      // attributable and nobody can write one in someone else's name.
+      allow create: if isAuth()
+        && request.resource.data.created_by == request.auth.uid
+        // Shape-pinned. Dropping isMember() opened this to every signed-in
+        // user on the internet, so the document itself has to be constrained:
+        // exact field set, known enum values, and a size cap well under the
+        // 1 MB document limit so nobody can park megabytes here for free.
+        && request.resource.data.keys().hasOnly([
+             'id', 'household_id', 'type', 'rating',
+             'message', 'context', 'created_by', 'created_at'])
+        && request.resource.data.type in ['general', 'bug', 'featureRequest']
+        && request.resource.data.rating in ['positive', 'neutral', 'negative']
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 100000;
+        // Deliberately NOT requiring the 'pfb1:' sealed prefix. The version
+        // live on the App Store today (1.2.0) still writes household-key
+        // ciphertext, and rejecting it here would break "send feedback" for
+        // every user on the current build the moment this deploys. Add the
+        // prefix check once the sealed build has actually rolled out.
+
+      // Immutable once sent: a submitted report cannot be rewritten.
+      allow update: if false;
+
+      // Read and delete stay keyed to household membership — deliberately NOT
+      // narrowed to created_by. Burn-all-data and discardOwnEmptyHouseholds
+      // both sweep every content collection with a `household_id ==` query,
+      // so a created_by-scoped rule would deny those queries and break burn
+      // outright. The exposure it would buy back is worth nothing anyway: the
+      // message is sealed to the Pacelli public key, so a household member
+      // fetching it gets ciphertext they hold no key for.
+      //
+      // Retrieval for us is scripts/read_feedback.py, which uses Admin
+      // credentials and bypasses rules entirely.
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
     }
 
     // ── Diagnostics ─────────────────────────────────────────

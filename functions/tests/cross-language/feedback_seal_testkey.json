@@ -1,0 +1,5 @@
+{
+  "_comment": "THROWAWAY keypair for cross-language tests only. Publishing it is intentional; it seals nothing real. The production public key lives in FeedbackRepository and its private half never leaves the maintainer's machine.",
+  "public_key_b64": "fHR2PEVse6HUWz1uEbSh+E37YgO3AASEBhdbC4SkHAU=",
+  "private_key_b64": "8D/KsflTH2vUL190sWABL8t1nllf/6NkU4IDXDQDD3k="
+}
