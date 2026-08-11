@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The ONLY entitlement this extension gets. It can read the household
+	     key and nothing else — no push, no Sign in with Apple, no network
+	     identity. Keeping this list short is the point: the extension is a
+	     second process with access to the key, so its reach has to be
+	     visibly minimal. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.pacelli.shared</string>
+	</array>
+</dict>
+</plist>

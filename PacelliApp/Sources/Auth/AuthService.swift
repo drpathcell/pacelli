@@ -6,6 +6,7 @@ import FirebaseFirestore
 import Foundation
 import GoogleSignIn
 import UIKit
+import PacelliKit
 
 /// Firebase auth flows. Ports the Flutter semantics:
 /// - Anonymous (guest) users UPGRADE in place via `link(with:)`, preserving

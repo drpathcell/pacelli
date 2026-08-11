@@ -8,6 +8,14 @@
 	     break signing on the release pipeline. -->
 	<key>aps-environment</key>
 	<string>$(APS_ENVIRONMENT)</string>
+	<!-- Shared with the notification extension so it can read the household
+	     key and decrypt a notification title on device. The App Store profile
+	     already grants 5PCNU95W9V.* (verified against the profile before this
+	     was added), so no regeneration was needed. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.pacelli.shared</string>
+	</array>
 	<key>com.apple.developer.applesignin</key>
 	<array>
 		<string>Default</string>

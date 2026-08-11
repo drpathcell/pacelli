@@ -25,6 +25,11 @@ actor KeyManager {
         if let local = SecureStore.read("hk_\(householdId)") {
             cachedKey = local
             cachedHouseholdId = householdId
+            // Opportunistic: an install that predates the shared access group
+            // holds this key where the notification extension cannot see it,
+            // so its pushes show the generic body forever until it moves.
+            // Cheap, idempotent, and a failure costs nothing but that.
+            SecureStore.migrateToAccessGroup("hk_\(householdId)")
             return local
         }
 
