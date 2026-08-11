@@ -81,7 +81,13 @@ vendor/bundle/
 .tmp-*
 .audit-*/
 .audits/
-AUDIT_*.md
+# AUDIT_*.md was ignored here from 2026-05-01 (0ddd716) until 2026-08-11.
+# Five security audits were silently untracked in that window and existed only
+# on one Mac, while the two from April — added before the rule — stayed in the
+# repo. The audits carry findings and reasoning, no secrets (checked), and are
+# the record of why the rules and crypto are shaped as they are. They belong
+# in version control. `.audits/` and `.audit-*/` stay ignored: those are
+# scratch output, not records.
 
 # Jarvis dashboard runtime output
 .jarvis_dashboard/
