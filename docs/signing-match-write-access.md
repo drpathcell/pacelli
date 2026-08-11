@@ -24,35 +24,29 @@ certs repo. fastlane treats that push failure as non-fatal, so the signing job
 finished **green having persisted nothing**. Release builds run `match` in
 readonly mode, read from the repo, find no profile, and fail.
 
-## The fix (only Juan can do this)
+## The fix — one command left
 
-`MATCH_GIT_URL` is a plain HTTPS URL with no credentials. CI's built-in
-`GITHUB_TOKEN` only grants write access to the `pacelli` repo, not to
-`pacelli-match-certs`.
+A **deploy key** was chosen over a personal access token: it is scoped to
+`pacelli-match-certs` alone and can do nothing else, whereas a PAT carries
+account-level reach. Already done:
 
-1. Create a fine-grained personal access token with **Contents: read & write**
-   on `drpathcell/pacelli-match-certs` only.
-2. Update the repo secret `MATCH_GIT_URL` to embed it:
+- ed25519 keypair generated at `~/.ssh/pacelli_match_deploy`
+- public half registered on the certs repo with write access (key id 159961087)
+- `Matchfile` switched to `git@github.com:...` — SSH, so the key applies
+- both workflows load the key, pin `known_hosts`, and **prove it can reach the
+  repo before fastlane runs**, so a silent 403 cannot happen again
+- `MATCH_GIT_URL` removed from both workflows: if it is set it overrides the
+  Matchfile and the credential-less HTTPS URL comes back
 
-   ```
-   https://x-access-token:<TOKEN>@github.com/drpathcell/pacelli-match-certs.git
-   ```
+Remaining, for Juan — the private key has to reach GitHub, and entering a
+credential is his to do:
 
-3. Re-run the **Signing (match)** workflow (Actions → Signing (match) → Run
-   workflow). It will store both profiles.
-4. Then tag the release normally.
+```bash
+gh secret set MATCH_DEPLOY_KEY < ~/.ssh/pacelli_match_deploy
+```
 
-Do not paste the token anywhere else; the secret is the only place it belongs.
-
-## Until then
-
-- `main` carries the full Phase B + Phase C work, built and proven on the
-  simulator.
-- **Tagged releases will fail** — the Matchfile now lists the extension's
-  identifier, and its profile is not in the repo. Nothing auto-tags, so this
-  blocks only a deliberate release.
-- Already-shipped versions are unaffected: 1.3.0 is live, and 1.3.1 is in
-  review on build 40, which was uploaded before any of this.
+Then: Actions → **Signing (match)** → Run workflow. Once it stores both
+profiles, tag the release.
 
 ## Worth remembering
 

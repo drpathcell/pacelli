@@ -1,4 +1,12 @@
-git_url("https://github.com/drpathcell/pacelli-match-certs.git")
+# SSH, not HTTPS. match must PUSH here — it stores each new provisioning
+# profile — and the HTTPS URL had no write credentials: the push 403'd, which
+# fastlane treats as non-fatal, so signing jobs finished green having persisted
+# nothing. Auth is a deploy key scoped to this one repo (secret
+# MATCH_DEPLOY_KEY), not a personal token.
+#
+# CI must NOT set MATCH_GIT_URL, or it overrides this line and the HTTPS URL
+# comes back.
+git_url("git@github.com:drpathcell/pacelli-match-certs.git")
 storage_mode("git")
 
 type("appstore")

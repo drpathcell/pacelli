@@ -22,12 +22,31 @@ jobs:
 
       - name: Sanity-check signing secrets
         env:
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
-          : "${MATCH_GIT_URL:?MATCH_GIT_URL secret is empty}"
           : "${MATCH_PASSWORD:?MATCH_PASSWORD secret is empty}"
           echo "Signing secrets present."
+
+      - name: Load the match deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+        run: |
+          : "${DEPLOY_KEY:?MATCH_DEPLOY_KEY secret is empty}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/match_deploy
+          chmod 600 ~/.ssh/match_deploy
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          cat >> ~/.ssh/config <<'EOF'
+          Host github.com
+            IdentityFile ~/.ssh/match_deploy
+            IdentitiesOnly yes
+          EOF
+          # Prove the key can actually reach the repo. A silent 403 at push
+          # time is what made two signing jobs report success while storing
+          # nothing; failing here instead is the whole point.
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/match_deploy -o IdentitiesOnly=yes" \
+            git ls-remote git@github.com:drpathcell/pacelli-match-certs.git >/dev/null
+          echo "Deploy key can read the certs repo."
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -47,7 +66,6 @@ jobs:
 
       - name: Run fastlane ios sync_appstore_signing
         env:
-          MATCH_GIT_URL:      ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
           ASC_KEY_ID:         ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID:      ${{ secrets.ASC_ISSUER_ID }}
