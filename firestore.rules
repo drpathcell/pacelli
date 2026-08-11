@@ -47,21 +47,9 @@ service cloud.firestore {
       // so at evaluation time the household genuinely does not exist yet.
       // Once it is committed this branch is closed to everyone, and the IDs
       // are UUIDs, so it cannot be squatted ahead of time.
-      // ─────────── TEMPORARY: remove when 1.2.0 is live on the App Store ───────────
-      // The LIVE App Store build is 1.1.0 / build 35, which predates `joined_via`.
-      // Requiring proof locked real users out of accepting invites — verified by
-      // firestore-tests/legacy.test.js. Until 1.2.0 replaces it on the Store, a
-      // caller may create their OWN membership without proof.
-      // Exposure while this is in place: someone who learns a household's UUID
-      // could add themselves to it. They still get no key, so content stays
-      // encrypted. Strictly narrower than the pre-1.2.0 rule, which let anyone
-      // create a membership for ANYONE.
-      // Tracked by the "Pacelli 1.2.0 App Review watch" scheduled task.
-      // TO REVERT: delete the `return true` line below and change the next
-      // line's leading `||` to `return`. Then redeploy. legacy.test.js will
-      // flip to expecting a denial, which is the signal that it worked.
-      return true
-        || !exists(/databases/$(database)/documents/households/$(householdId))
+      // (A grace clause lived here 2026-08-10 → 2026-08-11, while the live App
+      // Store build predated `joined_via`. Removed once 1.2.0/38 shipped.)
+      return !exists(/databases/$(database)/documents/households/$(householdId))
         || (('joined_via' in request.resource.data)
             && request.resource.data.joined_via is string
             && (invitedByEmail(householdId, request.resource.data.joined_via)
