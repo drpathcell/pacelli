@@ -17,13 +17,30 @@ Exit codes: 0 submitted or nothing to do, 1 blocked or failed.
 """
 
 import argparse
+import fcntl
 import importlib.util
 import pathlib
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
+LOCK_PATH = pathlib.Path("/tmp/pacelli-submit-when-clear.lock")
 IN_FLIGHT = {"WAITING_FOR_REVIEW", "IN_REVIEW", "PENDING_APPLE_RELEASE",
              "PENDING_DEVELOPER_RELEASE", "PROCESSING_FOR_APP_STORE"}
+
+
+def acquire_lock():
+    """One submitter at a time.
+
+    Two concurrent runs both pass the state checks, both reach submit(), and
+    the loser creates a second, empty reviewSubmission that Apple will neither
+    delete nor cancel. Learned 2026-08-12 on 1.4.0.
+    """
+    fh = LOCK_PATH.open("w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return None
+    return fh
 
 
 def load_asc():
@@ -44,6 +61,11 @@ def main() -> int:
     ap.add_argument("--review-notes-file", type=pathlib.Path)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+
+    lock = acquire_lock()
+    if lock is None:
+        print(f"another submit_when_clear is already running ({LOCK_PATH})")
+        return 0
 
     asc = load_asc()
     versions = {v["attributes"]["versionString"]: v for v in asc.app_versions()}
