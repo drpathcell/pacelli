@@ -53,7 +53,7 @@ jobs:
       # SPM checkout cache — same key scheme as release.yml (shared restore
       # prefix would cross-pollute signing lanes, so kept per-workflow).
       - name: Cache SPM checkouts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData/**/SourcePackages

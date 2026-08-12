@@ -63,7 +63,7 @@ jobs:
       # Keyed on the dependency pins in project.yml + PacelliKit's manifest
       # (Package.resolved lives inside the gitignored xcodeproj).
       - name: Cache SPM checkouts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
