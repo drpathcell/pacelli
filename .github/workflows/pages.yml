@@ -1,0 +1,50 @@
+# Repo-owned replacement for GitHub's implicit `pages-build-deployment`
+# workflow. The implicit one is not editable: its actions were pinned to
+# Node 20 (deprecation annotation on every run) and a transient runner TLS
+# fault on 2026-08-11 failed the deploy with no way to add a retry.
+#
+# Behaviour is identical to the legacy source (branch `main`, path `/docs`):
+# jekyll-build-pages is the same builder GitHub ran server-side. docs/*.md
+# carry no front matter, so Jekyll copies them verbatim, exactly as before.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel an in-flight deploy: a half-published site is worse than a
+# queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/configure-pages@v6
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v5
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
