@@ -51,17 +51,15 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"          # iPhone-only (decision 2026-05-05)
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        # 1.0 approved & released 2026-08-04 (build 34). 1.1.0 = first
-        # update: data export, household rename, generic theme names.
-        # 1.1.1 = household invite acceptance fix (rules denied the accept
-        # batch; invitees silently landed in a fresh empty household).
-        # 1.2.0 = household join codes — SIWA "Hide My Email" users can never
-        # be reached by an email-addressed invite, so the household publishes
-        # a short bearer code instead.
-        # Build numbers stay globally ascending (native floor lives in the
-        # Fastfile native_build lane; CI overrides CURRENT_PROJECT_VERSION).
+        # CURRENT_PROJECT_VERSION here is NOT the shipped build number and
+        # never will be — it is the native lane's FLOOR. Every release build
+        # gets max(floor, latest_testflight + 1) computed in the Fastfile
+        # native_build lane and passed as an xcarg, so this value only ever
+        # applies to local and simulator builds. Keep it equal to the floor in
+        # fastlane/Fastfile; native_build asserts the two match and fails loudly
+        # if they drift. Do not "update" it to the current build number.
         MARKETING_VERSION: "1.4.0"
-        CURRENT_PROJECT_VERSION: "35"
+        CURRENT_PROJECT_VERSION: "35"   # floor, mirrors Fastfile native_build
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Resources/PacelliApp.entitlements   # SIWA
         INFOPLIST_KEY_CFBundleDisplayName: Pacelli    # home-screen name (target is PacelliApp)
@@ -103,7 +101,7 @@ targets:
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         MARKETING_VERSION: "1.4.0"
-        CURRENT_PROJECT_VERSION: "35"
+        CURRENT_PROJECT_VERSION: "35"   # floor — see the app target's note
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: NotificationService/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Pacelli Notifications
