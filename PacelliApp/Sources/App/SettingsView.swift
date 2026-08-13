@@ -98,11 +98,6 @@ struct SettingsView: View {
                     } label: {
                         Label("Household manual", systemImage: "book")
                     }
-                    NavigationLink {
-                        FeedbackView(current: current)
-                    } label: {
-                        Label("Send feedback", systemImage: "envelope")
-                    }
                 }
 
                 Section {
@@ -178,6 +173,27 @@ struct SettingsView: View {
                     NavigationLink("Privacy & encryption") {
                         PrivacyEncryptionView()
                     }
+                }
+
+                // Was filed under "Household" until 2026-08-13, next to members
+                // and invites — where nobody looking for support would open it.
+                // Two versions shipped with a working feedback channel and not
+                // one real message arrived through it. Feedback goes to the
+                // developer, not to the household; it gets its own header, and
+                // the footer says where it lands, because "Send feedback" alone
+                // does not tell you whether a human reads it.
+                Section {
+                    NavigationLink {
+                        FeedbackView(current: current)
+                    } label: {
+                        Label("Send feedback", systemImage: "envelope")
+                    }
+                } header: {
+                    Text("Help")
+                } footer: {
+                    Text(
+                        "Report a problem or suggest an idea. It goes straight to the developer, encrypted so only they can read it."
+                    )
                 }
 
                 Section {
