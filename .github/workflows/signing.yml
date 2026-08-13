@@ -58,7 +58,10 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          # 3.3+, because Gemfile.lock carries excon 1.7.0 (pulled in by the
+          # fastlane 2.238.0 bump, 0c7d541) and excon 1.7 requires ruby >= 3.3.
+          # Keep this in step with the lock, not with habit.
+          ruby-version: '3.3'
           bundler-cache: true
 
       - name: Create build keychain
