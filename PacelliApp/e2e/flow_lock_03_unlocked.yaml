@@ -1,0 +1,9 @@
+appId: com.pacelli.pacelli
+---
+# Lock E2E 3/3 — a matching face gets you back in.
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 20000
+- assertVisible: "New task"
+- assertNotVisible: "Pacelli is locked"
+- takeScreenshot: /tmp/pv/lock_03_unlocked

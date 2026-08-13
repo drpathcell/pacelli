@@ -1,0 +1,40 @@
+appId: com.pacelli.pacelli
+---
+# Lock E2E 1/3 — the toggle exists, and turning it on sticks.
+#
+# The toggle is hidden entirely unless LAContext can evaluate a policy, so its
+# presence IS the assertion that BiometricLock.isAvailable is true. If the
+# simulator has no enrolled Face ID this fails here, which is correct: it means
+# the run was not testing what it claims to test.
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Require Face ID"
+    centerElement: true
+    timeout: 20000
+- assertVisible: "Require Face ID"
+
+# Tap the SWITCH, not the row.
+#
+# `tapOn: id: settings_biometric_lock_toggle` looks right and silently does
+# nothing: Maestro taps the centre of the element's frame, which is the label,
+# and SwiftUI only flips a Toggle when the switch itself is hit. The flow still
+# reports COMPLETED, so this reads as a pass while changing no state — it cost
+# an hour of chasing a phantom bug in the app on 2026-08-13. centerElement
+# above puts the row at ~50% height; the switch sits at the right edge.
+#
+# No existing flow in this repo taps a toggle, which is why nobody had hit it.
+- tapOn:
+    point: "86%,52%"
+- takeScreenshot: /tmp/pv/lock_01_enabled

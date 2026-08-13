@@ -1,0 +1,15 @@
+appId: com.pacelli.pacelli
+---
+# Lock E2E 2/3 — coming back from the background is locked.
+#
+# The runner presents a NON-matching face before this runs. That is deliberate:
+# returning to the foreground auto-attempts authentication (the intended UX —
+# you come back, Face ID runs, you are in), so with a matching face the lock
+# screen is correct but invisible, and asserting on it would be a race. A
+# refused face is what holds the lock on screen long enough to assert.
+- extendedWaitUntil:
+    visible: "Pacelli is locked"
+    timeout: 20000
+- assertVisible: "Pacelli is locked"
+- assertNotVisible: "New task"
+- takeScreenshot: /tmp/pv/lock_02_locked
