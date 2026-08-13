@@ -327,7 +327,16 @@ def cmd_status(_):
     print("== review submissions ==")
     for s in submissions():
         a = s["attributes"]
-        print(f"  {s['id']}  state={a['state']}  platform={a.get('platform')}")
+        note = ""
+        if a["state"] in ("READY_FOR_REVIEW", "UNRESOLVED_ISSUES"):
+            n = len(call("GET", f"/reviewSubmissions/{s['id']}/items",
+                         params={"limit": 50})["data"])
+            note = (f"  <- OPEN, {n} item(s); the next submit() reuses this one"
+                    if n else
+                    "  <- OPEN but EMPTY: a race orphan. Apple allows neither "
+                    "DELETE nor cancel on it; submit() reuses it, so it is "
+                    "harmless. Do not try to clear it.")
+        print(f"  {s['id']}  state={a['state']}  platform={a.get('platform')}{note}")
 
 
 def main():
