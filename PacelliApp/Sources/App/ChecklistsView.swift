@@ -191,7 +191,12 @@ struct ChecklistDetailView: View {
 
             Section("Items") {
                 ForEach(checklist.items) { item in
-                    ChecklistItemRow(item: item) { toggle(item) }
+                    ChecklistItemRow(
+                        item: item,
+                        onToggle: { toggle(item) },
+                        onCommit: { newTitle, newQty in
+                            updateItem(item, title: newTitle, quantity: newQty)
+                        })
                         .swipeActions(edge: .leading) {
                             Button {
                                 pushAsTask(item)
@@ -303,6 +308,32 @@ struct ChecklistDetailView: View {
         }
     }
 
+    /// Optimistic, and it puts the old values back if the write fails —
+    /// otherwise the row keeps showing an edit the household never received.
+    private func updateItem(_ item: ChecklistItem, title newTitle: String, quantity newQty: String) {
+        guard let i = checklist.items.firstIndex(where: { $0.id == item.id }) else { return }
+        let previousTitle = checklist.items[i].title
+        let previousQty = checklist.items[i].quantity
+
+        checklist.items[i].title = newTitle
+        checklist.items[i].quantity = newQty.isEmpty ? nil : newQty
+
+        Task {
+            do {
+                try await withTimeout(15) {
+                    try await ChecklistsRepository.updateItem(
+                        item, title: newTitle, quantity: newQty.isEmpty ? nil : newQty)
+                }
+            } catch {
+                if let j = checklist.items.firstIndex(where: { $0.id == item.id }) {
+                    checklist.items[j].title = previousTitle
+                    checklist.items[j].quantity = previousQty
+                }
+                errorMessage = String(localized: "Couldn't save the change.")
+            }
+        }
+    }
+
     private func toggle(_ item: ChecklistItem) {
         Task {
             do {
@@ -353,27 +384,101 @@ struct ChecklistDetailView: View {
     }
 }
 
+/// An item you can actually correct.
+///
+/// Until 1.5.0 the whole row was one Button that only toggled, so changing
+/// "White pepper ×1" to ×2 meant deleting it and retyping — which also threw
+/// away its position and its checked state. Now the circle toggles and the
+/// text is editable in place, in the same shape as the "Add an item" row
+/// directly beneath it so the two read as one control.
 private struct ChecklistItemRow: View {
     let item: ChecklistItem
     let onToggle: () -> Void
+    /// (title, quantity) — called only when something actually changed.
+    let onCommit: (String, String) -> Void
+
+    @State private var title: String
+    @State private var quantity: String
+    @FocusState private var focused: Field?
+    @Environment(\.scenePhase) private var scenePhase
+
+    private enum Field { case title, quantity }
+
+    init(
+        item: ChecklistItem,
+        onToggle: @escaping () -> Void,
+        onCommit: @escaping (String, String) -> Void
+    ) {
+        self.item = item
+        self.onToggle = onToggle
+        self.onCommit = onCommit
+        _title = State(initialValue: item.title)
+        _quantity = State(initialValue: item.quantity ?? "")
+    }
 
     var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: 12) {
+        HStack(spacing: 12) {
+            // Only the circle toggles. Making the whole row toggle again would
+            // mean every attempt to place the cursor ticks the item off.
+            Button(action: onToggle) {
                 Image(systemName: item.isChecked ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(item.isChecked ? Color.accentColor : .secondary)
-                Text(item.title)
-                    .strikethrough(item.isChecked)
-                    .foregroundStyle(item.isChecked ? .secondary : .primary)
-                if let quantity = item.quantity, !quantity.isEmpty {
-                    Text("×\(quantity)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(item.isChecked ? "Uncheck \(item.title)" : "Check \(item.title)")
+
+            TextField("Item", text: $title)
+                .focused($focused, equals: .title)
+                .strikethrough(item.isChecked)
+                .foregroundStyle(item.isChecked ? .secondary : .primary)
+                .submitLabel(.done)
+                .onSubmit(commit)
+                .accessibilityIdentifier("checklist_item_title")
+
+            TextField("Qty", text: $quantity)
+                .focused($focused, equals: .quantity)
+                .frame(width: 52)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .submitLabel(.done)
+                .onSubmit(commit)
+                .accessibilityIdentifier("checklist_item_qty")
         }
-        .buttonStyle(.plain)
+        // Commit when the field loses focus, not on every keystroke: a write
+        // per character would be a Firestore write per character.
+        .onChange(of: focused) { _, now in
+            if now == nil { commit() }
+        }
+        // Focus loss alone is not enough, and the first version of this shipped
+        // with only that. Type "×3", swipe the app away, and the edit dies with
+        // the process — the field never lost focus, so nothing ever wrote.
+        // Caught on a cold relaunch, 2026-08-13.
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { commit() }
+        }
+        // Same hole one level down: navigating back tears the row down without
+        // ever resigning first responder.
+        .onDisappear { commit() }
+        // Someone else edited this item, or our own toggle came back. Adopt it
+        // ONLY while not being edited, or a sync would overwrite mid-sentence.
+        .onChange(of: item.title) { _, new in
+            if focused == nil { title = new }
+        }
+        .onChange(of: item.quantity) { _, new in
+            if focused == nil { quantity = new ?? "" }
+        }
+    }
+
+    private func commit() {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        let q = quantity.trimmingCharacters(in: .whitespaces)
+        // An empty title would leave an unnameable row; put the old one back.
+        guard !t.isEmpty else {
+            title = item.title
+            quantity = item.quantity ?? ""
+            return
+        }
+        guard t != item.title || q != (item.quantity ?? "") else { return }
+        onCommit(t, q)
     }
 }

@@ -129,6 +129,31 @@ enum ChecklistsRepository {
         return item
     }
 
+    /// Edits an item's title and/or quantity in place.
+    ///
+    /// Added 1.5.0: before this the only way to change "White pepper ×1" to
+    /// "×2" was to delete the item and retype it, which also lost its
+    /// created_at ordering and its checked state.
+    ///
+    /// `title` is encrypted, matching `addItem`. `quantity` is NOT — it is
+    /// written in the clear exactly as `addItem` already writes it, because
+    /// encrypting it here and not there would make old and new items
+    /// undecryptable in different directions. That inconsistency is real and
+    /// is recorded for the audit rather than half-fixed in a UI change.
+    static func updateItem(
+        _ item: ChecklistItem, title: String, quantity: String?
+    ) async throws {
+        guard let key = await KeyManager.shared.loadHouseholdKey(item.householdId)
+        else { throw PacelliError.missingHouseholdKey }
+        try await db.collection("checklist_items").document(item.id).updateData([
+            "title": try PacelliCrypto.encrypt(title, key: key),
+            // NSNull, not omission: clearing the quantity has to erase the
+            // stored value, and leaving the key out would silently keep it.
+            "quantity": (quantity?.isEmpty == false) ? quantity! : NSNull(),
+            "updated_at": DartISO8601.string(from: Date()),
+        ])
+    }
+
     /// Mirrors Dart `toggleChecklistItem` (checked_at/checked_by shape).
     static func setChecked(_ item: ChecklistItem, checked: Bool) async throws {
         guard let uid else { throw PacelliError.notSignedIn }
