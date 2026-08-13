@@ -11,6 +11,7 @@ on:
     paths:
       - 'PacelliApp/**'
       - 'functions/tests/cross-language/**'
+      - 'scripts/verify_entitlements.py'
       - '.github/workflows/native-ci.yml'
   pull_request:
     branches:
@@ -19,6 +20,7 @@ on:
     paths:
       - 'PacelliApp/**'
       - 'functions/tests/cross-language/**'
+      - 'scripts/verify_entitlements.py'
       - '.github/workflows/native-ci.yml'
 
 concurrency:
@@ -26,6 +28,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Cheap, no toolchain, fails in seconds. The notification extension holds
+  # the household key; Phase C justified that on its reach being minimal, and
+  # this is what keeps that true after everyone has forgotten the argument.
+  entitlements:
+    name: Entitlement allow-list (extension reach)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: verify_entitlements
+        run: python3 scripts/verify_entitlements.py
+
   kit-tests:
     name: PacelliKit tests (crypto vector gate)
     # macos-26 = Xcode 26 / Swift 6 toolchain (April 2026 ASC SDK policy;
