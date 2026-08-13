@@ -9,6 +9,22 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+\+[0-9]+'
   workflow_dispatch:
 
+# One release at a time, and never kill one in flight.
+#
+# The build number is chosen by read-then-write in the Fastfile:
+# `[floor, latest_testflight + 1].max`. Two runs overlapping both read the
+# same latest, both pick the same number, and the loser dies on altool 409
+# "buildUpload" — the documented root cause of the v1.0.0+22 failure. The max()
+# makes a *sequential* re-tag safe; only serialising makes a concurrent one
+# safe.
+#
+# cancel-in-progress is deliberately false. Cancelling mid-upload is how you
+# get a half-delivered build and a burnt build number, and unlike CI there is
+# no "a later run covers this commit" argument for a release.
+concurrency:
+  group: release-native
+  cancel-in-progress: false
+
 jobs:
   native-beta:
     name: Native iOS → TestFlight

@@ -12,6 +12,13 @@ name: Signing (match)
 on:
   workflow_dispatch:
 
+# match force-pushes the encrypted certs repo. Two concurrent syncs race that
+# push, and the loser can leave the repo holding profiles nobody's keychain
+# matches. Manual-only makes this unlikely, not impossible.
+concurrency:
+  group: signing-match
+  cancel-in-progress: false
+
 jobs:
   sync:
     name: Sync App Store profiles
