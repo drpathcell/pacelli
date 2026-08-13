@@ -67,7 +67,7 @@ targets:
         INFOPLIST_FILE: Resources/Info.plist          # explicit CFBundleIconName (merged with generated keys)
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO   # parity with Flutter Info.plist
-        INFOPLIST_KEY_NSFaceIDUsageDescription: "Pacelli uses Face ID to protect access to your securely stored encryption keys."
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "Pacelli uses Face ID to unlock the app when you come back to it."   # app lock, NOT keychain gating — see BiometricLock
       configs:
         # aps-environment must match the provisioning profile or signing fails.
         # Debug builds run on the simulator and on development profiles;

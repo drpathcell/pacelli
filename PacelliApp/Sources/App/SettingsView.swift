@@ -20,6 +20,11 @@ struct SettingsView: View {
     @State private var exportItem: ExportShareItem?
     @State private var exportError: String?
 
+    // The lock's own on/off flag lives in UserDefaults under the same key
+    // BiometricLock reads, so RootView and this toggle cannot disagree.
+    @AppStorage(BiometricLock.enabledKey) private var lockEnabled = false
+    @State private var lock = BiometricLock()
+
     // Reminder prefs are per-device (a phone, not a household, gets reminded),
     // so they live in UserDefaults rather than Firestore.
     @AppStorage(ReminderPrefs.storageEnabled) private var remindersEnabled = false
@@ -169,9 +174,38 @@ struct SettingsView: View {
                     }
                 )
 
-                Section("Privacy") {
+                Section {
                     NavigationLink("Privacy & encryption") {
                         PrivacyEncryptionView()
+                    }
+                    if BiometricLock.isAvailable {
+                        Toggle(
+                            "Require \(BiometricLock.biometryLabel)",
+                            isOn: Binding(
+                                get: { lockEnabled },
+                                set: { want in
+                                    Task {
+                                        // The toggle follows the outcome, not
+                                        // the tap: turning the lock OFF has to
+                                        // pass the lock first, or anyone
+                                        // holding an unlocked phone just
+                                        // switches it off here.
+                                        if await lock.setEnabled(want) {
+                                            lockEnabled = want
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                        .accessibilityIdentifier("settings_biometric_lock_toggle")
+                    }
+                } header: {
+                    Text("Privacy")
+                } footer: {
+                    if BiometricLock.isAvailable {
+                        Text(
+                            "Locks the app when you switch away from it. Your data is always encrypted; this stops someone holding your unlocked phone from reading it."
+                        )
                     }
                 }
 

@@ -9,6 +9,7 @@ import SwiftUI
 /// never a gate.
 struct RootView: View {
     @State private var appState = AppState()
+    @State private var lock = BiometricLock()
     @Environment(\.scenePhase) private var scenePhase
 
     // Theme (local prefs — Flutter SharedPreferences parity).
@@ -31,14 +32,82 @@ struct RootView: View {
         .tint((AppColorSchemeChoice(rawValue: schemeRaw) ?? .pacelli).tint)
         .preferredColorScheme(
             (AppThemeModeChoice(rawValue: modeRaw) ?? .system).preferredColorScheme)
+        // Covers the household whenever the app is not frontmost, which
+        // includes the app-switcher snapshot iOS takes on the way out. A lock
+        // that only appears on return still shows your tasks to anyone who
+        // double-taps the home bar.
+        .overlay {
+            if lock.isEnabled && (lock.isLocked || scenePhase != .active) {
+                LockScreen(lock: lock, canPrompt: scenePhase == .active)
+                    .transition(.opacity)
+            }
+        }
         // Session restore runs exactly once per launch, at the root —
         // never from WelcomeView appearance (that caused a retry loop).
         .task { await appState.start() }
-        // Reminders are rebuilt whenever the app comes forward, so the
-        // schedule reflects what the household actually looks like now.
+        // A cold launch starts locked. Doing this in .task rather than in the
+        // initialiser keeps it off the main-actor init path and means the
+        // prompt appears once the window exists to present it over.
+        .task {
+            lock.lockIfEnabled()
+            await lock.unlock()
+        }
         .onChange(of: scenePhase) { _, newPhase in
-            guard newPhase == .active else { return }
-            Task { await appState.reconcileReminders() }
+            switch newPhase {
+            case .background:
+                lock.lockIfEnabled()
+            case .active:
+                // Reminders are rebuilt whenever the app comes forward, so the
+                // schedule reflects what the household actually looks like now.
+                Task { await appState.reconcileReminders() }
+                Task { await lock.unlock() }
+            default:
+                break
+            }
+        }
+    }
+}
+
+/// The cover. Two jobs, and it must be able to do the first without the
+/// second: hide the content, and offer a way back in.
+///
+/// `canPrompt` is false while the app is inactive — raising a Face ID sheet
+/// against a backgrounding app is how you get a prompt the user cannot answer
+/// and a lock they cannot clear.
+struct LockScreen: View {
+    let lock: BiometricLock
+    let canPrompt: Bool
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(.background)
+                .ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.tint)
+
+                Text("Pacelli is locked")
+                    .font(.title3.weight(.semibold))
+
+                if canPrompt {
+                    Button("Unlock with \(BiometricLock.biometryLabel)") {
+                        Task { await lock.unlock() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("lock_unlock_button")
+
+                    if let error = lock.lastError {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                }
+            }
         }
     }
 }
