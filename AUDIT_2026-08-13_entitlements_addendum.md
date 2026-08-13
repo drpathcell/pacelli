@@ -78,9 +78,27 @@ Whether that is worth shipping probe code into the extension is a judgement
 call, not an oversight. Recorded as open rather than quietly rounded up to
 verified.
 
-**Carried, unchanged:** Face ID keychain gating (open since 1.0),
-passphrase-encrypted export (open since 1.1.0), push rate limiting (bounded by
-household size).
+## Carried debt, now dispositioned
+
+Two items have been re-listed as "Open, carried" by every audit since 1.1.0
+with no intent to act on either. Both are now closed as **won't-do**, with the
+reasoning and the reopening condition recorded in
+`~/Documents/Claude-KB/decisions/2026-08-13-pacelli-carried-debt-disposition.md`:
+
+- **Passphrase-encrypted export** — the plaintext is the feature. An export
+  the user cannot open without Pacelli is a worse backup than none. The threat
+  model that would justify it (an attacker reading the app's tmp directory)
+  has already lost. *Reopens if an importer lands* — a tampered import is a
+  code path into the household and needs integrity protection, which is a
+  different fix.
+- **Push rate limiting** — the only actor who can trigger it is an existing
+  household member and the ceiling is household size. *Reopens if households
+  routinely exceed ~10 members, or if any join path admits someone without an
+  existing member's deliberate act.*
+
+**Still genuinely open:** Face ID keychain gating (since 1.0) — the household
+key comes out of the keychain on an unlocked phone with no further check. That
+is the real gap and the intended headline of 1.5.0.
 
 **Verdict: PASS.** No finding. The Phase C promise is now enforced rather than
 asserted, and the one part still resting on Apple's enforcement rather than
