@@ -10,6 +10,7 @@ import {
   decrypt,
   encryptNullable,
   decryptNullable,
+  decryptMigrating,
 } from "../crypto/encryption-service";
 
 /**
@@ -39,5 +40,13 @@ export function createFieldCrypto(householdKey: string) {
     /** Decrypt a nullable string field */
     decN: (ciphertext: string | null | undefined): string | null =>
       decryptNullable(ciphertext, householdKey),
+    /**
+     * Decrypt a field that may still hold pre-migration plaintext.
+     * Use for `quantity` only — everything else has always been ciphertext,
+     * and using this where `decN` belongs would silently pass corruption
+     * through to the client as if it were data.
+     */
+    decMig: (stored: string | null | undefined): string | null =>
+      decryptMigrating(stored, householdKey),
   };
 }

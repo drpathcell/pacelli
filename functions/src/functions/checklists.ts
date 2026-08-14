@@ -2,14 +2,14 @@
  * Checklist API endpoints for Pacelli Cloud Functions.
  *
  * Maps to DataRepository checklist methods in firebase_data_repository.dart.
- * Encrypted fields: title (checklist + items) ONLY.
+ * Encrypted fields: title (checklist + items) and quantity (items).
  *
- * `quantity` is deliberately PLAINTEXT. This file used to encrypt it, which the
- * native app does not — the app writes and reads it raw. An API-created item
- * therefore displayed a base64 blob in the Qty field, and an app-created item
- * came back from the API as null because decryption of plaintext fails.
- * Corrected 2026-08-14 to match the app, which is the live writer with existing
- * plaintext data. Encrypting it properly is a schema migration, not a patch.
+ * `quantity` became ciphertext in 1.7.0. Before that both writers stored it in
+ * the clear — a leak inherited from the Dart schema that left a shopping list's
+ * amounts readable on the server while its item names were not. Reads therefore
+ * go through `decMig`, which tolerates the pre-migration plaintext still in the
+ * collection; the app rewrites those rows as it encounters them. Writes here
+ * are unconditionally encrypted, so the API never adds to the backlog.
  */
 import * as admin from "firebase-admin";
 import { AuthContext } from "../middleware/auth";
@@ -37,7 +37,7 @@ function parseTimestamp(val: unknown): string | null {
 export async function listChecklists(
   ctx: AuthContext
 ): Promise<Checklist[]> {
-  const { dec } = createFieldCrypto(ctx.householdKey);
+  const { dec, decMig } = createFieldCrypto(ctx.householdKey);
 
   const snapshot = await db()
     .collection("checklists")
@@ -62,7 +62,7 @@ export async function listChecklists(
           checklistId: id.checklist_id,
           householdId: id.household_id,
           title: dec(id.title ?? ""),
-          quantity: id.quantity ?? null,
+          quantity: decMig(id.quantity),
           isChecked: id.is_checked ?? false,
           createdBy: id.created_by ?? null,
           createdAt: parseTimestamp(id.created_at),
@@ -92,7 +92,7 @@ export async function getChecklist(
   ctx: AuthContext,
   checklistId: string
 ): Promise<Checklist | null> {
-  const { dec } = createFieldCrypto(ctx.householdKey);
+  const { dec, decMig } = createFieldCrypto(ctx.householdKey);
 
   const doc = await db().collection("checklists").doc(checklistId).get();
   if (!doc.exists) return null;
@@ -113,7 +113,7 @@ export async function getChecklist(
       checklistId: id.checklist_id,
       householdId: id.household_id,
       title: dec(id.title ?? ""),
-      quantity: id.quantity ?? null,
+      quantity: decMig(id.quantity),
       isChecked: id.is_checked ?? false,
       createdBy: id.created_by ?? null,
       createdAt: parseTimestamp(id.created_at),
@@ -215,7 +215,7 @@ export async function addChecklistItem(
   ctx: AuthContext,
   req: AddChecklistItemRequest
 ): Promise<ChecklistItem> {
-  const { enc } = createFieldCrypto(ctx.householdKey);
+  const { enc, encN } = createFieldCrypto(ctx.householdKey);
 
   // Verify checklist belongs to household
   const clDoc = await db().collection("checklists").doc(req.checklistId).get();
@@ -231,7 +231,7 @@ export async function addChecklistItem(
     checklist_id: req.checklistId,
     household_id: ctx.householdId,
     title: enc(req.title),
-    quantity: req.quantity ?? null,
+    quantity: encN(req.quantity ?? null),
     is_checked: false,
     created_by: ctx.uid,
     created_at: now,

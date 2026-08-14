@@ -66,15 +66,30 @@ enum PlansRepository {
             .whereField("household_id", isEqualTo: householdId)
             .getDocuments()
         var checklistByPlan: [String: [PlanChecklistItem]] = [:]
+        var legacy: [(id: String, plaintext: String)] = []
         for doc in checklistSnap.documents {
             var data = doc.data()
             if let t = data["title"] as? String {
                 data["title"] = PacelliCrypto.decryptNullable(t, key: key) ?? t
             }
+            // The REST API has always written this field encrypted while the
+            // app wrote it raw, so this collection holds both forms for reasons
+            // that predate the migration. See QuantityMigration.
+            let qty = PacelliCrypto.readMigrating(data["quantity"] as? String, key: key)
+            if let shown = qty.displayValue {
+                data["quantity"] = shown
+            } else {
+                data["quantity"] = NSNull()
+            }
             guard let item = PlanChecklistItem(map: data), !item.planId.isEmpty
             else { continue }
+            if qty.needsMigration, let plaintext = qty.displayValue {
+                legacy.append((item.id, plaintext))
+            }
             checklistByPlan[item.planId, default: []].append(item)
         }
+        QuantityMigration.backfill(
+            collection: "plan_checklist_items", items: legacy, key: key)
 
         for i in plans.indices {
             plans[i].entries = (entriesByPlan[plans[i].id] ?? [])
@@ -211,6 +226,7 @@ enum PlansRepository {
 
         var map = item.toMap()
         map["title"] = try PacelliCrypto.encrypt(title, key: key)
+        map["quantity"] = try PacelliCrypto.encryptNullable(quantity, key: key) ?? NSNull()
 
         try await db.collection("plan_checklist_items").document(item.id).setData(map)
         return item

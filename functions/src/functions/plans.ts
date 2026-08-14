@@ -16,6 +16,9 @@
 import * as admin from "firebase-admin";
 import { AuthContext } from "../middleware/auth";
 import { createFieldCrypto } from "../middleware/encryption";
+// Used directly rather than via createFieldCrypto because buildPlan receives
+// its decryptors as parameters and already holds ctx.
+import { decryptMigrating } from "../crypto/encryption-service";
 import {
   Plan,
   PlanEntry,
@@ -135,7 +138,10 @@ async function buildPlan(
       householdId: cd.household_id,
       entryId: cd.entry_id ?? null,
       title: dec(cd.title ?? ""),
-      quantity: decN(cd.quantity),
+      // NOT decN. This collection has held both forms since the API shipped:
+      // it wrote `quantity` encrypted while the app wrote it raw, so decN
+      // answered "[encrypted]" for every item a user created in the app.
+      quantity: decryptMigrating(cd.quantity, ctx.householdKey),
       isChecked: cd.is_checked ?? false,
       createdBy: cd.created_by ?? null,
       createdAt: parseTimestamp(cd.created_at),

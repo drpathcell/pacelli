@@ -1,0 +1,167 @@
+{
+  "comment": "Shared classification fixture for the mid-migration `quantity` field. Read by functions/tests/field-migration.test.ts and by PacelliKitTests/FieldMigrationTests.swift. Regenerate with tests/cross-language/generate_migrating_vectors.js.",
+  "testKey": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "foreignKey": "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100",
+  "cases": [
+    {
+      "name": "ciphertext of \"2\"",
+      "stored": "2iIBRjZ4uPuP5kkR/a+6mlyCKjrTzn5Pc5kKEnNrUZI=",
+      "kind": "decrypted",
+      "display": "2",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "ciphertext of \"500g\"",
+      "stored": "/uAeibs27ufQnxjHyWnAXqu95z3qL7tdd7gz43gcfdA=",
+      "kind": "decrypted",
+      "display": "500g",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "ciphertext of \"2 dozen\"",
+      "stored": "6+z2TwUSxredeWGHSjfZ8y64ag+NYO+WVBDzB0fzhvE=",
+      "kind": "decrypted",
+      "display": "2 dozen",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "ciphertext of \"½ punnet\"",
+      "stored": "o6zgvgv6HSZ41I8awToEbk9ROGLA7IyfaZ4TXqpYsDk=",
+      "kind": "decrypted",
+      "display": "½ punnet",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "ciphertext of \"xxxxxxxxxxxx\"",
+      "stored": "GPSgzF6R3Xs2OYwfC62OLAkoIaIP4VKqs9G0ZXUgnyvt+aOB6A4JaM2jiVP1N9o3ijSz+gNriPZvlbSVxA0JYOQAZffAQtPDwwR5YwI8k0r3UdOCM4IKUgcSfhHMvzN8bhikJ0HDP8ssdUTZoKtn62FGogCvB9Yfkoiq/Ru2YKcJ9tTPh7N6XlHBp+8EMW3DtcoAP1DhMrdpSExDy5d33jcL0ukymCK2g971RZ88BDaBWyt7/YV9Z+N5BQ22jPYRRVKLFMypT4jO6wJ9InDSQruOzPGjlmBY9fH/mYPOAXw=",
+      "kind": "decrypted",
+      "display": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "ciphertext of the empty string",
+      "stored": "1Ga05Jfl6OG22P6PWowjGVSChOEWkKicW97xPFrz3Vk=",
+      "kind": "decrypted",
+      "display": "",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "legacy plaintext \"2\"",
+      "stored": "2",
+      "kind": "legacyPlaintext",
+      "display": "2",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"1\"",
+      "stored": "1",
+      "kind": "legacyPlaintext",
+      "display": "1",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"500g\"",
+      "stored": "500g",
+      "kind": "legacyPlaintext",
+      "display": "500g",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"2 dozen\"",
+      "stored": "2 dozen",
+      "kind": "legacyPlaintext",
+      "display": "2 dozen",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"½ punnet\"",
+      "stored": "½ punnet",
+      "kind": "legacyPlaintext",
+      "display": "½ punnet",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"x3\"",
+      "stored": "x3",
+      "kind": "legacyPlaintext",
+      "display": "x3",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"abcd\"",
+      "stored": "abcd",
+      "kind": "legacyPlaintext",
+      "display": "abcd",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"12345678\"",
+      "stored": "12345678",
+      "kind": "legacyPlaintext",
+      "display": "12345678",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"2 x 1.5L\"",
+      "stored": "2 x 1.5L",
+      "kind": "legacyPlaintext",
+      "display": "2 x 1.5L",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"AAAAAAAAAAAAAAAAAAAAAA==\"",
+      "stored": "AAAAAAAAAAAAAAAAAAAAAA==",
+      "kind": "legacyPlaintext",
+      "display": "AAAAAAAAAAAAAAAAAAAAAA==",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "legacy plaintext \"a lot\"",
+      "stored": "a lot",
+      "kind": "legacyPlaintext",
+      "display": "a lot",
+      "needsMigration": true,
+      "looksLikeEnvelope": false
+    },
+    {
+      "name": "ciphertext written with a different household key",
+      "stored": "B9cFVC/voDj4wAj8hilfff1yfcZixs0+60Nj+wQmocU=",
+      "kind": "undecryptable",
+      "display": "[encrypted]",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "base64-shaped junk long enough to pass the structural test",
+      "stored": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "kind": "undecryptable",
+      "display": "[encrypted]",
+      "needsMigration": false,
+      "looksLikeEnvelope": true
+    },
+    {
+      "name": "null",
+      "stored": null,
+      "kind": "absent",
+      "display": null,
+      "needsMigration": false,
+      "looksLikeEnvelope": false
+    }
+  ]
+}

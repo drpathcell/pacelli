@@ -96,6 +96,57 @@ export function decryptNullable(
   }
 }
 
+/** AES block size. Ciphertext length is always a multiple of this. */
+const BLOCK_LENGTH = 16;
+
+/**
+ * Structural test for the Pacelli envelope: `base64(16-byte IV || CBC blocks)`.
+ *
+ * Used to tell "this is ciphertext I cannot open" apart from "this was never
+ * ciphertext". Deliberately strict about length so a short human value like
+ * "2" or "500g" can never be mistaken for an envelope even when it happens to
+ * be valid base64.
+ *
+ * Mirrors `PacelliCrypto.looksLikeEnvelope` in PacelliKit — change both or
+ * neither.
+ */
+export function looksLikeEnvelope(s: string): boolean {
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(s)) return false;
+  const decoded = Buffer.from(s, "base64");
+  // Buffer.from is lenient; confirm the round trip really was base64.
+  if (decoded.toString("base64").replace(/=+$/, "") !== s.replace(/=+$/, "")) {
+    return false;
+  }
+  if (decoded.length < IV_LENGTH + BLOCK_LENGTH) return false;
+  return (decoded.length - IV_LENGTH) % BLOCK_LENGTH === 0;
+}
+
+/**
+ * Decrypts a field that is mid-migration from plaintext to ciphertext.
+ *
+ * `checklist_items.quantity` and `plan_checklist_items.quantity` were written
+ * in the clear before 1.7.0, so both forms are live in the same collection.
+ * `decryptNullable` is wrong for them: it answers "[encrypted]" for anything
+ * that will not open, which would hide a user's real pre-migration quantity
+ * behind a placeholder.
+ *
+ * Three-way, matching `PacelliCrypto.readMigrating` on the app side:
+ *   - opens                        → the plaintext
+ *   - not an envelope              → the stored value, unchanged (legacy)
+ *   - an envelope that will not open → "[encrypted]" (corruption / wrong key)
+ */
+export function decryptMigrating(
+  stored: string | null | undefined,
+  key: string
+): string | null {
+  if (stored == null || stored === "") return stored ?? null;
+  try {
+    return decrypt(stored, key);
+  } catch {
+    return looksLikeEnvelope(stored) ? "[encrypted]" : stored;
+  }
+}
+
 // ── Key generation ──
 
 /**

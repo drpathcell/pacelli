@@ -1,0 +1,36 @@
+appId: com.pacelli.pacelli
+---
+# Quantity E2E 2/2 — the same item, read back cold.
+#
+# This is the half that proves anything. Everything in flow 1 could be served
+# from memory by an app that never encrypted on write or never decrypted on
+# read; only a fresh process reading Firestore exercises both directions.
+#
+# No "Continue as guest" branch here by design: the session persists in the
+# keychain, and if the welcome screen appeared it would mean this flow is
+# looking at a different household than the one flow 1 wrote to — which would
+# make a pass meaningless.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+- tapOn: "Checklists"
+- extendedWaitUntil:
+    visible: "QtyProbe"
+    timeout: 20000
+- tapOn: "QtyProbe"
+- extendedWaitUntil:
+    visible: "Peppercorns"
+    timeout: 20000
+- assertVisible: "347"
+- takeScreenshot: /tmp/pv/qty_02_after_cold_read
+
+# Tidy up: a guest household is disposable, but leaving probe lists behind
+# makes the next run's assertions ambiguous.
+- tapOn: "Delete checklist"
+- runFlow:
+    when:
+      visible: "Delete"
+    commands:
+      - tapOn: "Delete"

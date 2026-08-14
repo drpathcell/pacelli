@@ -10,8 +10,13 @@ on:
       - develop
     paths:
       - 'PacelliApp/**'
-      - 'functions/tests/cross-language/**'
+      - 'functions/src/**'
+      - 'functions/tests/**'
+      - 'functions/package.json'
+      - 'functions/package-lock.json'
+      - 'functions/tsconfig.json'
       - 'scripts/verify_entitlements.py'
+      - 'scripts/verify_api_wire.py'
       - '.github/workflows/native-ci.yml'
   pull_request:
     branches:
@@ -19,8 +24,13 @@ on:
       - develop
     paths:
       - 'PacelliApp/**'
-      - 'functions/tests/cross-language/**'
+      - 'functions/src/**'
+      - 'functions/tests/**'
+      - 'functions/package.json'
+      - 'functions/package-lock.json'
+      - 'functions/tsconfig.json'
       - 'scripts/verify_entitlements.py'
+      - 'scripts/verify_api_wire.py'
       - '.github/workflows/native-ci.yml'
 
 concurrency:
@@ -39,6 +49,58 @@ jobs:
       - uses: actions/checkout@v5
       - name: verify_entitlements
         run: python3 scripts/verify_entitlements.py
+
+  # The other half of the entitlements argument: that job keeps the extension's
+  # reach honest, this one keeps the two WRITERS honest. Both are greps, both
+  # run in seconds, and both exist because the failure they prevent is silent —
+  # a disagreeing writer returns 200 and shows the user nothing.
+  #
+  # This guard was written on 2026-08-14 and left unwired for its first day,
+  # which is why `plans.ts` kept encrypting `quantity` while the app wrote it
+  # raw with nothing complaining.
+  wire-contract:
+    name: API/app wire contract (id fields, quantity encryption)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: verify_api_wire
+        run: python3 scripts/verify_api_wire.py
+
+  # The functions/ jest suite had never run in CI — not in this workflow, which
+  # had no node job at all, and not in ci.yml, whose `npm test` is the Firestore
+  # rules suite in firestore-tests/. So the cross-language crypto gate on the
+  # TypeScript side, the one that proves the API and the app agree on the
+  # envelope format, was 76 tests that only ever ran on someone's laptop.
+  #
+  # It is the counterpart of kit-tests below: same vectors, other language.
+  # Both must run, or "cross-language" means one language.
+  functions-tests:
+    name: Cloud Functions tests (crypto + wire parity)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: functions
+        run: npm ci
+
+      # tsc before jest: ts-jest would report a type error as a test failure,
+      # which reads as a broken assertion rather than a broken build.
+      - name: Type-check
+        working-directory: functions
+        run: npm run build
+
+      - name: jest
+        working-directory: functions
+        run: npm test
 
   kit-tests:
     name: PacelliKit tests (crypto vector gate)

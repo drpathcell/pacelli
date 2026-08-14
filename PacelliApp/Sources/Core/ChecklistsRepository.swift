@@ -39,15 +39,29 @@ enum ChecklistsRepository {
             .whereField("household_id", isEqualTo: householdId)
             .getDocuments()
         var itemsByChecklist: [String: [ChecklistItem]] = [:]
+        var legacy: [(id: String, plaintext: String)] = []
         for doc in itemsSnap.documents {
             var data = doc.data()
             if let t = data["title"] as? String {
                 data["title"] = PacelliCrypto.decryptNullable(t, key: key) ?? t
             }
+            // `quantity` is mid-migration: ciphertext on anything written since
+            // 1.7.0, plaintext on everything before it. See QuantityMigration.
+            let qty = PacelliCrypto.readMigrating(data["quantity"] as? String, key: key)
+            if let shown = qty.displayValue {
+                data["quantity"] = shown
+            } else {
+                data["quantity"] = NSNull()
+            }
             guard let item = ChecklistItem(map: data), !item.checklistId.isEmpty
             else { continue }
+            if qty.needsMigration, let plaintext = qty.displayValue {
+                legacy.append((item.id, plaintext))
+            }
             itemsByChecklist[item.checklistId, default: []].append(item)
         }
+        QuantityMigration.backfill(
+            collection: "checklist_items", items: legacy, key: key)
         for i in checklists.indices {
             checklists[i].items = (itemsByChecklist[checklists[i].id] ?? [])
                 .sorted { ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast) }
@@ -124,6 +138,7 @@ enum ChecklistsRepository {
 
         var map = item.toMap()
         map["title"] = try PacelliCrypto.encrypt(title, key: key)
+        map["quantity"] = try PacelliCrypto.encryptNullable(quantity, key: key) ?? NSNull()
 
         try await db.collection("checklist_items").document(item.id).setData(map)
         return item
@@ -135,11 +150,11 @@ enum ChecklistsRepository {
     /// "×2" was to delete the item and retype it, which also lost its
     /// created_at ordering and its checked state.
     ///
-    /// `title` is encrypted, matching `addItem`. `quantity` is NOT — it is
-    /// written in the clear exactly as `addItem` already writes it, because
-    /// encrypting it here and not there would make old and new items
-    /// undecryptable in different directions. That inconsistency is real and
-    /// is recorded for the audit rather than half-fixed in a UI change.
+    /// Both `title` and `quantity` are encrypted. Until 1.7.0 `quantity` was
+    /// written in the clear — an inheritance from the Dart schema that made a
+    /// shopping list's amounts readable on the server while its item names were
+    /// not. Old plaintext values are still out there and are migrated lazily on
+    /// read; see ``QuantityMigration``.
     static func updateItem(
         _ item: ChecklistItem, title: String, quantity: String?
     ) async throws {
@@ -149,7 +164,8 @@ enum ChecklistsRepository {
             "title": try PacelliCrypto.encrypt(title, key: key),
             // NSNull, not omission: clearing the quantity has to erase the
             // stored value, and leaving the key out would silently keep it.
-            "quantity": (quantity?.isEmpty == false) ? quantity! : NSNull(),
+            "quantity": try PacelliCrypto.encryptNullable(
+                (quantity?.isEmpty == false) ? quantity : nil, key: key) ?? NSNull(),
             "updated_at": DartISO8601.string(from: Date()),
         ])
     }
@@ -298,6 +314,8 @@ enum ChecklistsRepository {
                 createdAt: now)
             var itemMap = item.toMap()
             itemMap["title"] = try PacelliCrypto.encrypt(entry.title, key: key)
+            itemMap["quantity"] =
+                try PacelliCrypto.encryptNullable(entry.quantity, key: key) ?? NSNull()
             batch.setData(itemMap, forDocument:
                 db.collection("checklist_items").document(item.id))
             created.append(item)

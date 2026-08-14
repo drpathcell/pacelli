@@ -121,29 +121,49 @@ struct ApiWireContractTests {
             TaskCategory(map: map), "The app cannot parse a category the API created.")
     }
 
-    /// Both writers must store `quantity` as PLAINTEXT.
+    /// `quantity` is CIPHERTEXT at rest as of 1.7.0, in both writers.
     ///
-    /// The API used to encrypt it (`encN`) while the app writes and reads it
-    /// raw, so an API-created item showed a base64 blob in the Qty field and an
-    /// app-created one came back from the API as null. The app won that argument
-    /// because it is the live writer with existing plaintext data on real
-    /// devices; encrypting it properly is a migration, not a patch.
+    /// This test cannot see that, and saying so is the point. `toMap()` still
+    /// emits the raw quantity — it is the in-memory shape — and the
+    /// repositories replace it with ciphertext immediately before the write,
+    /// exactly as they already do for `title`. The storage contract therefore
+    /// lives in four files, none of them this one:
     ///
-    /// This asserts the app side of the contract. The API side is pinned by the
-    /// grep in `scripts/verify_api_wire.py`, because a Swift test cannot see
-    /// TypeScript.
-    @Test("the app stores checklist quantity as plaintext, matching the API")
-    func quantityIsPlaintextBothSides() throws {
-        let item = ChecklistItem(
-            id: "i-1", checklistId: "cl-1", householdId: "hh-1",
-            title: "White pepper", quantity: "2")
-        let map = item.toMap()
+    ///   - `ChecklistsRepository` / `PlansRepository`  (the app's writes)
+    ///   - `checklists.ts` / `plans.ts`                (the API's writes)
+    ///
+    /// and is enforced by `scripts/verify_api_wire.py`, which greps all four
+    /// per write site. The earlier version of this test asserted the opposite —
+    /// that `toMap()` must emit plaintext — which was true of storage until the
+    /// migration and is now merely true of the struct.
+    ///
+    /// What IS testable here is that the model layer stays neutral about the
+    /// form: it must carry a ciphertext quantity through a round trip without
+    /// inspecting, validating or rejecting it. If it ever started caring, the
+    /// repositories' override would not survive parsing.
+    @Test("the model layer carries a ciphertext quantity untouched")
+    func modelIsNeutralAboutQuantityForm() throws {
+        let key = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+        let ciphertext = try PacelliCrypto.encrypt("2", key: key)
+
+        let map: [String: Any] = [
+            "id": "i-1",
+            "checklist_id": "cl-1",
+            "household_id": "hh-1",
+            "title": try PacelliCrypto.encrypt("White pepper", key: key),
+            "quantity": ciphertext,
+            "is_checked": false,
+            "created_at": "2026-08-14T07:30:00.000Z",
+        ]
+
+        let item = try #require(
+            ChecklistItem(map: map),
+            "The app cannot parse an item whose quantity is encrypted.")
         #expect(
-            map["quantity"] as? String == "2",
-            """
-            toMap() no longer emits a plaintext quantity. If the app has started
-            encrypting it, functions/src/functions/checklists.ts must change in
-            the same commit or the two writers disagree again.
-            """)
+            item.quantity == ciphertext,
+            "init?(map:) altered the stored quantity instead of carrying it.")
+
+        // And back out again, unchanged.
+        #expect(item.toMap()["quantity"] as? String == ciphertext)
     }
 }

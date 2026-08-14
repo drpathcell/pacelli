@@ -1,0 +1,51 @@
+appId: com.pacelli.pacelli
+---
+# Quantity E2E 1/2 — write an item with a quantity.
+#
+# Split from the cold read on purpose. Firestore's `setData` resolves against
+# the local cache, so killing the app immediately after the await can drop the
+# write before it reaches the server — the read half then fails for a reason
+# that has nothing to do with encryption. The driver sleeps between the two
+# flows to let the write flush, which is the same shape check_lock_e2e.sh uses
+# for state that needs real time to settle.
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- tapOn: "Checklists"
+- extendedWaitUntil:
+    visible: "New checklist"
+    timeout: 15000
+- tapOn: "New checklist"
+- inputText: "QtyProbe"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "QtyProbe"
+    timeout: 15000
+- hideKeyboard
+
+- tapOn: "QtyProbe"
+- extendedWaitUntil:
+    visible: "Add an item"
+    timeout: 15000
+
+# 347 rather than a realistic "2": a value that appears nowhere else on screen,
+# so assertVisible cannot pass on some unrelated digit.
+- tapOn: "Add an item"
+- inputText: "Peppercorns"
+- tapOn: "Qty"
+- inputText: "347"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Peppercorns"
+    timeout: 15000
+- hideKeyboard
+- assertVisible: "347"
+- takeScreenshot: /tmp/pv/qty_01_written
