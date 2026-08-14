@@ -77,43 +77,27 @@ export async function createLink(
 ): Promise<CreatedLink> {
   const label = (params.label ?? "AI assistant").slice(0, 40);
 
-  // A real Firebase user, so it can hold a session and be revoked like any
-  // other. Disabled accounts cannot mint tokens, which is the kill switch.
-  const assistant = await admin.auth().createUser({
-    displayName: label,
-  });
-
+  // Nothing is provisioned here — not the user, not the member row, not the
+  // key. Only the INTENT is stored.
+  //
+  // The first version created the member immediately, and the very first failed
+  // pairing left a ghost "Member" in Juan's household that he spotted before I
+  // did. Every abandoned code would have added another. An unredeemed code must
+  // cost nothing, so materialising the assistant belongs in redeem.
+  //
+  // The uid is chosen now rather than by createUser, because the household key
+  // has to be wrapped for it and only this authenticated call holds that key.
+  // The wrapped key is no more exposed here than in `household_keys` — same
+  // uid-derived wrapping — and this collection is unreadable by clients.
+  const assistantUid = `ai_${crypto.randomBytes(12).toString("hex")}`;
   const code = makeCode();
   const expiresAt = new Date(Date.now() + CODE_TTL_MS).toISOString();
 
-  // The assistant must be able to DECRYPT, so the household key is re-wrapped
-  // for its uid — exactly as the invite handshake does for a new person. Without
-  // this it would authenticate fine and then read ciphertext forever.
-  await db().collection("household_keys").add({
-    household_id: ctx.householdId,
-    user_id: assistant.uid,
-    encrypted_key: encryptKeyForUser(ctx.householdKey, assistant.uid),
-    created_at: isoNow(),
-  });
-
-  // `joined_via` points at the code that authorised it, matching how every
-  // other membership records its provenance.
-  await db()
-    .collection("household_members")
-    .doc(`${assistant.uid}_${ctx.householdId}`)
-    .set({
-      household_id: ctx.householdId,
-      user_id: assistant.uid,
-      role: ASSISTANT_ROLE,
-      joined_at: isoNow(),
-      joined_via: `ai_link:${code}`,
-      display_name: label,
-    });
-
   await db().collection("ai_link_codes").doc(code).set({
     code,
-    assistant_uid: assistant.uid,
+    assistant_uid: assistantUid,
     household_id: ctx.householdId,
+    wrapped_key: encryptKeyForUser(ctx.householdKey, assistantUid),
     created_by: ctx.uid,
     created_at: isoNow(),
     expires_at: expiresAt,
@@ -121,7 +105,7 @@ export async function createLink(
     label,
   });
 
-  return { code, expiresAt, assistantUid: assistant.uid, label };
+  return { code, expiresAt, assistantUid, label };
 }
 
 /**
@@ -155,19 +139,52 @@ export async function redeemLink(
     return d;
   });
 
-  // Un-claim if minting fails, or the code is destroyed for nothing.
-  //
-  // The first version of this did not, and the very first real pairing attempt
-  // burned its code: the claim committed, then createCustomToken threw
+  // Everything below is undone if any step throws, so a failed redemption
+  // leaves neither a burnt code nor a half-provisioned assistant. The first
+  // version burned the code when `createCustomToken` hit
   // `iam.serviceAccounts.signBlob denied` (the runtime service account needs
-  // Token Creator on itself), and the user was left holding a dead code with a
-  // generic error. Claim-then-mint is right for the race; it just has to be
-  // undone when the second half fails.
+  // Token Creator on itself) and left the user holding a dead code.
   let customToken: string;
   try {
+    // The assistant becomes real only now.
+    await admin.auth().createUser({
+      uid: data.assistant_uid,
+      displayName: data.label ?? "AI assistant",
+    });
+
+    // Without this it would authenticate fine and then read ciphertext forever.
+    await db().collection("household_keys").add({
+      household_id: data.household_id,
+      user_id: data.assistant_uid,
+      encrypted_key: data.wrapped_key,
+      created_at: isoNow(),
+    });
+
+    await db()
+      .collection("household_members")
+      .doc(`${data.assistant_uid}_${data.household_id}`)
+      .set({
+        household_id: data.household_id,
+        user_id: data.assistant_uid,
+        role: ASSISTANT_ROLE,
+        joined_at: isoNow(),
+        joined_via: `ai_link:${trimmed}`,
+        display_name: data.label ?? "AI assistant",
+      });
+
     customToken = await admin.auth().createCustomToken(data.assistant_uid);
   } catch (e) {
-    await ref.update({ redeemed: false, redeemed_at: admin.firestore.FieldValue.delete() });
+    await ref.update({
+      redeemed: false,
+      redeemed_at: admin.firestore.FieldValue.delete(),
+    });
+    // Best-effort cleanup of anything that did land, so a retry starts clean.
+    await admin.auth().deleteUser(data.assistant_uid).catch(() => undefined);
+    await db()
+      .collection("household_members")
+      .doc(`${data.assistant_uid}_${data.household_id}`)
+      .delete()
+      .catch(() => undefined);
     throw e;
   }
   return {
