@@ -94,36 +94,58 @@ APP="$(find "$DD/Build/Products/Debug-iphonesimulator" -maxdepth 1 -name '*.app'
   -not -path '*PlugIns*' 2>/dev/null | head -1)"
 [[ -d "$APP" ]] || fail "no .app in $DD — run without --no-build"
 
-# A full uninstall, not just a reinstall. It clears two pieces of leftover state
-# that otherwise produce baffling failures:
+# ERASE the simulator — an uninstall is NOT enough, and believing otherwise cost
+# the first run of this script.
 #
-#   - a household from an earlier run, so "QtyProbe" below is unambiguous
-#   - the biometric-lock flag, which check_lock_e2e.sh leaves ENABLED. The app
-#     then opens on the Face ID screen and every assertion here fails with
-#     "element not visible" while the app is working perfectly.
-xcrun simctl uninstall "$SIM" com.pacelli.pacelli >/dev/null 2>&1 || true
+# Uninstalling clears the app container but leaves the KEYCHAIN, and the guest
+# user's Firebase Auth session lives there. The reinstalled app therefore signs
+# back in as the SAME anonymous user and inherits that user's household, with
+# every checklist any previous run left on the server. `tapOn: "QtyProbe"` then
+# hits whichever one Firestore returns first — usually an empty leftover — and
+# the cold read fails with "Peppercorns is not visible" while the write it is
+# supposed to be checking worked perfectly. (Same keychain-survives-uninstall
+# behaviour that stranded build 26 on "Loading your home…".)
+#
+# Erasing also clears the biometric-lock flag, which check_lock_e2e.sh leaves
+# ENABLED — otherwise the app opens on the Face ID screen and every assertion
+# here fails as "element not visible".
+#
+# make_screenshots.sh erases for the same reason. Do not downgrade this to an
+# uninstall to save the ~20s.
+say "0.5/4  Erase the simulator (see the note above — uninstall is not enough)"
+xcrun simctl shutdown "$SIM" >/dev/null 2>&1 || true
+xcrun simctl erase "$SIM"
+xcrun simctl boot "$SIM" >/dev/null 2>&1 || true
+xcrun simctl bootstatus "$SIM" -b >/dev/null
 xcrun simctl install "$SIM" "$APP"
-ok "installed $(basename "$APP") on $SIM"
+ok "erased, then installed $(basename "$APP") on $SIM"
 
-say "1/3  Write an item with a quantity"
+say "1/4  Write an item with a quantity"
 "$MAESTRO" --device "$SIM" test "$E2E/flow_qty_01_write.yaml" \
   || fail "flow_qty_01_write — could not create the item.
   If this stopped at \"New task\", check the app is not showing
   \"Couldn't start guest mode\": that is the unsigned-build trap, not the network."
 
-say "2/3  Let the write reach the server (${FLUSH_S}s)"
+say "2/4  Let the write reach the server (${FLUSH_S}s)"
 sleep "$FLUSH_S"
 ok "flushed"
 
-say "3/3  Cold read — a fresh process, straight out of Firestore"
+say "3/4  Cold read — a fresh process, straight out of Firestore"
 "$MAESTRO" --device "$SIM" test "$E2E/flow_qty_02_coldread.yaml" \
   || fail "flow_qty_02_coldread — the quantity did not survive the round trip.
   Either the write stored something the read cannot decrypt, or the read is
   not using PacelliCrypto.readMigrating. Compare /tmp/pv/qty_01_written.png
   with /tmp/pv/qty_02_after_cold_read.png."
 
-printf '\n\033[32mA quantity written encrypted comes back as what the user typed.\033[0m\n'
-printf '\033[2mThis proves the round trip, NOT the storage form. An app that skipped\n'
-printf 'encryption entirely on both sides would pass every assertion above.\n'
-printf 'Proving the value is ciphertext at rest needs a reader that is not the\n'
-printf 'app, and no such check exists yet — see the Pacelli project note.\033[0m\n'
+ok "a quantity written encrypted comes back as what the user typed"
+
+# Everything above proves the ROUND TRIP, which an app that skipped encryption
+# on both sides would also pass. This step is the other claim: that what sits in
+# storage is not the user's value. It reads the simulator's Firestore
+# persistence — a reader that is not the app — and refuses to report a pass
+# unless it first proves it could have seen plaintext.
+say "4/4  At rest — is the stored value actually ciphertext?"
+"$ROOT/scripts/check_quantity_at_rest.py" --sim "$SIM" \
+  || fail "the quantity is not encrypted in storage (see above)"
+
+printf '\n\033[32mThe quantity round-trips, AND it is not recoverable from storage.\033[0m\n'

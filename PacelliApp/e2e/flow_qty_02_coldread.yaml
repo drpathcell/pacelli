@@ -26,11 +26,13 @@ appId: com.pacelli.pacelli
 - assertVisible: "347"
 - takeScreenshot: /tmp/pv/qty_02_after_cold_read
 
-# Tidy up: a guest household is disposable, but leaving probe lists behind
-# makes the next run's assertions ambiguous.
-- tapOn: "Delete checklist"
-- runFlow:
-    when:
-      visible: "Delete"
-    commands:
-      - tapOn: "Delete"
+# Deliberately NO cleanup here. Two reasons:
+#
+#   - the driver erases the simulator before every run, so there is nothing
+#     left to tidy; the old delete was solving a problem that the erase already
+#     solves properly (an uninstall alone left the keychain, and with it the
+#     guest account and its accumulated households)
+#   - step 4/4 inspects the stored document to prove it holds ciphertext.
+#     Deleting the checklist here removes exactly that evidence, and the
+#     at-rest check would then pass on an empty database — which is the failure
+#     mode it exists to refuse.

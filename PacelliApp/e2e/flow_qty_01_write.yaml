@@ -38,14 +38,30 @@ appId: com.pacelli.pacelli
 
 # 347 rather than a realistic "2": a value that appears nowhere else on screen,
 # so assertVisible cannot pass on some unrelated digit.
+#
+# Tap the + button; do NOT press Enter here. The first version of this flow did,
+# and it passed while creating nothing: return in the Qty field was swallowed
+# (that field had no .onSubmit until 2026-08-14), so the item was never added
+# and both assertions below matched the text still sitting in the two input
+# fields. Asserting on the contents of a field you just typed into proves only
+# that typing works.
+#
+# The button is the honest target because addItem() clears both fields
+# synchronously, so from the moment it fires, any "Peppercorns" on screen is a
+# saved row and not an echo of the input.
 - tapOn: "Add an item"
 - inputText: "Peppercorns"
 - tapOn: "Qty"
 - inputText: "347"
-- pressKey: Enter
+- hideKeyboard
+- tapOn:
+    id: "add_item_button"
 - extendedWaitUntil:
     visible: "Peppercorns"
     timeout: 15000
-- hideKeyboard
+
+# The input fields must be back to their placeholders. If "Add an item" is not
+# visible as placeholder text, the row above is still unsaved input.
+- assertVisible: "Add an item"
 - assertVisible: "347"
 - takeScreenshot: /tmp/pv/qty_01_written

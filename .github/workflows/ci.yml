@@ -10,6 +10,12 @@ on:
     paths-ignore:
       - 'PacelliApp/**'
       - 'docs/**'
+      # functions/ moved to native-ci.yml on 2026-08-14, which is where the
+      # jest suite now runs. Without this, a backend-only commit spun up the
+      # whole frozen Flutter lane — analyze, test, rules, Android build — and
+      # never ran a single functions test, because ci.yml has no job for them.
+      # It burned a runner to check nothing.
+      - 'functions/**'
   pull_request:
     branches:
       - main
@@ -17,6 +23,12 @@ on:
     paths-ignore:
       - 'PacelliApp/**'
       - 'docs/**'
+      # functions/ moved to native-ci.yml on 2026-08-14, which is where the
+      # jest suite now runs. Without this, a backend-only commit spun up the
+      # whole frozen Flutter lane — analyze, test, rules, Android build — and
+      # never ran a single functions test, because ci.yml has no job for them.
+      # It burned a runner to check nothing.
+      - 'functions/**'
 
 # Cancel superseded runs on the same branch to avoid stacking long iOS builds.
 concurrency:

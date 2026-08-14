@@ -326,13 +326,23 @@ struct ChecklistDetailView: View {
                 HStack(spacing: 12) {
                     TextField("Add an item", text: $newItemTitle)
                         .onSubmit(addItem)
+                    // The quantity field needs its own .onSubmit. Without it,
+                    // the natural order — type the name, tab to Qty, type
+                    // "500g", hit return — did nothing at all: return in a
+                    // TextField with no onSubmit is swallowed, the item was
+                    // never created, and the text just sat there looking as
+                    // though it had been entered. Found 2026-08-14 by the
+                    // quantity E2E, which had itself been asserting on that
+                    // leftover text and reporting a pass.
                     TextField("Qty", text: $newItemQuantity)
                         .frame(width: 52)
                         .textFieldStyle(.roundedBorder)
+                        .onSubmit(addItem)
                     Button(action: addItem) {
                         Image(systemName: "plus.circle.fill")
                     }
                     .disabled(newItemTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityIdentifier("add_item_button")
                 }
             }
 
