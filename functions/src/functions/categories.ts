@@ -39,6 +39,7 @@ export async function createCategory(
 
   const ref = db().collection("task_categories").doc();
   await ref.set({
+    id: ref.id,
     household_id: ctx.householdId,
     name: enc(req.name),
     icon: req.icon ?? "category",

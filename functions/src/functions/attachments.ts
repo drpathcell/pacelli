@@ -44,6 +44,7 @@ export async function createTaskAttachment(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     task_id: req.taskId,
     household_id: ctx.householdId,
     drive_file_id: req.driveFileId,
@@ -136,6 +137,7 @@ export async function createPlanAttachment(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     plan_id: req.planId,
     entry_id: req.entryId,
     household_id: ctx.householdId,

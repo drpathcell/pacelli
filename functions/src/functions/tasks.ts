@@ -225,6 +225,7 @@ export async function createTask(
 
   const taskRef = db().collection("tasks").doc();
   const taskData: Record<string, unknown> = {
+    id: taskRef.id,
     household_id: ctx.householdId,
     title: enc(req.title),
     description: encN(req.description ?? null),
@@ -250,6 +251,7 @@ export async function createTask(
     for (let i = 0; i < req.subtaskTitles.length; i++) {
       const subRef = db().collection("subtasks").doc();
       batch.set(subRef, {
+        id: subRef.id,
         task_id: taskRef.id,
         household_id: ctx.householdId,
         title: enc(req.subtaskTitles[i]),
@@ -374,6 +376,7 @@ export async function addSubtask(
 
   const ref = db().collection("subtasks").doc();
   await ref.set({
+    id: ref.id,
     task_id: taskId,
     household_id: ctx.householdId,
     title: enc(title),

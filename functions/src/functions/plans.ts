@@ -152,6 +152,7 @@ export async function createPlan(
 
   const ref = db().collection("plans").doc();
   await ref.set({
+    id: ref.id,
     household_id: ctx.householdId,
     title: enc(req.title),
     type: req.type ?? "weekly",
@@ -241,6 +242,7 @@ export async function addPlanEntry(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     plan_id: req.planId,
     household_id: ctx.householdId,
     entry_date: req.entryDate,
@@ -323,6 +325,7 @@ export async function addPlanChecklistItem(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     plan_id: req.planId,
     household_id: ctx.householdId,
     entry_id: req.entryId ?? null,
@@ -422,6 +425,7 @@ export async function savePlanAsTemplate(
   // Create template plan
   const templateRef = db().collection("plans").doc();
   await templateRef.set({
+    id: templateRef.id,
     household_id: ctx.householdId,
     title: src.title, // Already encrypted
     type: src.type,
@@ -447,6 +451,7 @@ export async function savePlanAsTemplate(
     for (const e of entrySnap.docs) {
       const newRef = db().collection("plan_entries").doc();
       batch.set(newRef, {
+        id: newRef.id,
         ...e.data(),
         plan_id: templateRef.id,
         created_at: now,
@@ -467,6 +472,7 @@ export async function savePlanAsTemplate(
     for (const c of checklistSnap.docs) {
       const newRef = db().collection("plan_checklist_items").doc();
       batch.set(newRef, {
+        id: newRef.id,
         ...c.data(),
         plan_id: templateRef.id,
         is_checked: false,
@@ -507,6 +513,7 @@ export async function createFromTemplate(
   // Create new plan
   const planRef = db().collection("plans").doc();
   await planRef.set({
+    id: planRef.id,
     household_id: ctx.householdId,
     title: enc(req.title),
     type: tmpl.type,
@@ -541,6 +548,7 @@ export async function createFromTemplate(
       entryIdMap[e.id] = newRef.id;
 
       batch.set(newRef, {
+        id: newRef.id,
         plan_id: planRef.id,
         household_id: ctx.householdId,
         entry_date: newDate,
@@ -568,6 +576,7 @@ export async function createFromTemplate(
       const cd = c.data();
       const newRef = db().collection("plan_checklist_items").doc();
       batch.set(newRef, {
+        id: newRef.id,
         plan_id: planRef.id,
         household_id: ctx.householdId,
         entry_id: cd.entry_id ? (entryIdMap[cd.entry_id] ?? null) : null,
@@ -623,6 +632,7 @@ export async function finalisePlan(
       // Create task from entry
       const taskRef = db().collection("tasks").doc();
       batch.set(taskRef, {
+        id: taskRef.id,
         household_id: ctx.householdId,
         title: enc(entryTitle),
         description: ed.description, // Already encrypted

@@ -218,6 +218,7 @@ export async function createInventoryItem(
 
   const ref = db().collection("inventory_items").doc();
   const data: Record<string, unknown> = {
+    id: ref.id,
     household_id: ctx.householdId,
     name: enc(req.name),
     description: encN(req.description ?? null),
@@ -342,6 +343,7 @@ export async function createInventoryCategory(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     household_id: ctx.householdId,
     name: enc(req.name),
     icon: req.icon ?? "inventory_2",
@@ -415,6 +417,7 @@ export async function createInventoryLocation(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     household_id: ctx.householdId,
     name: enc(req.name),
     icon: req.icon ?? "place",
@@ -465,6 +468,7 @@ export async function logInventoryAction(
 
   const ref = db().collection("inventory_logs").doc();
   await ref.set({
+    id: ref.id,
     item_id: req.itemId,
     household_id: ctx.householdId,
     action: req.action,
@@ -526,6 +530,7 @@ export async function createInventoryAttachment(
   const now = new Date().toISOString();
 
   await ref.set({
+    id: ref.id,
     item_id: req.itemId,
     household_id: ctx.householdId,
     drive_file_id: req.driveFileId,
