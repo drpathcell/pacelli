@@ -304,6 +304,22 @@ struct ChecklistDetailView: View {
                             }
                             .tint(.accentColor)
                         }
+                        // Explicit, rather than relying on the one .onDelete
+                        // synthesises. Since the row became editable it is
+                        // almost all TextField, and a TextField eats the
+                        // horizontal drag for cursor placement — the swipe only
+                        // registered over the ~30pt toggle at the leading edge,
+                        // so in practice items could not be deleted at all.
+                        // Reported 2026-08-14. The Edit button in the toolbar
+                        // is the gesture-free route to the same thing.
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                delete(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            .accessibilityIdentifier("checklist_item_delete")
+                        }
                 }
                 .onDelete(perform: deleteItems)
 
@@ -361,7 +377,12 @@ struct ChecklistDetailView: View {
         .navigationTitle("Checklist")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                // Edit mode disables the row TextFields and shows the red
+                // delete circles, which is the only delete affordance that
+                // does not fight the text fields for the drag gesture.
+                EditButton()
+                    .accessibilityIdentifier("checklist_edit_button")
                 Button("Save") { save() }
                     .disabled(!isDirty || saving)
             }
@@ -502,8 +523,24 @@ struct ChecklistDetailView: View {
     private func deleteItems(at offsets: IndexSet) {
         let toDelete = offsets.map { checklist.items[$0] }
         checklist.items.remove(atOffsets: offsets)
+        remotelyDelete(toDelete)
+    }
+
+    /// Swipe-to-delete on a single row.
+    private func delete(_ item: ChecklistItem) {
+        guard let index = checklist.items.firstIndex(where: { $0.id == item.id })
+        else { return }
+        withAnimation {
+            checklist.items.remove(at: index)
+        }
+        remotelyDelete([item])
+    }
+
+    /// Optimistic removal has already happened; put anything back that the
+    /// server refuses, so the list never claims a delete that did not land.
+    private func remotelyDelete(_ items: [ChecklistItem]) {
         Task {
-            for item in toDelete {
+            for item in items {
                 do {
                     try await withTimeout(15) {
                         try await ChecklistsRepository.deleteItem(item)
@@ -549,6 +586,12 @@ private struct ChecklistItemRow: View {
     @State private var quantity: String
     @FocusState private var focused: Field?
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.editMode) private var editMode
+
+    /// While the list is in edit mode the row must not accept taps into its
+    /// text fields — the whole point of edit mode here is that the delete
+    /// circles get the gesture instead of the TextField.
+    private var isEditing: Bool { editMode?.wrappedValue.isEditing == true }
 
     private enum Field { case title, quantity }
 
@@ -581,6 +624,7 @@ private struct ChecklistItemRow: View {
                 .foregroundStyle(item.isChecked ? .secondary : .primary)
                 .submitLabel(.done)
                 .onSubmit(commit)
+                .disabled(isEditing)
                 .accessibilityIdentifier("checklist_item_title")
 
             TextField("Qty", text: $quantity)
@@ -590,6 +634,7 @@ private struct ChecklistItemRow: View {
                 .foregroundStyle(.secondary)
                 .submitLabel(.done)
                 .onSubmit(commit)
+                .disabled(isEditing)
                 .accessibilityIdentifier("checklist_item_qty")
         }
         // Commit when the field loses focus, not on every keystroke: a write
@@ -603,6 +648,10 @@ private struct ChecklistItemRow: View {
         // Caught on a cold relaunch, 2026-08-13.
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { commit() }
+        }
+        // Tapping Edit yanks focus away without a focus-loss event of its own.
+        .onChange(of: isEditing) { _, editing in
+            if editing { commit() }
         }
         // Same hole one level down: navigating back tears the row down without
         // ever resigning first responder.
