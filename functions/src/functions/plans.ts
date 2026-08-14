@@ -5,6 +5,14 @@
  * Encrypted fields: title/label/description (plan + entries),
  * title/quantity (plan checklist items), templateName.
  */
+// COLLECTION NAME: `scratch_plans`, not `plans`.
+//
+// Until 2026-08-14 every function in this file wrote to `plans`. The app reads
+// `scratch_plans` (PlansRepository.swift) and firestore.rules defines no `plans`
+// block at all — so these ~20 endpoints wrote into a collection nothing read and
+// no client could read even if it tried. Admin SDK bypasses rules, so the writes
+// succeeded silently. The child collections (`plan_entries`,
+// `plan_checklist_items`) already matched; only the parent was wrong.
 import * as admin from "firebase-admin";
 import { AuthContext } from "../middleware/auth";
 import { createFieldCrypto } from "../middleware/encryption";
@@ -23,6 +31,9 @@ import {
 
 const db = () => admin.firestore();
 
+
+
+
 function parseTimestamp(val: unknown): string | null {
   if (!val) return null;
   if (val instanceof admin.firestore.Timestamp) {
@@ -32,8 +43,16 @@ function parseTimestamp(val: unknown): string | null {
   return null;
 }
 
+/** The app parses these with DartDateOnly — strictly `yyyy-MM-dd`.
+ *
+ * `substring(0, 10)` on its own is silent: hand it "next Tuesday" and it returns
+ * "next Tuesd", which the app then drops with no error anywhere. That is the
+ * obvious thing for an AI to send, so it is now rejected loudly instead.
+ */
 function dateOnly(iso: string): string {
-  return iso.substring(0, 10); // YYYY-MM-DD
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(iso ?? "");
+  if (!m) throw new Error(`date must be yyyy-MM-dd (or ISO), got: ${iso}`);
+  return m[1];
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -44,7 +63,7 @@ export async function listPlans(ctx: AuthContext): Promise<Plan[]> {
   const { dec, decN } = createFieldCrypto(ctx.householdKey);
 
   const snapshot = await db()
-    .collection("plans")
+    .collection("scratch_plans")
     .where("household_id", "==", ctx.householdId)
     .where("is_template", "==", false)
     .get();
@@ -60,7 +79,7 @@ export async function getPlan(
 ): Promise<Plan | null> {
   const { dec, decN } = createFieldCrypto(ctx.householdKey);
 
-  const doc = await db().collection("plans").doc(planId).get();
+  const doc = await db().collection("scratch_plans").doc(planId).get();
   if (!doc.exists) return null;
 
   const d = doc.data()!;
@@ -150,15 +169,15 @@ export async function createPlan(
   const { enc, encN } = createFieldCrypto(ctx.householdKey);
   const now = new Date().toISOString();
 
-  const ref = db().collection("plans").doc();
+  const ref = db().collection("scratch_plans").doc();
   await ref.set({
     id: ref.id,
     household_id: ctx.householdId,
     title: enc(req.title),
     type: req.type ?? "weekly",
     status: "draft",
-    start_date: req.startDate,
-    end_date: req.endDate,
+    start_date: dateOnly(req.startDate),
+    end_date: dateOnly(req.endDate),
     is_template: req.isTemplate ?? false,
     template_name: encN(req.templateName ?? null),
     created_by: ctx.uid,
@@ -173,7 +192,7 @@ export async function deletePlan(
   ctx: AuthContext,
   planId: string
 ): Promise<boolean> {
-  const ref = db().collection("plans").doc(planId);
+  const ref = db().collection("scratch_plans").doc(planId);
   const doc = await ref.get();
   if (!doc.exists || doc.data()!.household_id !== ctx.householdId) return false;
 
@@ -211,7 +230,7 @@ export async function updatePlanStatus(
   planId: string,
   status: string
 ): Promise<boolean> {
-  const ref = db().collection("plans").doc(planId);
+  const ref = db().collection("scratch_plans").doc(planId);
   const doc = await ref.get();
   if (!doc.exists || doc.data()!.household_id !== ctx.householdId) return false;
 
@@ -233,7 +252,7 @@ export async function addPlanEntry(
   const { enc, encN } = createFieldCrypto(ctx.householdKey);
 
   // Verify plan belongs to household
-  const planDoc = await db().collection("plans").doc(req.planId).get();
+  const planDoc = await db().collection("scratch_plans").doc(req.planId).get();
   if (!planDoc.exists || planDoc.data()!.household_id !== ctx.householdId) {
     throw new Error("Plan not found or access denied");
   }
@@ -316,7 +335,7 @@ export async function addPlanChecklistItem(
   const { enc, encN } = createFieldCrypto(ctx.householdKey);
 
   // Verify plan belongs to household
-  const planDoc = await db().collection("plans").doc(req.planId).get();
+  const planDoc = await db().collection("scratch_plans").doc(req.planId).get();
   if (!planDoc.exists || planDoc.data()!.household_id !== ctx.householdId) {
     throw new Error("Plan not found or access denied");
   }
@@ -397,7 +416,7 @@ export async function getTemplates(ctx: AuthContext): Promise<Plan[]> {
   const { dec, decN } = createFieldCrypto(ctx.householdKey);
 
   const snapshot = await db()
-    .collection("plans")
+    .collection("scratch_plans")
     .where("household_id", "==", ctx.householdId)
     .where("is_template", "==", true)
     .get();
@@ -414,7 +433,7 @@ export async function savePlanAsTemplate(
   const { enc } = createFieldCrypto(ctx.householdKey);
 
   // Load source plan
-  const srcDoc = await db().collection("plans").doc(req.planId).get();
+  const srcDoc = await db().collection("scratch_plans").doc(req.planId).get();
   if (!srcDoc.exists || srcDoc.data()!.household_id !== ctx.householdId) {
     return null;
   }
@@ -423,7 +442,7 @@ export async function savePlanAsTemplate(
   const now = new Date().toISOString();
 
   // Create template plan
-  const templateRef = db().collection("plans").doc();
+  const templateRef = db().collection("scratch_plans").doc();
   await templateRef.set({
     id: templateRef.id,
     household_id: ctx.householdId,
@@ -494,7 +513,7 @@ export async function createFromTemplate(
   const { enc } = createFieldCrypto(ctx.householdKey);
 
   // Load template
-  const templateDoc = await db().collection("plans").doc(req.templateId).get();
+  const templateDoc = await db().collection("scratch_plans").doc(req.templateId).get();
   if (!templateDoc.exists || templateDoc.data()!.household_id !== ctx.householdId) {
     return null;
   }
@@ -511,15 +530,15 @@ export async function createFromTemplate(
   );
 
   // Create new plan
-  const planRef = db().collection("plans").doc();
+  const planRef = db().collection("scratch_plans").doc();
   await planRef.set({
     id: planRef.id,
     household_id: ctx.householdId,
     title: enc(req.title),
     type: tmpl.type,
     status: "draft",
-    start_date: req.startDate,
-    end_date: req.endDate,
+    start_date: dateOnly(req.startDate),
+    end_date: dateOnly(req.endDate),
     is_template: false,
     template_name: null,
     created_by: ctx.uid,
@@ -605,7 +624,7 @@ export async function finalisePlan(
 ): Promise<boolean> {
   const { enc, dec } = createFieldCrypto(ctx.householdKey);
 
-  const planRef = db().collection("plans").doc(req.planId);
+  const planRef = db().collection("scratch_plans").doc(req.planId);
   const planDoc = await planRef.get();
   if (!planDoc.exists || planDoc.data()!.household_id !== ctx.householdId) {
     return false;
