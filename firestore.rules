@@ -186,6 +186,16 @@ service cloud.firestore {
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
+    // ── Checklist Templates ──────────────────────────────────────
+    // A reusable set of items ("quick Dunnes shop") any member can stamp into
+    // a real checklist. Same household gate as checklists — the items live
+    // inside the doc as one encrypted blob rather than in their own
+    // collection, so there is nothing else to guard.
+    match /checklist_templates/{templateId} {
+      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow create: if isAuth() && isMember(request.resource.data.household_id);
+    }
+
     // ── Scratch Plans ────────────────────────────────────────────
     match /scratch_plans/{planId} {
       allow read, update, delete: if isAuth() && isMember(resource.data.household_id);

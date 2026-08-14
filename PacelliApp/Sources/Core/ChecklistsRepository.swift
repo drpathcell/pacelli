@@ -176,6 +176,138 @@ enum ChecklistsRepository {
         try await db.collection("checklist_items").document(item.id).delete()
     }
 
+    // MARK: - Templates
+
+    /// Every saved template in the household, newest first.
+    ///
+    /// A template whose blob will not decrypt is returned with an empty item
+    /// list rather than dropped, so it stays visible and deletable instead of
+    /// silently vanishing from the UI.
+    static func fetchTemplates(householdId: String) async throws -> [ChecklistTemplate] {
+        guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
+            throw PacelliError.missingHouseholdKey
+        }
+        let snap = try await db.collection("checklist_templates")
+            .whereField("household_id", isEqualTo: householdId)
+            .getDocuments()
+
+        return snap.documents.compactMap { doc -> ChecklistTemplate? in
+            var data = doc.data()
+            if let t = data["title"] as? String {
+                data["title"] = PacelliCrypto.decryptNullable(t, key: key) ?? t
+            }
+            guard let id = data["id"] as? String,
+                  let hh = data["household_id"] as? String,
+                  let title = data["title"] as? String,
+                  let createdBy = data["created_by"] as? String,
+                  let createdAt = DartISO8601.date(from: data["created_at"] as? String)
+            else { return nil }
+
+            var items: [TemplateItem] = []
+            if let blob = data["items"] as? String,
+               let json = PacelliCrypto.decryptNullable(blob, key: key) {
+                items = ChecklistTemplate.decodeItems(json)
+            }
+            return ChecklistTemplate(
+                id: id, householdId: hh, title: title, items: items,
+                createdBy: createdBy, createdAt: createdAt,
+                updatedAt: DartISO8601.date(from: data["updated_at"] as? String))
+        }
+        .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// Snapshots a checklist's items into a reusable template.
+    ///
+    /// A snapshot, not a link: editing the checklist afterwards does not
+    /// change the template, and using the template does not touch the
+    /// checklist. Anything else would mean "tick the milk off this week's shop"
+    /// silently editing next week's.
+    ///
+    /// Checked state is deliberately not carried over — a template exists to
+    /// produce a fresh list, and a template that remembered what you had
+    /// already bought would be useless the second time.
+    static func saveAsTemplate(
+        _ checklist: Checklist, title: String
+    ) async throws -> ChecklistTemplate {
+        guard let uid else { throw PacelliError.notSignedIn }
+        guard let key = await KeyManager.shared.loadHouseholdKey(checklist.householdId)
+        else { throw PacelliError.missingHouseholdKey }
+
+        let items = checklist.items.map {
+            TemplateItem(title: $0.title, quantity: $0.quantity)
+        }
+        let template = ChecklistTemplate(
+            id: UUID().uuidString.lowercased(),
+            householdId: checklist.householdId,
+            title: title,
+            items: items,
+            createdBy: uid,
+            createdAt: Date())
+
+        var map = template.toMap()
+        map["title"] = try PacelliCrypto.encrypt(title, key: key)
+        // One ciphertext for the whole list: an array of maps would leave every
+        // quantity, and the item count, readable on the server.
+        map["items"] = try PacelliCrypto.encrypt(
+            ChecklistTemplate.encodeItems(items), key: key)
+
+        try await db.collection("checklist_templates").document(template.id)
+            .setData(map)
+        return template
+    }
+
+    static func deleteTemplate(_ template: ChecklistTemplate) async throws {
+        try await db.collection("checklist_templates").document(template.id).delete()
+    }
+
+    /// Stamps a template into a real, unchecked checklist.
+    ///
+    /// One batch: a half-written checklist — the doc with none of its items —
+    /// is worse than a failure, because it looks like it worked.
+    static func createChecklist(
+        from template: ChecklistTemplate
+    ) async throws -> Checklist {
+        guard let uid else { throw PacelliError.notSignedIn }
+        guard let key = await KeyManager.shared.loadHouseholdKey(template.householdId)
+        else { throw PacelliError.missingHouseholdKey }
+
+        let now = Date()
+        var checklist = Checklist(
+            id: UUID().uuidString.lowercased(),
+            householdId: template.householdId,
+            title: template.title,
+            createdBy: uid,
+            createdAt: now)
+
+        var listMap = checklist.toMap()
+        listMap["title"] = try PacelliCrypto.encrypt(template.title, key: key)
+
+        let batch = db.batch()
+        batch.setData(listMap, forDocument:
+            db.collection("checklists").document(checklist.id))
+
+        var created: [ChecklistItem] = []
+        for entry in template.items {
+            let item = ChecklistItem(
+                id: UUID().uuidString.lowercased(),
+                checklistId: checklist.id,
+                householdId: template.householdId,
+                title: entry.title,
+                quantity: entry.quantity,
+                createdBy: uid,
+                createdAt: now)
+            var itemMap = item.toMap()
+            itemMap["title"] = try PacelliCrypto.encrypt(entry.title, key: key)
+            batch.setData(itemMap, forDocument:
+                db.collection("checklist_items").document(item.id))
+            created.append(item)
+        }
+
+        try await batch.commit()
+        checklist.items = created
+        return checklist
+    }
+
     /// Converts an item into a shared task due today, then removes the item.
     /// Mirrors Dart `pushChecklistItemAsTask`.
     static func pushItemAsTask(_ item: ChecklistItem) async throws {

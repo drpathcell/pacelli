@@ -8,6 +8,7 @@ struct ChecklistsView: View {
     let appState: AppState
 
     @State private var checklists: [Checklist] = []
+    @State private var templates: [ChecklistTemplate] = []
     @State private var newTitle = ""
     @State private var loading = true
     @State private var errorMessage: String?
@@ -25,19 +26,25 @@ struct ChecklistsView: View {
                         description: Text("Add your first checklist below."))
                 } else {
                     List {
-                        ForEach($checklists) { $checklist in
-                            NavigationLink {
-                                ChecklistDetailView(checklist: $checklist) {
-                                    remove(checklist)
-                                }
-                            } label: {
-                                ChecklistRowLabel(checklist: checklist)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    delete(checklist)
+                        templatesSection
+                        Section {
+                            ForEach($checklists) { $checklist in
+                                NavigationLink {
+                                    ChecklistDetailView(
+                                        checklist: $checklist,
+                                        onSavedAsTemplate: { templates.insert($0, at: 0) }
+                                    ) {
+                                        remove(checklist)
+                                    }
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    ChecklistRowLabel(checklist: checklist)
+                                }
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        delete(checklist)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
@@ -69,6 +76,83 @@ struct ChecklistsView: View {
         }
     }
 
+    /// Only shown once something has been saved. An always-present empty
+    /// "Templates" header would be a permanent advert for a feature the
+    /// household is not using.
+    @ViewBuilder
+    private var templatesSection: some View {
+        if !templates.isEmpty {
+            Section {
+                ForEach(templates) { template in
+                    Button {
+                        use(template)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.on.square")
+                                .foregroundStyle(.tint)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(template.title)
+                                    .foregroundStyle(.primary)
+                                Text(
+                                    template.items.count == 1
+                                        ? "1 item"
+                                        : "\(template.items.count) items"
+                                )
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("template_row")
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            deleteTemplate(template)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            } header: {
+                Text("Templates")
+            } footer: {
+                Text("Tap a template to start a new list from it.")
+            }
+        }
+    }
+
+    /// Stamps a template into a real checklist and drops it at the top, where
+    /// the person who just tapped it is looking.
+    private func use(_ template: ChecklistTemplate) {
+        Task {
+            do {
+                let created = try await withTimeout(15) {
+                    try await ChecklistsRepository.createChecklist(from: template)
+                }
+                withAnimation { checklists.insert(created, at: 0) }
+            } catch {
+                errorMessage = String(localized: "Couldn't start a list from that template.")
+            }
+        }
+    }
+
+    private func deleteTemplate(_ template: ChecklistTemplate) {
+        let previous = templates
+        withAnimation { templates.removeAll { $0.id == template.id } }
+        Task {
+            do {
+                try await withTimeout(15) {
+                    try await ChecklistsRepository.deleteTemplate(template)
+                }
+            } catch {
+                templates = previous
+                errorMessage = String(localized: "Couldn't delete the template.")
+            }
+        }
+    }
+
     private var addBar: some View {
         HStack(spacing: 12) {
             TextField("New checklist", text: $newTitle)
@@ -90,6 +174,12 @@ struct ChecklistsView: View {
                 try await ChecklistsRepository.fetchChecklists(householdId: householdId)
             }
             loading = false
+            // Templates are secondary: a failure here must not blank the
+            // checklists that already loaded, so it is caught separately and
+            // silently. Worst case the section is missing until the next pull.
+            templates = (try? await withTimeout(15) {
+                try await ChecklistsRepository.fetchTemplates(householdId: householdId)
+            }) ?? []
         } catch {
             loading = false
             errorMessage = String(localized: "Couldn't load checklists.")
@@ -161,6 +251,7 @@ private struct ChecklistRowLabel: View {
 /// delete checklist. Rename saves explicitly; item ops apply immediately.
 struct ChecklistDetailView: View {
     @Binding var checklist: Checklist
+    let onSavedAsTemplate: (ChecklistTemplate) -> Void
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -171,9 +262,17 @@ struct ChecklistDetailView: View {
     @State private var saving = false
     @State private var confirmingDelete = false
     @State private var errorMessage: String?
+    @State private var namingTemplate = false
+    @State private var templateName = ""
+    @State private var savedTemplateName: String?
 
-    init(checklist: Binding<Checklist>, onDelete: @escaping () -> Void) {
+    init(
+        checklist: Binding<Checklist>,
+        onSavedAsTemplate: @escaping (ChecklistTemplate) -> Void = { _ in },
+        onDelete: @escaping () -> Void
+    ) {
         self._checklist = checklist
+        self.onSavedAsTemplate = onSavedAsTemplate
         self.onDelete = onDelete
         _title = State(initialValue: checklist.wrappedValue.title)
     }
@@ -222,11 +321,43 @@ struct ChecklistDetailView: View {
             }
 
             Section {
+                Button {
+                    templateName = title
+                    namingTemplate = true
+                } label: {
+                    Label("Save as template", systemImage: "square.on.square")
+                }
+                // A template of nothing is not worth saving, and the button
+                // being live would suggest otherwise.
+                .disabled(checklist.items.isEmpty)
+                .accessibilityIdentifier("save_as_template_button")
+            } footer: {
+                Text(
+                    checklist.items.isEmpty
+                        ? "Add some items first, then you can save this list as a reusable template."
+                        : "Anyone in your household can start a fresh list from a template."
+                )
+            }
+
+            Section {
                 Button("Delete checklist", role: .destructive) {
                     confirmingDelete = true
                 }
             }
         }
+        .alert("Save as template", isPresented: $namingTemplate) {
+            TextField("Template name", text: $templateName)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") { saveAsTemplate() }
+        } message: {
+            Text("Its items are copied as they are now. Ticking things off later won't change the template.")
+        }
+        .alert(
+            "Saved", isPresented: .constant(savedTemplateName != nil),
+            actions: { Button("OK") { savedTemplateName = nil } },
+            message: {
+                Text("\"\(savedTemplateName ?? "")\" is now in Templates on the Checklists screen.")
+            })
         .navigationTitle("Checklist")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -330,6 +461,23 @@ struct ChecklistDetailView: View {
                     checklist.items[j].quantity = previousQty
                 }
                 errorMessage = String(localized: "Couldn't save the change.")
+            }
+        }
+    }
+
+    private func saveAsTemplate() {
+        let name = templateName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !checklist.items.isEmpty else { return }
+        let snapshot = checklist
+        Task {
+            do {
+                let created = try await withTimeout(15) {
+                    try await ChecklistsRepository.saveAsTemplate(snapshot, title: name)
+                }
+                onSavedAsTemplate(created)
+                savedTemplateName = created.title
+            } catch {
+                errorMessage = String(localized: "Couldn't save the template.")
             }
         }
     }
