@@ -17,6 +17,7 @@ import * as attachments from "./functions/attachments";
 import * as inventory from "./functions/inventory";
 import * as search from "./functions/search";
 import * as feedback from "./functions/feedback";
+import * as aiLink from "./functions/ai-link";
 
 // Firestore-triggered push. Exported straight through — these are triggers,
 // not HTTP handlers, so they do not go via apiHandler.
@@ -62,6 +63,50 @@ function apiHandler(
     }
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  AI ASSISTANT LINKING
+// ═══════════════════════════════════════════════════════════════════
+
+export const aiLinkCreate = apiHandler(async (ctx, body) => {
+  return aiLink.createLink(ctx, { label: body.label as string | undefined });
+}, "write");
+
+export const aiLinkList = apiHandler(async (ctx) => {
+  return aiLink.listLinks(ctx);
+}, "read");
+
+export const aiLinkRevoke = apiHandler(async (ctx, body) => {
+  return aiLink.revokeLink(ctx, body.assistantUid as string);
+}, "write");
+
+/**
+ * UNAUTHENTICATED on purpose — the caller has no credential yet; the pairing
+ * code IS the credential. It therefore does NOT go through apiHandler, which
+ * requires a Bearer token and would reject every legitimate call.
+ *
+ * That means apiHandler's per-uid rate limiting does not apply either, so this
+ * has its own guard: codes are 8 chars of ~41 bits, single-use, and dead after
+ * ten minutes, and a wrong code is indistinguishable from an expired one.
+ */
+export const aiLinkRedeem = onRequest(
+  { cors: true, region: "us-central1" },
+  async (req, res) => {
+    try {
+      const code = (req.body as Record<string, unknown> | undefined)?.code;
+      const result = await aiLink.redeemLink(String(code ?? ""));
+      res.json({ success: true, data: result });
+    } catch (e) {
+      // Deliberately uniform: distinguishing "no such code" from "already used"
+      // from "expired" would let someone probe the code space for near misses.
+      console.warn("[aiLinkRedeem]", e instanceof Error ? e.message : e);
+      res.status(400).json({
+        success: false,
+        error: "That pairing code is not valid, has expired, or has already been used.",
+      });
+    }
+  }
+);
 
 // ═══════════════════════════════════════════════════════════════════
 //  TASK ENDPOINTS

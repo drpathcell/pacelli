@@ -4,206 +4,392 @@
       "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "subtasks",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "task_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "ASCENDING" }
+        {
+          "fieldPath": "task_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sort_order",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "subtasks",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "task_id", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "task_id",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "checklists",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "scratch_plans",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "is_template", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_template",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "checklist_items",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "checklist_id", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "checklist_id",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "plan_entries",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "plan_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "ASCENDING" }
+        {
+          "fieldPath": "plan_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sort_order",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "plan_entries",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "plan_id", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "plan_id",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "plan_checklist_items",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "plan_id", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "plan_id",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "task_attachments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "task_id", "order": "ASCENDING" },
-        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "task_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploaded_at",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "task_attachments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "task_id", "order": "ASCENDING" },
-        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "task_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploaded_at",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "plan_attachments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "entry_id", "order": "ASCENDING" },
-        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "entry_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploaded_at",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "plan_attachments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "plan_id", "order": "ASCENDING" },
-        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "plan_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploaded_at",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_items",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_items",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "expiry_date", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "expiry_date",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_items",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "low_stock_threshold", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "low_stock_threshold",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_categories",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sort_order",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_locations",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sort_order",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_logs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "item_id", "order": "ASCENDING" },
-        { "fieldPath": "performed_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "item_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "performed_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "inventory_attachments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "item_id", "order": "ASCENDING" },
-        { "fieldPath": "uploaded_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "item_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploaded_at",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "manual_entries",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "updated_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updated_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "manual_categories",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "sort_order", "order": "ASCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sort_order",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "feedback",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "diagnostics",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "weekly_digests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "household_id", "order": "ASCENDING" },
-        { "fieldPath": "week_starting", "order": "DESCENDING" }
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "week_starting",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "household_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "due_date",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],
