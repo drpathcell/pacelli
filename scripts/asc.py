@@ -15,6 +15,9 @@ Auth: ES256 JWT from ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8.
     ./scripts/asc.py review-notes 1.2.0 "text..."
     ./scripts/asc.py submit 1.2.0
     ./scripts/asc.py submission-status
+    ./scripts/asc.py screenshots-list 1.2.0
+    ./scripts/asc.py screenshots-sync 1.2.0 --dir path/to/pngs
+    ./scripts/asc.py submission-cancel --yes   # unlock a submitted version
 
 Read-only by default: only version-create / version-attach / whats-new /
 review-notes / submit mutate, and `submit` prints exactly what it will do
@@ -24,6 +27,7 @@ and requires --yes.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -310,6 +314,186 @@ def submit(version_string: str):
     return sub
 
 
+
+# ── Screenshots ──────────────────────────────────────────────────────────
+#
+# Uploading a screenshot to ASC is four calls, not one, and skipping any of
+# them leaves an asset stuck in UPLOAD_INCOMPLETE that the web UI shows as a
+# broken tile you cannot delete:
+#   1. POST /appScreenshots        reserve, and get back uploadOperations
+#   2. PUT  each uploadOperation   raw bytes, to a signed URL, NO ASC auth
+#   3. PATCH /appScreenshots/{id}  uploaded=true + md5 of the whole file
+#   4. poll assetDeliveryState until COMPLETE (Apple re-checks the dimensions
+#      server side, so a wrong-size PNG fails HERE, long after a 201)
+
+DISPLAY_TYPE = "APP_IPHONE_67"
+
+# What Apple accepts for the 6.7"/6.9" slot. Anything else is rejected at
+# step 4 with a state we would otherwise have to guess at.
+ALLOWED_SIZES = {(1290, 2796), (2796, 1290), (1320, 2868), (2868, 1320)}
+
+
+def png_size(path: Path) -> tuple[int, int]:
+    """Width/height straight out of the IHDR. Avoids a Pillow dependency."""
+    raw = path.read_bytes()
+    if raw[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ASCError(f"{path.name} is not a PNG")
+    w = int.from_bytes(raw[16:20], "big")
+    h = int.from_bytes(raw[20:24], "big")
+    return w, h
+
+
+def screenshot_sets(loc_id: str):
+    return call(
+        "GET",
+        f"/appStoreVersionLocalizations/{loc_id}/appScreenshotSets",
+        params={"limit": 50},
+    )["data"]
+
+
+def screenshots_in(set_id: str):
+    return call(
+        "GET",
+        f"/appScreenshotSets/{set_id}/appScreenshots",
+        params={"limit": 50,
+                "fields[appScreenshots]": "fileName,fileSize,assetDeliveryState"},
+    )["data"]
+
+
+def find_or_create_set(loc_id: str, display_type: str = DISPLAY_TYPE):
+    for st in screenshot_sets(loc_id):
+        if st["attributes"]["screenshotDisplayType"] == display_type:
+            return st["id"]
+    out = call(
+        "POST",
+        "/appScreenshotSets",
+        body={"data": {
+            "type": "appScreenshotSets",
+            "attributes": {"screenshotDisplayType": display_type},
+            "relationships": {"appStoreVersionLocalization": {"data": {
+                "type": "appStoreVersionLocalizations", "id": loc_id}}},
+        }},
+    )["data"]
+    print(f"created {display_type} set {out['id']}")
+    return out["id"]
+
+
+def upload_one(set_id: str, path: Path) -> str:
+    raw = path.read_bytes()
+    reserved = call(
+        "POST",
+        "/appScreenshots",
+        body={"data": {
+            "type": "appScreenshots",
+            "attributes": {"fileSize": len(raw), "fileName": path.name},
+            "relationships": {"appScreenshotSet": {"data": {
+                "type": "appScreenshotSets", "id": set_id}}},
+        }},
+    )["data"]
+    for op in reserved["attributes"]["uploadOperations"]:
+        headers = {h["name"]: h["value"] for h in (op.get("requestHeaders") or [])}
+        chunk = raw[op["offset"]:op["offset"] + op["length"]]
+        r = requests.request(op["method"], op["url"], headers=headers,
+                             data=chunk, timeout=180)
+        if r.status_code >= 400:
+            raise ASCError(f"upload {path.name} -> {r.status_code}\n{r.text}")
+    call(
+        "PATCH",
+        f"/appScreenshots/{reserved['id']}",
+        body={"data": {
+            "type": "appScreenshots",
+            "id": reserved["id"],
+            "attributes": {"uploaded": True,
+                           "sourceFileChecksum": hashlib.md5(raw).hexdigest()},
+        }},
+    )
+    return reserved["id"]
+
+
+def await_complete(ids: list[str], timeout: int = 300):
+    """Apple validates after the commit, so a 200 on PATCH means nothing yet."""
+    deadline = time.time() + timeout
+    pending = set(ids)
+    while pending and time.time() < deadline:
+        time.sleep(5)
+        for sid in list(pending):
+            a = call("GET", f"/appScreenshots/{sid}")["data"]["attributes"]
+            state = (a.get("assetDeliveryState") or {})
+            if state.get("errors"):
+                raise ASCError(f"{a.get('fileName')} rejected: {state['errors']}")
+            if state.get("state") == "COMPLETE":
+                pending.discard(sid)
+    if pending:
+        raise ASCError(f"{len(pending)} screenshot(s) never reached COMPLETE")
+
+
+def screenshots_sync(version_string: str, folder: Path, locale: str,
+                     display_type: str = DISPLAY_TYPE):
+    """Make the remote set exactly match `folder`, in filename order.
+
+    Replaces rather than appends: appending is how you end up with the 1.4.0
+    screenshots still sitting behind the 1.6.0 ones.
+    """
+    v = find_version(version_string)
+    if not v:
+        raise ASCError(f"no ASC version {version_string}")
+    state = v["attributes"].get("appStoreState") or v["attributes"].get("appVersionState")
+    if state not in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED"):
+        raise ASCError(
+            f"version {version_string} is {state}; Apple locks metadata once a "
+            f"version is submitted. Cancel the review submission first "
+            f"(./scripts/asc.py submission-cancel), then re-run this, then submit again.")
+
+    files = sorted(folder.glob("*.png"))
+    if not files:
+        raise ASCError(f"no PNGs in {folder}")
+    for f in files:
+        size = png_size(f)
+        if size not in ALLOWED_SIZES:
+            raise ASCError(
+                f"{f.name} is {size[0]}x{size[1]}; {display_type} accepts "
+                f"{sorted(ALLOWED_SIZES)}")
+
+    locs = {l["attributes"]["locale"]: l["id"] for l in localizations(v["id"])}
+    if locale not in locs:
+        raise ASCError(f"no localization {locale}; available: {sorted(locs)}")
+    set_id = find_or_create_set(locs[locale], display_type)
+
+    for old in screenshots_in(set_id):
+        call("DELETE", f"/appScreenshots/{old['id']}")
+        print(f"  removed {old['attributes']['fileName']}")
+
+    ids = []
+    for f in files:
+        ids.append(upload_one(set_id, f))
+        print(f"  uploaded {f.name} ({f.stat().st_size // 1024} KB)")
+    await_complete(ids)
+
+    # Order is the display order on the product page, and Apple does not infer
+    # it from upload order.
+    call(
+        "PATCH",
+        f"/appScreenshotSets/{set_id}/relationships/appScreenshots",
+        body={"data": [{"type": "appScreenshots", "id": i} for i in ids]},
+    )
+    print(f"synced {len(ids)} screenshot(s) to {version_string} / {locale} / {display_type}")
+
+
+def submission_cancel():
+    """Pull an in-flight submission back so its version becomes editable."""
+    done = 0
+    for s in submissions():
+        if s["attributes"]["state"] in ("WAITING_FOR_REVIEW", "IN_REVIEW"):
+            call("PATCH", f"/reviewSubmissions/{s['id']}",
+                 body={"data": {"type": "reviewSubmissions", "id": s["id"],
+                                "attributes": {"canceled": True}}})
+            print(f"cancelled submission {s['id']} ({s['attributes']['state']})")
+            done += 1
+    if not done:
+        print("no submission in WAITING_FOR_REVIEW or IN_REVIEW")
+    return done
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────
 
 
@@ -339,9 +523,54 @@ def cmd_status(_):
         print(f"  {s['id']}  state={a['state']}  platform={a.get('platform')}{note}")
 
 
+def cmd_screenshots_list(a):
+    v = find_version(a.version)
+    if not v:
+        raise ASCError(f"no ASC version {a.version}")
+    state = v["attributes"].get("appStoreState") or v["attributes"].get("appVersionState")
+    print(f"version {a.version} ({state})")
+    for l in localizations(v["id"]):
+        loc = l["attributes"]["locale"]
+        for st in screenshot_sets(l["id"]):
+            shots = screenshots_in(st["id"])
+            print(f"  {loc} / {st['attributes']['screenshotDisplayType']} "
+                  f"({len(shots)})")
+            for sh in shots:
+                sa = sh["attributes"]
+                dstate = (sa.get("assetDeliveryState") or {}).get("state")
+                print(f"    {sa['fileName']:<28} {dstate}")
+
+
+def cmd_screenshots_sync(a):
+    screenshots_sync(a.version, Path(a.dir), a.locale, a.display_type)
+
+
+def cmd_submission_cancel(a):
+    if not a.yes:
+        print("This pulls the version out of the review queue and loses its "
+              "place in it. Re-run with --yes.")
+        return
+    submission_cancel()
+
+
 def main():
     p = argparse.ArgumentParser(description="Pacelli App Store Connect client")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    sl = sub.add_parser("screenshots-list")
+    sl.add_argument("version")
+    sl.set_defaults(fn=cmd_screenshots_list)
+
+    ss = sub.add_parser("screenshots-sync")
+    ss.add_argument("version")
+    ss.add_argument("--dir", default="fastlane/metadata/ios/en-GB/screenshots")
+    ss.add_argument("--locale", default="en-GB")
+    ss.add_argument("--display-type", default=DISPLAY_TYPE)
+    ss.set_defaults(fn=cmd_screenshots_sync)
+
+    sc = sub.add_parser("submission-cancel")
+    sc.add_argument("--yes", action="store_true")
+    sc.set_defaults(fn=cmd_submission_cancel)
 
     sub.add_parser("status").set_defaults(fn=cmd_status)
 
