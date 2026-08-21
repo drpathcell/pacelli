@@ -1,0 +1,46 @@
+appId: com.pacelli.pacelli
+---
+# Connect an AI, part 2 — the assistant is now real; see it and cut it off.
+#
+# Runs only after the driver has redeemed the code with `scripts/pacelli.py`.
+# A cold launch, not a refresh: the row has to come from the server, not from
+# anything this session was already holding.
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings_connect_ai"
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    id: "settings_connect_ai"
+
+# The assistant materialised at REDEEM, not at create — an unredeemed code
+# leaves nothing behind, and this is where that is visible.
+- extendedWaitUntil:
+    visible: "E2E laptop"
+    timeout: 30000
+- assertNotVisible:
+    id: "ai_link_empty"
+- takeScreenshot: /tmp/pacelli_ai_03_connected
+
+# ── Disconnect ────────────────────────────────────────────────────────
+# A LEFT swipe REVEALS the trailing action; it does not fire it. Only a full
+# RIGHT swipe executes a leading action directly (flow_checklists_e2e). Same
+# shape as the task-delete swipe in flow_tasks_e2e5.
+- swipe:
+    from: "E2E laptop"
+    direction: LEFT
+- tapOn: "Disconnect"
+- extendedWaitUntil:
+    visible:
+      id: "ai_link_empty"
+    timeout: 25000
+- assertNotVisible: "E2E laptop"
+- takeScreenshot: /tmp/pacelli_ai_04_revoked

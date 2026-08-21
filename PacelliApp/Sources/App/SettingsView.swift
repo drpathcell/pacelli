@@ -92,7 +92,7 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
-                Section("Household") {
+                Section {
                     NavigationLink {
                         HouseholdView(current: current, appState: appState)
                     } label: {
@@ -103,6 +103,18 @@ struct SettingsView: View {
                     } label: {
                         Label("Household manual", systemImage: "book")
                     }
+                    NavigationLink {
+                        ConnectAIView()
+                    } label: {
+                        Label("Connect an AI", systemImage: "sparkles")
+                    }
+                    .accessibilityIdentifier("settings_connect_ai")
+                } header: {
+                    Text("Household")
+                } footer: {
+                    Text(
+                        "Connecting an AI lets a tool like Claude read and change your household for you. It joins as its own member and you can disconnect it at any time."
+                    )
                 }
 
                 Section {
@@ -365,6 +377,7 @@ struct PrivacyEncryptionView: View {
                     "Plan titles, entry titles, labels and descriptions",
                     systemImage: "lock.fill")
                 Label("Category names", systemImage: "lock.fill")
+                Label("Checklist and plan item quantities", systemImage: "lock.fill")
                 Label("Household name", systemImage: "lock.fill")
                 Label("Your display name", systemImage: "lock.fill")
             }
@@ -372,7 +385,6 @@ struct PrivacyEncryptionView: View {
             Section {
                 Label("Dates and times", systemImage: "lock.open")
                 Label("Completion status and priority", systemImage: "lock.open")
-                Label("Item quantities", systemImage: "lock.open")
                 Label("Category icons and colours", systemImage: "lock.open")
                 Label("Sort order and record identifiers", systemImage: "lock.open")
             } header: {

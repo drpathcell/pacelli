@@ -12,6 +12,7 @@ Firebase refresh token, exactly like a signed-in client would.
     ./scripts/pacelli.py task-add "Water the plants" --due 2026-08-20
     ./scripts/pacelli.py task-done <id>
     ./scripts/pacelli.py checklists
+    ./scripts/pacelli.py plans
     ./scripts/pacelli.py item-add <checklistId> "White pepper" --qty 2
     ./scripts/pacelli.py unlink                # forget local credentials
 
@@ -144,7 +145,8 @@ def cmd_unlink(_) -> None:
         CRED_PATH.unlink()
         print("local credentials removed")
         print("NOTE: this only forgets them here. To cut off access properly, "
-              "remove the assistant from Members in the app.")
+              "disconnect the assistant in the app: Settings > Connect an AI. "
+              "Removing it from Members does NOT revoke the session.")
     else:
         print("not linked")
 
@@ -190,6 +192,37 @@ def cmd_checklists(_) -> None:
             print(f"    [{mark}] {i['id'][:8]}  {i['title']}{qty}")
 
 
+def cmd_disconnect_self(_) -> None:
+    """Hand back this assistant's own access, from the assistant's side.
+
+    `aiLinkRevoke` is scoped to the caller's household and refuses anything
+    that is not an assistant row, so an assistant calling it on its own uid is
+    exactly the one case it can do — no elevation, no reach into anyone else.
+
+    Useful when decommissioning the machine this credential lives on, and it
+    is what keeps `check_ai_link_e2e.sh` from leaving a ghost member behind
+    every time a run fails midway.
+    """
+    cred = _load()
+    call("aiLinkRevoke", {"assistantUid": cred["assistant_uid"]})
+    CRED_PATH.unlink(missing_ok=True)
+    print("disconnected and local credentials removed")
+
+
+def cmd_plans(_) -> None:
+    """Plans, with their entries.
+
+    `plansGet` is the only read that touches `plan_entries` with two filters
+    and two sorts, so it is the only way to notice that its composite index is
+    missing — `plansList` alone would pass with the index absent.
+    """
+    for p in call("plansList"):
+        print(f"{p['id'][:8]}  {p['title']}  {p.get('status', '')}")
+        for e in call("plansGet", {"planId": p["id"]}).get("entries") or []:
+            date = f"  {e['entryDate'][:10]}" if e.get("entryDate") else ""
+            print(f"    {e['id'][:8]}  {e['title']}{date}")
+
+
 def cmd_item_add(a) -> None:
     body = {"checklistId": a.checklist_id, "title": a.title}
     if a.qty:
@@ -218,6 +251,8 @@ def main() -> None:
     p = sub.add_parser("task-done"); p.add_argument("task_id"); p.set_defaults(fn=cmd_task_done)
 
     sub.add_parser("checklists").set_defaults(fn=cmd_checklists)
+    sub.add_parser("plans").set_defaults(fn=cmd_plans)
+    sub.add_parser("disconnect-self").set_defaults(fn=cmd_disconnect_self)
     p = sub.add_parser("item-add"); p.add_argument("checklist_id"); p.add_argument("title")
     p.add_argument("--qty"); p.set_defaults(fn=cmd_item_add)
     p = sub.add_parser("item-toggle"); p.add_argument("item_id"); p.set_defaults(fn=cmd_item_toggle)

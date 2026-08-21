@@ -32,6 +32,15 @@ maestro --device <SIM-UDID> test PacelliApp/e2e/flow_tasks_e2e.yaml
 - `flow_household_manual_search_e2e.yaml` — members list → manual entry
   create → feedback submit → cross-entity search (task + manual hits).
   Re-runnable (conditional seeding).
+- `flow_ai_link_01_create.yaml` / `_02_connected.yaml` — Connect an AI.
+  Driven by `scripts/check_ai_link_e2e.sh`, which owns the erase, the
+  pasteboard read that carries the code out of Maestro, and every assertion
+  involving the CLI: that `scripts/pacelli.py` redeems the code, reads a task
+  title the app encrypted, is refused a second use of the same code, and is
+  locked out the moment the app disconnects it. **First run found a shipped
+  bug** — `tasksList` had 500'd since the API shipped on a missing
+  `subtasks(household_id, task_id, sort_order)` composite index, invisible
+  because the app queries Firestore directly and sorts client-side.
 
 Lessons (Maestro 2.5.1 + iOS 27 sim):
 - `back` (edge swipe) and `hideKeyboard` are unreliable with the keyboard
@@ -42,6 +51,10 @@ Lessons (Maestro 2.5.1 + iOS 27 sim):
 - Text matching is exact (regex), so "Milk" does not match "Milk, eggs".
 - A full `swipe` across a row EXECUTES the leading/trailing swipe action
   directly (standard iOS) — don't follow it with a tap on the action label.
+  This is about the FULL swipe only. `swipe: {from: <row>, direction: LEFT}`
+  merely REVEALS the trailing action and must be followed by a tap on it
+  (as in `flow_tasks_e2e5`); reading the line above as covering both cost a
+  failed run on `flow_ai_link_02`.
 - SwiftUI back buttons have id `BackButton` — `tapOn: id: "BackButton"`
   beats both `back` (flaky edge swipe) and point taps (frame is [16,62]–
   [60,106]pt; a 7%-height tap lands 1pt above it).

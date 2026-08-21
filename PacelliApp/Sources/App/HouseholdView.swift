@@ -88,14 +88,24 @@ struct HouseholdView: View {
                             .foregroundStyle(.tint)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(displayName(for: member))
-                            Text(member.role == "admin" ? "Admin" : "Member")
+                            Text(roleLabel(for: member))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
                     }
                     .swipeActions(edge: .trailing) {
-                        if isAdmin && member.userId != myUid {
+                        // Assistants are deliberately NOT removable here.
+                        // `removeMember` deletes the membership row and
+                        // nothing else — the assistant would keep a live
+                        // refresh token and a usable wrapped household key,
+                        // and go on reading for up to an hour while this list
+                        // showed it as gone. Only `aiLinkRevoke` kills the
+                        // session and the key first, so Connect an AI is the
+                        // one revocation path.
+                        if isAdmin && member.userId != myUid
+                            && member.role != "assistant"
+                        {
                             Button(role: .destructive) {
                                 remove(member)
                             } label: {
@@ -256,7 +266,22 @@ struct HouseholdView: View {
             return member.displayName.map { "\($0) (you)" }
                 ?? String(localized: "You")
         }
+        // An assistant has no `profiles` document, so it would otherwise sit
+        // here as a nameless "Member" that cannot be removed — which reads as
+        // a bug rather than as a feature working correctly.
+        if member.role == "assistant" {
+            return member.displayName ?? String(localized: "AI assistant")
+        }
         return member.displayName ?? String(localized: "Member")
+    }
+
+    private func roleLabel(for member: MembershipService.Member) -> String {
+        switch member.role {
+        case "admin": return String(localized: "Admin")
+        case "assistant":
+            return String(localized: "AI assistant — disconnect in Settings › Connect an AI")
+        default: return String(localized: "Member")
+        }
     }
 
     private func reload() async {

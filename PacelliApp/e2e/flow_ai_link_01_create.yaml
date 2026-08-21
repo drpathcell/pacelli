@@ -1,0 +1,77 @@
+appId: com.pacelli.pacelli
+---
+# Connect an AI, part 1 — mint a pairing code and put it where the driver
+# script can reach it.
+#
+# Seeds a task first, because the real assertion happens outside Maestro: the
+# CLI redeems this code and has to read THIS title in plaintext. Nothing short
+# of the full chain — code redeemed, member row written, household key wrapped
+# for the assistant uid and unwrapped again — produces a decrypted title for a
+# uid that did not exist when the task was written.
+#
+# The code leaves this flow via the simulator pasteboard (`simctl pbpaste`),
+# which is also the only way the copy button gets tested.
+
+- stopApp
+- launchApp
+
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+# The title the assistant must be able to read.
+- runFlow:
+    when:
+      notVisible: "Water the plants"
+    commands:
+      - tapOn: "New task"
+      - inputText: "Water the plants"
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: "Water the plants"
+          timeout: 20000
+      - hideKeyboard
+
+# ── Settings → Connect an AI ──────────────────────────────────────────
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings_connect_ai"
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    id: "settings_connect_ai"
+- extendedWaitUntil:
+    visible:
+      id: "ai_link_create"
+    timeout: 20000
+
+# Nothing is connected on a freshly erased simulator. Asserting it here is
+# what makes the part-2 assertion mean something: the row that appears later
+# cannot have been there all along.
+- assertVisible:
+    id: "ai_link_empty"
+- takeScreenshot: /tmp/pacelli_ai_01_empty
+
+- tapOn:
+    id: "ai_link_label_field"
+- inputText: "E2E laptop"
+- hideKeyboard
+- tapOn:
+    id: "ai_link_create"
+
+- extendedWaitUntil:
+    visible:
+      id: "ai_link_code_value"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_ai_02_code
+
+# Hands the code to the driver, and proves the copy button does what the
+# screen implies it does.
+- tapOn:
+    id: "ai_link_code_copy"
