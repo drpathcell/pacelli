@@ -192,6 +192,20 @@ def cmd_checklists(_) -> None:
             print(f"    [{mark}] {i['id'][:8]}  {i['title']}{qty}")
 
 
+def cmd_connect_another(a) -> None:
+    """Try to mint a pairing code from this assistant's own session.
+
+    **This is expected to FAIL**, and it exists so that the refusal is
+    testable. An assistant is a household member, and the security rules judge
+    membership by the member doc's existence rather than its role — so without
+    the role check in `createLink` an assistant could connect a second
+    assistant and keep it after the first was revoked. `check_ai_link_e2e.sh`
+    runs this as a negative control.
+    """
+    d = call("aiLinkCreate", {"label": a.label})
+    print(f"UNEXPECTED: minted {d['code']} for {d['assistantUid']}")
+
+
 def cmd_disconnect_self(_) -> None:
     """Hand back this assistant's own access, from the assistant's side.
 
@@ -252,6 +266,8 @@ def main() -> None:
 
     sub.add_parser("checklists").set_defaults(fn=cmd_checklists)
     sub.add_parser("plans").set_defaults(fn=cmd_plans)
+    p = sub.add_parser("connect-another"); p.add_argument("label")
+    p.set_defaults(fn=cmd_connect_another)
     sub.add_parser("disconnect-self").set_defaults(fn=cmd_disconnect_self)
     p = sub.add_parser("item-add"); p.add_argument("checklist_id"); p.add_argument("title")
     p.add_argument("--qty"); p.set_defaults(fn=cmd_item_add)

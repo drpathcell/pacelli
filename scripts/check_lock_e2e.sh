@@ -40,13 +40,13 @@ ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 # Simulator Face ID lives in the Features menu; there is no simctl verb for it.
 face() {
   osascript -e "tell application \"System Events\" to tell process \"Simulator\" \
-    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu \"Features\" of menu bar 1" \
+    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu 1 of menu bar item \"Features\" of menu bar 1" \
     >/dev/null 2>&1
 }
 # One line on purpose: inside single quotes bash keeps a backslash-newline
 # literally, and AppleScript's continuation character is not a backslash.
 enrolled() {
-  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu "Features" of menu bar 1' 2>/dev/null
+  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu 1 of menu bar item "Features" of menu bar 1' 2>/dev/null
 }
 
 open -a Simulator; sleep 2

@@ -53,7 +53,7 @@ appId: com.pacelli.pacelli
     timeout: 15000
 - hideKeyboard
 - tapOn: "Balcony pots"
-- takeScreenshot: /tmp/asc_02_task_detail
+- takeScreenshot: /tmp/asc_03_task_detail
 - tapOn:
     id: "BackButton"
 - extendedWaitUntil:
@@ -99,7 +99,7 @@ appId: com.pacelli.pacelli
 # the screenshot — harmless in a test, fatal in a store listing.
 - tapOn: "Check Milk"
 - hideKeyboard
-- takeScreenshot: /tmp/asc_03_checklist
+- takeScreenshot: /tmp/asc_04_checklist
 # ── Templates (1.6.0) ──
 # Saved from this very list, then shown on the Checklists screen, because the
 # Templates section is invisible until one exists — a screenshot of the empty
@@ -130,7 +130,7 @@ appId: com.pacelli.pacelli
 - extendedWaitUntil:
     visible: "Templates"
     timeout: 15000
-- takeScreenshot: /tmp/asc_04_templates
+- takeScreenshot: /tmp/asc_05_templates
 # ── Plans ──
 - tapOn: "Plans"
 - tapOn: "New weekly plan"
@@ -157,7 +157,7 @@ appId: com.pacelli.pacelli
 - scrollUntilVisible:
     element: "Pasta night"
     direction: UP
-- takeScreenshot: /tmp/asc_05_plan
+- takeScreenshot: /tmp/asc_06_plan
 - tapOn:
     id: "BackButton"
 # ── Security ──
@@ -180,7 +180,7 @@ appId: com.pacelli.pacelli
 - extendedWaitUntil:
     visible: "Encrypted before upload"
     timeout: 15000
-- takeScreenshot: /tmp/asc_08_privacy
+- takeScreenshot: /tmp/asc_09_privacy
 - tapOn:
     id: "BackButton"
 - extendedWaitUntil:
@@ -190,7 +190,42 @@ appId: com.pacelli.pacelli
     element: "Require Face ID"
     direction: DOWN
     centerElement: true
-- takeScreenshot: /tmp/asc_07_lock
+- takeScreenshot: /tmp/asc_08_lock
+# ── Connect an AI (1.7.0) ──
+# Captured here because we are already in Settings; numbered 02 because the
+# headline feature of this release belongs near the front of the listing.
+#
+# The code on screen is real, and that is fine: it belongs to a throwaway
+# guest household on a simulator that gets erased, it is single-use, and it
+# is dead ten minutes after capture. Showing the empty state instead would
+# be safer in a way that protects nothing and explains nothing.
+- scrollUntilVisible:
+    element:
+      id: "settings_connect_ai"
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: "settings_connect_ai"
+- extendedWaitUntil:
+    visible:
+      id: "ai_link_create"
+    timeout: 20000
+- tapOn:
+    id: "ai_link_label_field"
+- inputText: "Claude on my laptop"
+- hideKeyboard
+- tapOn:
+    id: "ai_link_create"
+- extendedWaitUntil:
+    visible:
+      id: "ai_link_code_value"
+    timeout: 30000
+- takeScreenshot: /tmp/asc_02_connect_ai
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "Privacy & encryption"
+    timeout: 15000
 # ── Search ──
 # Deliberately LAST, though it is numbered 06. .searchable presents its field
 # over the whole screen including the tab bar, and a tap on another tab while
@@ -207,4 +242,4 @@ appId: com.pacelli.pacelli
     visible: "Weekly food shop"
     timeout: 25000
 - hideKeyboard
-- takeScreenshot: /tmp/asc_06_search
+- takeScreenshot: /tmp/asc_07_search

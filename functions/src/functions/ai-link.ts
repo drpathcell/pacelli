@@ -75,6 +75,25 @@ export async function createLink(
   ctx: AuthContext,
   params: { label?: string }
 ): Promise<CreatedLink> {
+  // An assistant may not connect another assistant.
+  //
+  // Nothing else here checks a role, because every other caller is a person.
+  // But an assistant IS a household member, and the security rules judge
+  // membership by the existence of the member doc, not by its role — so
+  // without this an assistant could mint a second one and keep it. Revoking
+  // the first would then leave the second attached, which is precisely the
+  // property revocation is supposed to have.
+  //
+  // Found by the 1.7.0 audit, once "Connect an AI" made a real assistant
+  // session something that routinely exists (2026-08-21).
+  const caller = await db()
+    .collection("household_members")
+    .doc(`${ctx.uid}_${ctx.householdId}`)
+    .get();
+  if (caller.exists && caller.data()!.role === ASSISTANT_ROLE) {
+    throw new Error("An assistant cannot connect another assistant");
+  }
+
   const label = (params.label ?? "AI assistant").slice(0, 40);
 
   // Nothing is provisioned here — not the user, not the member row, not the

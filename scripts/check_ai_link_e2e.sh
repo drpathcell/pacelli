@@ -135,6 +135,22 @@ fi
 rm -rf "$SECOND_HOME"
 ok "used code refused"
 
+# ── Negative control 3: no self-propagation ───────────────────────────
+# An assistant is a household member, and the rules judge membership by the
+# member doc existing, not by its role. Without the role check in createLink
+# an assistant could mint a second assistant and keep it after the first was
+# revoked — which would quietly undo revocation.
+say "negative control: an assistant connecting another assistant"
+ESC_OUT="$(cli connect-another "escalation probe" 2>&1)" && \
+  fail "an assistant minted another assistant: $ESC_OUT"
+# Assert on the REASON, not merely on a non-zero exit. A control that passes
+# on any failure passes when the network is down, the token is stale or the
+# subcommand is misspelled — it would be a red harness lying, which is the
+# same disease as a green one.
+grep -q "cannot connect another assistant" <<<"$ESC_OUT" \
+  || fail "refused, but not for the expected reason: $ESC_OUT"
+ok "assistant self-propagation refused, for the right reason"
+
 # ── 3. The app sees it, and cuts it off ───────────────────────────────
 flow flow_ai_link_02_connected.yaml
 

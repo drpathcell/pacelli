@@ -83,8 +83,18 @@ APP="$DD/Build/Products/Debug-iphonesimulator/Pacelli.app"
 ok "built $(basename "$APP")"
 
 xcrun simctl install "$SIM" "$APP"
+
+# `--args -CurrentDeviceUDID` is read at LAUNCH and ignored by an already
+# running Simulator. Leaving it at that is how the Face ID menu ends up
+# toggling biometrics on whatever device the front window happens to show —
+# which on a machine with several booted simulators is not this one. Restart
+# it so the front window is definitely $SIM.
+killall Simulator >/dev/null 2>&1 || true
+sleep 1
 open -a Simulator --args -CurrentDeviceUDID "$SIM"
-sleep 3
+sleep 5
+osascript -e 'tell application "Simulator" to activate' >/dev/null 2>&1 || true
+sleep 1
 
 # The Face ID row in Settings is hidden outright when the device cannot
 # evaluate a biometric policy, and a freshly erased simulator has neither a
@@ -93,16 +103,20 @@ sleep 3
 # enrolment is a Features menu item, same as in check_lock_e2e.sh.
 face_menu() {
   osascript -e "tell application \"System Events\" to tell process \"Simulator\" \
-    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu \"Features\" of menu bar 1" \
+    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu 1 of menu bar item \"Features\" of menu bar 1" \
     >/dev/null 2>&1
 }
 enrolled() {
-  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu "Features" of menu bar 1' 2>/dev/null
+  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu 1 of menu bar item "Features" of menu bar 1' 2>/dev/null
 }
 [[ "$(enrolled)" == "✓" ]] || { face_menu "Enrolled"; sleep 1; }
 [[ "$(enrolled)" == "✓" ]] || fail "could not enrol Face ID — the Settings shot needs it.
-  Automation access for the terminal may be off: System Settings > Privacy &
-  Security > Automation."
+  Checked, in order:
+    - is Simulator showing THIS device? (several booted sims => wrong menu target)
+    - Automation access: System Settings > Privacy & Security > Automation
+    - the menu path itself: Features > Face ID > Enrolled, reached as
+      'menu 1 of menu bar item \"Features\"'. The 'menu \"Features\"' form
+      raises -1719 and was silently swallowed here until 2026-08-21."
 ok "Face ID enrolled"
 
 # 9:41 and a full battery, the same as every other app on the store. Without
