@@ -25,6 +25,7 @@ struct TaskDetailView: View {
     @State private var saving = false
     @State private var confirmingDelete = false
     @State private var errorMessage: String?
+    @State private var photosForSubtask: Subtask?
 
     init(task: Binding<HouseholdTask>, onDelete: @escaping () -> Void) {
         self._task = task
@@ -152,6 +153,15 @@ struct TaskDetailView: View {
             Section("Subtasks") {
                 ForEach(subtasks) { subtask in
                     SubtaskRow(subtask: subtask) { toggleSubtask(subtask) }
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                photosForSubtask = subtask
+                            } label: {
+                                Label("Photo", systemImage: "camera")
+                            }
+                            .tint(.secondary)
+                            .accessibilityIdentifier("subtask_photo")
+                        }
                 }
                 .onDelete(perform: deleteSubtasks)
 
@@ -174,6 +184,28 @@ struct TaskDetailView: View {
                     confirmingDelete = true
                 }
             }
+        }
+        .sheet(item: $photosForSubtask) { subtask in
+            NavigationStack {
+                List {
+                    Section {
+                        PhotoStrip(
+                            subject: .subtask,
+                            subjectId: subtask.id,
+                            householdId: task.householdId)
+                    } header: {
+                        Text(subtask.title)
+                    }
+                }
+                .navigationTitle("Photos")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { photosForSubtask = nil }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .navigationTitle("Task")
         .navigationBarTitleDisplayMode(.inline)

@@ -104,3 +104,44 @@ enum PhotosRepository {
             .updateData(["category_id": categoryId as Any])
     }
 }
+
+// MARK: - Provenance
+
+extension PhotosRepository {
+
+    /// What a photo is a picture *of*, in the words the household used.
+    ///
+    /// The gallery's whole value is this line under each thumbnail: not a
+    /// filename or a date, but "Oat milk, blue lid — Checklist · Kitchen". It
+    /// costs three queries for the entire household, which is cheaper than one
+    /// per photo and small enough not to matter.
+    struct Provenance: Sendable {
+        let title: String
+        let kind: String
+    }
+
+    static func provenance(householdId: String) async -> [String: Provenance] {
+        guard let key = await KeyManager.shared.loadHouseholdKey(householdId) else {
+            return [:]
+        }
+        let db = Firestore.firestore()
+        var out: [String: Provenance] = [:]
+
+        func harvest(_ collection: String, kind: String) async {
+            guard let snap = try? await db.collection(collection)
+                .whereField("household_id", isEqualTo: householdId)
+                .getDocuments()
+            else { return }
+            for doc in snap.documents {
+                let title = PacelliCrypto.decryptNullable(
+                    doc.data()["title"] as? String, key: key) ?? ""
+                out[doc.documentID] = Provenance(title: title, kind: kind)
+            }
+        }
+
+        await harvest("tasks", kind: String(localized: "Task"))
+        await harvest("subtasks", kind: String(localized: "Subtask"))
+        await harvest("checklist_items", kind: String(localized: "Checklist"))
+        return out
+    }
+}

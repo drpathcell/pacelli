@@ -10,11 +10,29 @@ struct SearchView: View {
     @State private var results: [SearchService.Result] = []
     @State private var searching = false
     @State private var searchTask: Task<Void, Never>?
+    @State private var mode: Mode = .everything
+
+    /// Two ways of finding the same household, on one screen. Photos are not a
+    /// sixth tab: an empty query with Photos selected IS the gallery, and
+    /// typing narrows it. Browsing the wall and searching the text are the
+    /// same act.
+    private enum Mode: String, CaseIterable, Identifiable {
+        case everything, photos
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .everything: return String(localized: "Everything")
+            case .photos: return String(localized: "Photos")
+            }
+        }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                if mode == .photos {
+                    PhotoGalleryView(current: current, query: query)
+                } else if query.trimmingCharacters(in: .whitespaces).isEmpty {
                     ContentUnavailableView(
                         "Search your household",
                         systemImage: "magnifyingglass",
@@ -50,6 +68,18 @@ struct SearchView: View {
                         }
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                Picker("", selection: $mode) {
+                    ForEach(Mode.allCases) { m in
+                        Text(m.label).tag(m)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .background(.bar)
+                .accessibilityIdentifier("search_mode")
             }
             .navigationTitle("Search")
             .searchable(text: $query, prompt: "Search everything")

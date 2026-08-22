@@ -88,6 +88,8 @@ ok "clean simulator with a photo in its library"
 # ── attach ────────────────────────────────────────────────────────────
 flow flow_photo_01_attach.yaml
 
+flow flow_photo_02_gallery.yaml
+
 # ── the plaintext original really is on the device ────────────────────
 say "the original on this device"
 CONTAINER="$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)"

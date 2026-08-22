@@ -1,5 +1,6 @@
 import PacelliKit
 import SwiftUI
+import UIKit
 
 /// Checklists tab: live list (decrypted) with add, delete, and navigation
 /// into item-level detail.
@@ -265,6 +266,11 @@ struct ChecklistDetailView: View {
     @State private var namingTemplate = false
     @State private var templateName = ""
     @State private var savedTemplateName: String?
+    /// One photo per item, for the inline thumbnail. This is the whole point
+    /// of photos on a shopping list: you want to see the right brand while you
+    /// are standing in the shop, not after tapping through to a detail screen.
+    @State private var itemPhotos: [String: Photo] = [:]
+    @State private var photosForItem: ChecklistItem?
 
     init(
         checklist: Binding<Checklist>,
@@ -275,6 +281,24 @@ struct ChecklistDetailView: View {
         self.onSavedAsTemplate = onSavedAsTemplate
         self.onDelete = onDelete
         _title = State(initialValue: checklist.wrappedValue.title)
+    }
+
+    /// The first photo on each item, in one query.
+    ///
+    /// A query per row would be absurd, and the household's photo count is
+    /// small enough that fetching them all and filtering here is cheaper than
+    /// any arrangement of indexes.
+    private func loadItemPhotos() async {
+        let householdId = checklist.householdId
+        guard let all = try? await PhotosRepository.fetchAll(householdId: householdId)
+        else { return }
+        let ids = Set(checklist.items.map(\.id))
+        var first: [String: Photo] = [:]
+        for photo in all.reversed()
+        where photo.subjectType == .checklistItem && ids.contains(photo.subjectId) {
+            first[photo.subjectId] = photo
+        }
+        itemPhotos = first
     }
 
     private var isDirty: Bool {
@@ -292,6 +316,7 @@ struct ChecklistDetailView: View {
                 ForEach(checklist.items) { item in
                     ChecklistItemRow(
                         item: item,
+                        thumbnail: itemPhotos[item.id]?.thumbnail,
                         onToggle: { toggle(item) },
                         onCommit: { newTitle, newQty in
                             updateItem(item, title: newTitle, quantity: newQty)
@@ -303,6 +328,16 @@ struct ChecklistDetailView: View {
                                 Label("Make task", systemImage: "arrow.right.circle")
                             }
                             .tint(.accentColor)
+                            // A swipe, not a button in the row. The row is
+                            // already two TextFields and a toggle; one more
+                            // control in it would make the thing unusable.
+                            Button {
+                                photosForItem = item
+                            } label: {
+                                Label("Photo", systemImage: "camera")
+                            }
+                            .tint(.secondary)
+                            .accessibilityIdentifier("checklist_item_photo")
                         }
                         // Explicit, rather than relying on the one .onDelete
                         // synthesises. Since the row became editable it is
@@ -384,6 +419,32 @@ struct ChecklistDetailView: View {
             message: {
                 Text("\"\(savedTemplateName ?? "")\" is now in Templates on the Checklists screen.")
             })
+        .task { await loadItemPhotos() }
+        .sheet(item: $photosForItem) { item in
+            NavigationStack {
+                List {
+                    Section {
+                        PhotoStrip(
+                            subject: .checklistItem,
+                            subjectId: item.id,
+                            householdId: item.householdId)
+                    } header: {
+                        Text(item.title)
+                    } footer: {
+                        Text("A picture of the exact thing, so whoever does the shop gets the right one.")
+                    }
+                }
+                .navigationTitle("Photos")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { photosForItem = nil }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
+            .onDisappear { Task { await loadItemPhotos() } }
+        }
         .navigationTitle("Checklist")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -588,6 +649,8 @@ struct ChecklistDetailView: View {
 /// directly beneath it so the two read as one control.
 private struct ChecklistItemRow: View {
     let item: ChecklistItem
+    /// Decrypted JPEG bytes straight out of the photo document — no network.
+    let thumbnail: Data?
     let onToggle: () -> Void
     /// (title, quantity) — called only when something actually changed.
     let onCommit: (String, String) -> Void
@@ -607,10 +670,12 @@ private struct ChecklistItemRow: View {
 
     init(
         item: ChecklistItem,
+        thumbnail: Data? = nil,
         onToggle: @escaping () -> Void,
         onCommit: @escaping (String, String) -> Void
     ) {
         self.item = item
+        self.thumbnail = thumbnail
         self.onToggle = onToggle
         self.onCommit = onCommit
         _title = State(initialValue: item.title)
@@ -627,6 +692,15 @@ private struct ChecklistItemRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(item.isChecked ? "Uncheck \(item.title)" : "Check \(item.title)")
+
+            if let thumbnail, let image = UIImage(data: thumbnail) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 28, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .accessibilityIdentifier("checklist_item_thumb")
+            }
 
             TextField("Item", text: $title)
                 .focused($focused, equals: .title)

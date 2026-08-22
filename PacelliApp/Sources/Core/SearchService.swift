@@ -9,7 +9,7 @@ import PacelliKit
 enum SearchService {
     struct Result: Identifiable, Sendable {
         enum Kind: String {
-            case task, subtask, checklist, checklistItem, plan, planEntry, manual
+            case task, subtask, checklist, checklistItem, plan, planEntry, manual, photo
 
             var displayName: String {
                 switch self {
@@ -20,6 +20,7 @@ enum SearchService {
                 case .plan: String(localized: "Plan")
                 case .planEntry: String(localized: "Plan entry")
                 case .manual: String(localized: "Manual")
+                case .photo: String(localized: "Photo")
                 }
             }
 
@@ -29,6 +30,7 @@ enum SearchService {
                 case .checklist, .checklistItem: "list.bullet.rectangle"
                 case .plan, .planEntry: "calendar"
                 case .manual: "book"
+                case .photo: "photo"
                 }
             }
         }
@@ -115,6 +117,49 @@ enum SearchService {
                     id: "manual-\(entry.id)", kind: .manual, title: entry.title,
                     subtitle: preview))
         }
+
+        // Photos match on what the person typed AND on what the phone read in
+
+        // them. The subtitle carries the recognised text rather than a generic
+
+        // label, because a photo that surfaced for the word "boiler" is baffling
+
+        // until you can see that the word is printed on the thing in the picture.
+
+        let photos = (try? await PhotosRepository.fetchAll(householdId: householdId)) ?? []
+
+        let provenance = await PhotosRepository.provenance(householdId: householdId)
+
+        for photo in photos {
+
+            let subjectTitle = provenance[photo.subjectId]?.title
+
+            guard matches(photo.caption) || matches(photo.recognisedText)
+
+                || matches(photo.labels) || matches(subjectTitle)
+
+            else { continue }
+
+        
+
+            let why = [photo.caption, photo.recognisedText]
+
+                .compactMap { $0 }
+
+                .first { $0.localizedCaseInsensitiveContains(q) }
+
+            results.append(
+
+                Result(
+
+                    id: "photo-\(photo.id)", kind: .photo,
+
+                    title: subjectTitle ?? String(localized: "Photo"),
+
+                    subtitle: why.map { String($0.prefix(80)) }))
+
+        }
+
 
         return results
     }

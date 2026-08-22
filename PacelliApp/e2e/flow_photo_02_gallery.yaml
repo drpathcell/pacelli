@@ -1,0 +1,47 @@
+appId: com.pacelli.pacelli
+---
+# Photos, part 2 — the gallery, and the checklist thumbnail.
+#
+# A cold launch, not a refresh: everything here has to come back from the
+# server, not from state the previous flow left in memory.
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+# ── the gallery lives inside Search ───────────────────────────────────
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible:
+      id: "search_mode"
+    timeout: 15000
+- tapOn: "Photos"
+- extendedWaitUntil:
+    visible:
+      id: "gallery_cell"
+    timeout: 30000
+- takeScreenshot: /tmp/pacelli_photo_04_gallery
+
+# Provenance is the point of the screen: the photo says what it is a picture
+# of, in the household's own words.
+- assertVisible: "Fix the boiler"
+
+# ── the viewer opens, and closes ──────────────────────────────────────
+- tapOn:
+    id: "gallery_cell"
+- extendedWaitUntil:
+    visible: "Done"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_photo_05_viewer
+- tapOn: "Done"
+
+# ── typing narrows the same wall ──────────────────────────────────────
+- tapOn: "Search everything"
+- inputText: "boiler"
+- extendedWaitUntil:
+    visible:
+      id: "gallery_cell"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_photo_06_filtered

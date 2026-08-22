@@ -84,9 +84,12 @@ enum PhotoService {
 
         try await db.collection("photos").document(photoId).setData(doc)
 
-        // Deliberately not awaited by the caller's UI path.
+        // Deliberately not awaited by the caller's UI path. The photo is
+        // already on the item and already on everyone else's phone; the upload
+        // and the reading of it are both housekeeping from here.
         Task.detached(priority: .utility) {
             try? await upload(photoId: photoId, householdId: householdId)
+            await indexInBackground(photoId: photoId, householdId: householdId)
         }
         return photoId
     }
@@ -134,9 +137,11 @@ enum PhotoService {
     /// — so the query is scoped to our own uid.
     static func resumePending(householdId: String) async {
         guard let uid else { return }
+        // One filter, then sort it out here. A second `where` on upload_state
+        // would want its own composite index for a query that runs a handful
+        // of times a day over a household's worth of documents.
         let snap = try? await db.collection("photos")
             .whereField("household_id", isEqualTo: householdId)
-            .whereField("subject_id", isNotEqualTo: "")
             .getDocuments()
         guard let snap else { return }
 
@@ -148,6 +153,48 @@ enum PhotoService {
             else { continue }
             try? await upload(photoId: doc.documentID, householdId: householdId)
         }
+    }
+
+    /// Reads the photo with Vision and writes the result back, encrypted.
+    ///
+    /// Separate from `attach` on purpose: recognition takes a second or two on
+    /// a large image and nothing waits for it. A photo is searchable slightly
+    /// after it is visible, which nobody notices, and the alternative is a
+    /// shutter that stalls.
+    static func indexInBackground(photoId: String, householdId: String) async {
+        guard let jpeg = PhotoStore.read(householdId: householdId, photoId: photoId),
+              let key = await KeyManager.shared.loadHouseholdKey(householdId)
+        else { return }
+
+        let index = await PhotoIndexer.index(jpeg: jpeg)
+        guard !index.isEmpty else { return }
+
+        var update: [String: Any] = [:]
+        if !index.text.isEmpty {
+            update["recognised_text"] = try? PacelliCrypto.encrypt(index.text, key: key)
+        }
+        if let labels = index.labelsJSON {
+            update["labels"] = try? PacelliCrypto.encrypt(labels, key: key)
+        }
+        guard !update.isEmpty else { return }
+        try? await db.collection("photos").document(photoId).updateData(update)
+    }
+
+    /// Re-reads every photo this device still holds.
+    ///
+    /// Vision gets better with each iOS release, and a photo indexed two years
+    /// ago was read by an older model. Only photos whose original is on this
+    /// device can be re-read — nobody else has the plaintext — so this is
+    /// per-device housekeeping, not a household-wide operation.
+    static func reindexAll(householdId: String) async -> Int {
+        guard let ids = try? await PhotosRepository.liveIds(householdId: householdId)
+        else { return 0 }
+        var done = 0
+        for id in ids where PhotoStore.has(householdId: householdId, photoId: id) {
+            await indexInBackground(photoId: id, householdId: householdId)
+            done += 1
+        }
+        return done
     }
 
     // MARK: - Reading

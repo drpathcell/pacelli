@@ -19,6 +19,9 @@ struct SettingsView: View {
     @State private var exporting = false
     @State private var exportItem: ExportShareItem?
     @State private var exportError: String?
+    @State private var photoBytes: Int64 = 0
+    @State private var tidying = false
+    @State private var reindexed: Int?
 
     // The lock's own on/off flag lives in UserDefaults under the same key
     // BiometricLock reads, so RootView and this toggle cannot disagree.
@@ -243,6 +246,63 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent("Photos on this phone") {
+                        Text(ByteCountFormatter.string(
+                            fromByteCount: photoBytes, countStyle: .file))
+                            .monospacedDigit()
+                    }
+                    Button {
+                        // Safe precisely because the local file is a cache: the
+                        // encrypted copy is the durable one, and anything freed
+                        // here comes back the next time it is opened.
+                        tidying = true
+                        Task {
+                            defer { tidying = false }
+                            let live = (try? await PhotosRepository.liveIds(
+                                householdId: current.household.id)) ?? []
+                            PhotoStore.reconcile(
+                                householdId: current.household.id, keeping: live)
+                            PhotoStore.evict(
+                                householdId: current.household.id, downTo: 0,
+                                protecting: await pendingPhotoIds())
+                            photoBytes = PhotoStore.bytesUsed(
+                                householdId: current.household.id)
+                        }
+                    } label: {
+                        HStack {
+                            Text("Free up space")
+                            Spacer()
+                            if tidying { ProgressView() }
+                        }
+                    }
+                    .disabled(tidying || photoBytes == 0)
+                    .foregroundStyle(.primary)
+
+                    Button {
+                        Task {
+                            reindexed = await PhotoService.reindexAll(
+                                householdId: current.household.id)
+                        }
+                    } label: {
+                        Text("Read photos again for search")
+                    }
+                    .foregroundStyle(.primary)
+                } header: {
+                    Text("Photos")
+                } footer: {
+                    Text(
+                        "Freeing space removes the readable copies from this phone. They come back when you open them, and photos still waiting to upload are never removed. Reading again is worth doing after a big iOS update — the text recognition improves."
+                    )
+                }
+                .task {
+                    photoBytes = PhotoStore.bytesUsed(householdId: current.household.id)
+                }
+                .alert(
+                    "Done", isPresented: .constant(reindexed != nil),
+                    actions: { Button("OK") { reindexed = nil } },
+                    message: { Text("Read \(reindexed ?? 0) photo(s) on this phone.") })
+
+                Section {
                     Button {
                         showExportWarning = true
                     } label: {
@@ -305,6 +365,14 @@ struct SettingsView: View {
                     .presentationDetents([.medium])
             }
         }
+    }
+
+    /// Photos this phone has not managed to upload yet. They are the only
+    /// copy that exists, so nothing may evict them.
+    private func pendingPhotoIds() async -> Set<String> {
+        let all = (try? await PhotosRepository.fetchAll(
+            householdId: current.household.id)) ?? []
+        return Set(all.filter { $0.uploadState != .ready }.map(\.id))
     }
 
     /// The export is plaintext — don't leave copies in tmp after the share
@@ -378,6 +446,8 @@ struct PrivacyEncryptionView: View {
                     systemImage: "lock.fill")
                 Label("Category names", systemImage: "lock.fill")
                 Label("Checklist and plan item quantities", systemImage: "lock.fill")
+                Label("Photos you attach", systemImage: "lock.fill")
+                Label("What your phone reads in a photo", systemImage: "lock.fill")
                 Label("Household name", systemImage: "lock.fill")
                 Label("Your display name", systemImage: "lock.fill")
             }
@@ -398,6 +468,23 @@ struct PrivacyEncryptionView: View {
             // The claims on this screen have to stay literally true, and push
             // introduced two new facts about where data goes. Saying nothing
             // would have left the screen quietly inaccurate.
+            Section {
+                Text(
+                    "The picture itself is encrypted on this device before it is stored, and what is stored is bytes — no one operating the servers can open it. A readable copy of each photo stays on the phones of your household and nowhere else. It is kept in a Pacelli folder you can open in the Files app, and it is deliberately left out of your iCloud backup, because that is the one place readable content would otherwise leave your devices."
+                )
+                .font(.callout)
+                Text(
+                    "Location data is removed before a photo is stored. A picture taken at home carries your address in it otherwise."
+                )
+                .font(.callout)
+                Text(
+                    "Your phone reads the text in a photo so you can search for it later. That happens on the device, and what it reads is encrypted like everything else — no photo is sent anywhere to be looked at."
+                )
+                .font(.callout)
+            } header: {
+                Text("Photos")
+            }
+
             Section("Notifications") {
                 Text(
                     "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we."

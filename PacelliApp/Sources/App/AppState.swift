@@ -249,6 +249,29 @@ final class AppState {
     /// Local notifications have no idea what the other member did. Without
     /// this, Chloe ticking off "Buy milk" still leaves Juan's phone scheduled
     /// to remind him about it. Called on every foreground.
+    /// Finishes any photo this device started and did not send, and clears
+    /// local originals whose document has gone.
+    ///
+    /// Cloud Storage does not queue writes made offline the way Firestore
+    /// does, so an upload interrupted by a dead connection or a killed app has
+    /// to be picked up again by somebody. That somebody is this, on every
+    /// launch and every foreground — and the list it works from is the photo
+    /// documents themselves, not a second local queue that could disagree with
+    /// them.
+    ///
+    /// Silent on purpose. A photo waiting to upload is not a problem the user
+    /// needs told about; it already shows on the item, and on everyone else's.
+    func reconcilePhotos() async {
+        guard case .home(let current) = phase else { return }
+        let householdId = current.household.id
+
+        await PhotoService.resumePending(householdId: householdId)
+
+        if let live = try? await PhotosRepository.liveIds(householdId: householdId) {
+            PhotoStore.reconcile(householdId: householdId, keeping: live)
+        }
+    }
+
     func reconcileReminders() async {
         guard case .home(let current) = phase else { return }
         let prefs = ReminderPrefs.current

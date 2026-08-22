@@ -51,6 +51,7 @@ struct RootView: View {
         .task {
             lock.lockIfEnabled()
             await lock.unlock()
+            await appState.reconcilePhotos()
         }
         .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
@@ -60,6 +61,10 @@ struct RootView: View {
                 // Reminders are rebuilt whenever the app comes forward, so the
                 // schedule reflects what the household actually looks like now.
                 Task { await appState.reconcileReminders() }
+                // Same moment, same reason: a photo whose upload was cut off
+                // gets another go, and local originals whose document has gone
+                // get cleaned up.
+                Task { await appState.reconcilePhotos() }
                 Task { await lock.unlock() }
             default:
                 break
