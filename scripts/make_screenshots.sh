@@ -70,6 +70,14 @@ xcrun simctl erase "$SIM"
 xcrun simctl boot "$SIM"
 xcrun simctl bootstatus "$SIM" -b >/dev/null
 
+# The library has to have something in it before the picker can be driven.
+# iOS seeds an erased device with stock photos too, so this is belt and braces
+# — but a set that advertises photos should not depend on Apple's sample images
+# still being there next release.
+if [[ -f /tmp/pacelli_test_photo.jpg ]]; then
+  xcrun simctl addmedia "$SIM" /tmp/pacelli_test_photo.jpg || true
+fi
+
 say "building"
 xcodebuild -project "$ROOT/PacelliApp/PacelliApp.xcodeproj" \
   -scheme "$SCHEME" -configuration Debug \
@@ -84,39 +92,46 @@ ok "built $(basename "$APP")"
 
 xcrun simctl install "$SIM" "$APP"
 
-# `--args -CurrentDeviceUDID` is read at LAUNCH and ignored by an already
-# running Simulator. Leaving it at that is how the Face ID menu ends up
-# toggling biometrics on whatever device the front window happens to show —
-# which on a machine with several booted simulators is not this one. Restart
-# it so the front window is definitely $SIM.
-killall Simulator >/dev/null 2>&1 || true
-sleep 1
+# The Simulator app is opened only so the capture has a window to render in.
+# Which device its front window shows no longer matters: enrolment goes
+# through notifyutil inside $SIM, not through a menu aimed at whatever is in
+# front. The killall/relaunch dance this used to need is gone with it.
 open -a Simulator --args -CurrentDeviceUDID "$SIM"
-sleep 5
-osascript -e 'tell application "Simulator" to activate' >/dev/null 2>&1 || true
-sleep 1
+sleep 3
 
 # The Face ID row in Settings is hidden outright when the device cannot
 # evaluate a biometric policy, and a freshly erased simulator has neither a
 # face nor a passcode. Without this the capture flow fails looking for a row
-# that the app is correctly refusing to draw. There is no simctl verb for it —
-# enrolment is a Features menu item, same as in check_lock_e2e.sh.
-face_menu() {
-  osascript -e "tell application \"System Events\" to tell process \"Simulator\" \
-    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu 1 of menu bar item \"Features\" of menu bar 1" \
+# that the app is correctly refusing to draw.
+# Simulator biometrics, without touching a menu.
+#
+# The Features > Face ID menu was the only route anyone documented, and driving
+# it through System Events never worked here: the AppleScript path was wrong
+# for a year (`menu "Features"` raises -1719 — it is `menu 1 of menu bar item
+# "Features"`), and once corrected the click still reported success while
+# `AXMenuItemMarkChar` stayed empty. It also targets whatever device the front
+# Simulator window shows, which on a machine with several booted simulators is
+# not necessarily this one.
+#
+# `notifyutil` inside the guest is exact, per-device, and readable back. It is
+# what the menu item is doing underneath.
+face_state() {
+  xcrun simctl spawn "$SIM" notifyutil -g com.apple.BiometricKit.enrollmentChanged \
+    2>/dev/null | awk '{print $2}'
+}
+face_enrol() {
+  xcrun simctl spawn "$SIM" notifyutil -s com.apple.BiometricKit.enrollmentChanged 1 \
+    >/dev/null 2>&1
+  xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit.enrollmentChanged \
     >/dev/null 2>&1
 }
-enrolled() {
-  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu 1 of menu bar item "Features" of menu bar 1' 2>/dev/null
-}
-[[ "$(enrolled)" == "✓" ]] || { face_menu "Enrolled"; sleep 1; }
-[[ "$(enrolled)" == "✓" ]] || fail "could not enrol Face ID — the Settings shot needs it.
-  Checked, in order:
-    - is Simulator showing THIS device? (several booted sims => wrong menu target)
-    - Automation access: System Settings > Privacy & Security > Automation
-    - the menu path itself: Features > Face ID > Enrolled, reached as
-      'menu 1 of menu bar item \"Features\"'. The 'menu \"Features\"' form
-      raises -1719 and was silently swallowed here until 2026-08-21."
+# A face the device accepts, and one it does not.
+face_match()    { xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit_Sim.pearl.match   >/dev/null 2>&1; }
+face_nomatch()  { xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit_Sim.pearl.nomatch >/dev/null 2>&1; }
+
+[[ "$(face_state)" == "1" ]] || { face_enrol; sleep 1; }
+[[ "$(face_state)" == "1" ]] || fail "could not enrol Face ID — the Settings shot needs it.
+  notifyutil reported '$(face_state)' rather than 1 inside $SIM."
 ok "Face ID enrolled"
 
 # 9:41 and a full battery, the same as every other app on the store. Without

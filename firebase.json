@@ -3,7 +3,7 @@
     {
       "source": "functions",
       "codebase": "default",
-      "runtime": "nodejs20",
+      "runtime": "nodejs22",
       "predeploy": [
         "\"$RESOURCE_DIR/node_modules/.bin/tsc\" -p \"$RESOURCE_DIR\""
       ]

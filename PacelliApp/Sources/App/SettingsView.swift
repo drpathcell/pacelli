@@ -323,7 +323,7 @@ struct SettingsView: View {
                         Button("Export") { runExport() }
                     } message: {
                         Text(
-                            "The exported file contains your household data in readable form — it is not encrypted. Keep it somewhere safe."
+                            "The exported file contains your household data in readable form, including your photos — it is not encrypted. Keep it somewhere safe."
                         )
                     }
                     .alert(
@@ -342,7 +342,7 @@ struct SettingsView: View {
                     Text("Your data")
                 } footer: {
                     Text(
-                        "Save a backup of everything in your household as a JSON file."
+                        "Save a backup of everything in your household. With photos it is a zip; without, a single JSON file."
                     )
                 }
 
@@ -381,6 +381,8 @@ struct SettingsView: View {
         let fm = FileManager.default
         let tmp = fm.temporaryDirectory
         guard let files = try? fm.contentsOfDirectory(atPath: tmp.path) else { return }
+        // Matches the .json, the .zip and the working folder — all three are
+        // readable copies of the household and none may be left in tmp.
         for name in files where name.hasPrefix("Pacelli export") {
             try? fm.removeItem(at: tmp.appendingPathComponent(name))
         }
@@ -392,7 +394,9 @@ struct SettingsView: View {
         Task {
             defer { exporting = false }
             do {
-                let url = try await withTimeout(30) {
+                // Photos are fetched and decrypted on the way into the zip,
+                // so this is no longer a few seconds of Firestore reads.
+                let url = try await withTimeout(300) {
                     try await ExportService.exportFile(for: current)
                 }
                 exportItem = ExportShareItem(url: url)

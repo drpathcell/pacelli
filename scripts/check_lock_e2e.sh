@@ -37,23 +37,37 @@ say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 
-# Simulator Face ID lives in the Features menu; there is no simctl verb for it.
-face() {
-  osascript -e "tell application \"System Events\" to tell process \"Simulator\" \
-    to click menu item \"$1\" of menu 1 of menu item \"Face ID\" of menu 1 of menu bar item \"Features\" of menu bar 1" \
+# Simulator biometrics, without touching a menu.
+#
+# The Features > Face ID menu was the only route anyone documented, and driving
+# it through System Events never worked here: the AppleScript path was wrong
+# for a year (`menu "Features"` raises -1719 — it is `menu 1 of menu bar item
+# "Features"`), and once corrected the click still reported success while
+# `AXMenuItemMarkChar` stayed empty. It also targets whatever device the front
+# Simulator window shows, which on a machine with several booted simulators is
+# not necessarily this one.
+#
+# `notifyutil` inside the guest is exact, per-device, and readable back. It is
+# what the menu item is doing underneath.
+face_state() {
+  xcrun simctl spawn "$SIM" notifyutil -g com.apple.BiometricKit.enrollmentChanged \
+    2>/dev/null | awk '{print $2}'
+}
+face_enrol() {
+  xcrun simctl spawn "$SIM" notifyutil -s com.apple.BiometricKit.enrollmentChanged 1 \
+    >/dev/null 2>&1
+  xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit.enrollmentChanged \
     >/dev/null 2>&1
 }
-# One line on purpose: inside single quotes bash keeps a backslash-newline
-# literally, and AppleScript's continuation character is not a backslash.
-enrolled() {
-  osascript -e 'tell application "System Events" to tell process "Simulator" to return value of attribute "AXMenuItemMarkChar" of menu item "Enrolled" of menu 1 of menu item "Face ID" of menu 1 of menu bar item "Features" of menu bar 1' 2>/dev/null
-}
+# A face the device accepts, and one it does not.
+face_match()    { xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit_Sim.pearl.match   >/dev/null 2>&1; }
+face_nomatch()  { xcrun simctl spawn "$SIM" notifyutil -p com.apple.BiometricKit_Sim.pearl.nomatch >/dev/null 2>&1; }
 
-open -a Simulator; sleep 2
-[[ "$(enrolled)" == "✓" ]] || {
-  face "Enrolled"; sleep 1
-  [[ "$(enrolled)" == "✓" ]] || fail "could not enrol Face ID in the simulator"
+[[ "$(face_state)" == "1" ]] || {
+  face_enrol; sleep 1
+  [[ "$(face_state)" == "1" ]] || fail "could not enrol Face ID in the simulator"
 }
+ok "Face ID enrolled (notifyutil reports 1)"
 ok "Face ID enrolled in the simulator"
 
 # Read the flag out of the app's OWN container.
@@ -99,13 +113,13 @@ sleep 3
 # asserted — the lock screen would be correct and invisible. Refusing it is
 # what holds the screen still, AND asserts the security property in one go: if
 # a rejected face left the household on screen, this fails.
-face "Non-matching Face"; sleep 3
+face_nomatch; sleep 3
 "$MAESTRO" test -e SIM="$SIM" "$E2E/flow_lock_02_locked.yaml" \
   || fail "flow_lock_02_locked — household visible after backgrounding + a REFUSED face"
 ok "locked after backgrounding; a refused face does not get in"
 
 say "3/3  The right face gets back in"
-face "Matching Face"; sleep 3
+face_match; sleep 3
 "$MAESTRO" test -e SIM="$SIM" "$E2E/flow_lock_03_unlocked.yaml" \
   || fail "flow_lock_03_unlocked — a matching face did not let us back in"
 ok "matching face unlocked"

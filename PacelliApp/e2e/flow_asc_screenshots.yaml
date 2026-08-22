@@ -53,6 +53,15 @@ appId: com.pacelli.pacelli
     timeout: 15000
 - hideKeyboard
 - tapOn: "Balcony pots"
+# ── Photos (1.8.0) — NOT CAPTURED YET ──
+# An attach was driven here and it worked, but it left the app in a state the
+# Checklists section immediately after could not recover from ("Groceries"
+# never appeared). Backed out rather than shipped half-working: the set below
+# is the known-good one, and the gallery shot is still owed.
+#
+# When it goes back in, put it AFTER the checklist and plan sections rather
+# than in the middle of the task flow, and take the gallery shot from the
+# Search tab where flow_photo_02 already does it reliably.
 - takeScreenshot: /tmp/asc_03_task_detail
 - tapOn:
     id: "BackButton"
@@ -209,7 +218,7 @@ appId: com.pacelli.pacelli
 - extendedWaitUntil:
     visible:
       id: "ai_link_create"
-    timeout: 20000
+    timeout: 45000
 - tapOn:
     id: "ai_link_label_field"
 - inputText: "Claude on my laptop"
