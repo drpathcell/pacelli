@@ -18,10 +18,15 @@ import * as inventory from "./functions/inventory";
 import * as search from "./functions/search";
 import * as feedback from "./functions/feedback";
 import * as aiLink from "./functions/ai-link";
+import * as photos from "./functions/photos";
 
 // Firestore-triggered push. Exported straight through — these are triggers,
 // not HTTP handlers, so they do not go via apiHandler.
 export { onTaskCreated, onMemberJoined } from "./functions/push";
+
+// Deleting a photo document deletes its object in Cloud Storage, and a daily
+// sweep stops a half-uploaded photo claiming forever that it is on its way.
+export { onPhotoDeleted, sweepStrandedPhotos } from "./functions/photos";
 
 // Initialise Firebase Admin SDK
 admin.initializeApp();
@@ -63,6 +68,38 @@ function apiHandler(
     }
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  PHOTOS
+// ═══════════════════════════════════════════════════════════════════
+
+// No client can reach the bucket — storage.rules denies every path. These two
+// mint a signed URL for one object, for a few minutes, after checking the photo
+// belongs to the caller's household.
+export const photoUploadUrl = apiHandler(async (ctx, body) => {
+  return photos.uploadUrl(ctx, { photoId: body.photoId as string });
+}, "write");
+
+export const photoDownloadUrl = apiHandler(async (ctx, body) => {
+  return photos.downloadUrl(ctx, { photoId: body.photoId as string });
+}, "read");
+
+export const photosList = apiHandler(async (ctx, body) => {
+  return photos.listPhotos(ctx, {
+    subjectId: body.subjectId as string | undefined,
+    limit: body.limit as number | undefined,
+  });
+}, "read");
+
+// `includeImage` decrypts server-side and returns base64 — the same trust
+// boundary every other endpoint already sits on, and what lets a paired
+// assistant actually look at the picture rather than just count it.
+export const photosGet = apiHandler(async (ctx, body) => {
+  return photos.getPhoto(ctx, {
+    photoId: body.photoId as string,
+    includeImage: body.includeImage === true,
+  });
+}, "read");
 
 // ═══════════════════════════════════════════════════════════════════
 //  AI ASSISTANT LINKING

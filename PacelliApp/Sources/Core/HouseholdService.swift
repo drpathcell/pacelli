@@ -66,6 +66,10 @@ enum HouseholdService {
         "manual_entries", "manual_categories", "feedback", "diagnostics",
         "weekly_digests",
         "subtasks", "checklist_items", "plan_entries", "plan_checklist_items",
+        // Deleting a photo document deletes its Cloud Storage object through
+        // the onPhotoDeleted trigger, so listing it here is all burn needs to
+        // do to clear the bucket as well.
+        "photos",
     ]
 
     /// Deletes the caller's own auto-provisioned households that are provably

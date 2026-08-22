@@ -28,22 +28,38 @@ function keyFromHex(hexKey: string): Buffer {
 }
 
 /**
+ * Encrypts arbitrary bytes. Returns raw `iv + ciphertext` — NOT base64.
+ *
+ * Photos are why this exists. An encrypted image is stored as an opaque object
+ * in Cloud Storage, where base64 would buy nothing and cost a third more bytes.
+ * The construction is identical to the string form below, which is now built on
+ * top of it — one AES path in this file, so a photo and a task title can never
+ * drift apart. Mirrors `PacelliCrypto.encrypt(_ plaintext: Data, key:)`.
+ */
+export function encryptBytes(plaintext: Buffer, key: string): Buffer {
+  const keyBuf = keyFromHex(key);
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, keyBuf, iv);
+  return Buffer.concat([iv, cipher.update(plaintext), cipher.final()]);
+}
+
+/** Decrypts raw `iv + ciphertext` bytes produced by `encryptBytes()`. */
+export function decryptBytes(sealed: Buffer, key: string): Buffer {
+  const keyBuf = keyFromHex(key);
+  if (sealed.length < IV_LENGTH + 1) {
+    throw new Error("Ciphertext too short to contain IV + data");
+  }
+  const iv = sealed.subarray(0, IV_LENGTH);
+  const decipher = crypto.createDecipheriv(ALGORITHM, keyBuf, iv);
+  return Buffer.concat([decipher.update(sealed.subarray(IV_LENGTH)), decipher.final()]);
+}
+
+/**
  * Encrypts plaintext using AES-256-CBC with a fresh random IV.
  * Returns base64(iv + ciphertext) — identical format to Dart.
  */
 export function encrypt(plaintext: string, key: string): string {
-  const keyBuf = keyFromHex(key);
-  const iv = crypto.randomBytes(IV_LENGTH);
-
-  const cipher = crypto.createCipheriv(ALGORITHM, keyBuf, iv);
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
-    cipher.final(),
-  ]);
-
-  // Prepend IV to ciphertext, then base64-encode the whole thing.
-  const combined = Buffer.concat([iv, encrypted]);
-  return combined.toString("base64");
+  return encryptBytes(Buffer.from(plaintext, "utf8"), key).toString("base64");
 }
 
 /**
@@ -51,23 +67,7 @@ export function encrypt(plaintext: string, key: string): string {
  * Splits first 16 bytes as IV, rest as ciphertext.
  */
 export function decrypt(ciphertext: string, key: string): string {
-  const keyBuf = keyFromHex(key);
-  const combined = Buffer.from(ciphertext, "base64");
-
-  if (combined.length < IV_LENGTH + 1) {
-    throw new Error("Ciphertext too short to contain IV + data");
-  }
-
-  const iv = combined.subarray(0, IV_LENGTH);
-  const encryptedBytes = combined.subarray(IV_LENGTH);
-
-  const decipher = crypto.createDecipheriv(ALGORITHM, keyBuf, iv);
-  const decrypted = Buffer.concat([
-    decipher.update(encryptedBytes),
-    decipher.final(),
-  ]);
-
-  return decrypted.toString("utf8");
+  return decryptBytes(Buffer.from(ciphertext, "base64"), key).toString("utf8");
 }
 
 /**

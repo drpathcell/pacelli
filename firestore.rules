@@ -370,6 +370,22 @@ service cloud.firestore {
     // bypasses rules — so this block exists to say "deliberately unreachable"
     // rather than to grant anything. The catch-all below would deny it anyway;
     // being explicit means a future reader does not have to infer the intent.
+    // ── Photos ───────────────────────────────────────────────────
+    // The document is the small half of a photo: metadata, an encrypted
+    // thumbnail of a few kilobytes, and the encrypted text Vision read on the
+    // device. The image itself is an object in Cloud Storage that no client
+    // can reach — see storage.rules and functions/src/functions/photos.ts.
+    //
+    // Deleting one of these documents deletes the object with it, via the
+    // onPhotoDeleted trigger. That is what keeps burn-all-data correct without
+    // burn needing to know Cloud Storage exists.
+    match /photos/{photoId} {
+      allow read: if isMember(resource.data.household_id);
+      allow create: if isMember(request.resource.data.household_id)
+        && request.resource.data.created_by == request.auth.uid;
+      allow update, delete: if isMember(resource.data.household_id);
+    }
+
     match /ai_link_codes/{code} {
       allow read, write: if false;
     }

@@ -13,6 +13,12 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "storage": [
+    {
+      "bucket": "pacelli-35621-photos",
+      "rules": "storage.rules"
+    }
+  ],
   "emulators": {
     "firestore": {
       "port": 8080

@@ -31,29 +31,61 @@ public enum PacelliCrypto {
 
     /// Encrypts `plaintext` with AES-256-CBC. Returns `base64(IV || ct)`.
     /// A fresh random IV per call gives semantic security.
+    ///
+    /// UTF-8 bytes through ``encrypt(_:key:)-(Data,_)`` and base64 on the way
+    /// out. There is exactly one AES construction in this type, so a photo and
+    /// a task title cannot drift apart, and the cross-language vectors that
+    /// pin the string form pin the byte form with it.
     public static func encrypt(_ plaintext: String, key hexKey: String) throws -> String {
-        let keyBytes = try keyFromHex(hexKey)
-        var iv = [UInt8](repeating: 0, count: 16)
-        let rc = SecRandomCopyBytes(kSecRandomDefault, iv.count, &iv)
-        precondition(rc == errSecSuccess, "SecRandomCopyBytes failed: \(rc)")
-        let ct = try aesCBC(.encrypt, input: Array(plaintext.utf8), key: keyBytes, iv: iv)
-        return Data(iv + ct).base64EncodedString()
+        try encrypt(Data(plaintext.utf8), key: hexKey).base64EncodedString()
     }
 
     /// Decrypts a `base64(IV || ct)` string produced by any Pacelli port.
     public static func decrypt(_ ciphertext: String, key hexKey: String) throws -> String {
-        let keyBytes = try keyFromHex(hexKey)
         guard let combined = Data(base64Encoded: ciphertext) else {
             throw PacelliCryptoError.invalidBase64
         }
-        guard combined.count >= 17 else { throw PacelliCryptoError.ciphertextTooShort }
-        let iv = Array(combined.prefix(16))
-        let ct = Array(combined.dropFirst(16))
-        let pt = try aesCBC(.decrypt, input: ct, key: keyBytes, iv: iv)
-        guard let s = String(bytes: pt, encoding: .utf8) else {
+        let pt = try decrypt(combined, key: hexKey)
+        guard let s = String(data: pt, encoding: .utf8) else {
             throw PacelliCryptoError.invalidUTF8Plaintext
         }
         return s
+    }
+
+    // MARK: - Blob encryption
+
+    /// Encrypts arbitrary bytes. Returns raw `IV || ct` — **not** base64.
+    ///
+    /// Photos are the reason this exists. A Firestore document is capped at
+    /// 1 MiB, so an image goes to Cloud Storage as an opaque object, and an
+    /// object gains nothing from base64 except a third more bytes to store and
+    /// transfer. The construction is identical to the string path: same key
+    /// schedule, same fresh 16-byte IV per call, same PKCS7 padding.
+    ///
+    /// One-shot rather than streaming, deliberately. Photos are re-encoded to
+    /// roughly 400 KB before they reach here, which CommonCrypto handles in
+    /// single-digit milliseconds. If this type ever has to carry video, that
+    /// assumption is the first thing to revisit.
+    public static func encrypt(_ plaintext: Data, key hexKey: String) throws -> Data {
+        let keyBytes = try keyFromHex(hexKey)
+        var iv = [UInt8](repeating: 0, count: 16)
+        let rc = SecRandomCopyBytes(kSecRandomDefault, iv.count, &iv)
+        precondition(rc == errSecSuccess, "SecRandomCopyBytes failed: \(rc)")
+        let ct = try aesCBC(.encrypt, input: Array(plaintext), key: keyBytes, iv: iv)
+        return Data(iv + ct)
+    }
+
+    /// Decrypts raw `IV || ct` bytes produced by ``encrypt(_:key:)-(Data,_)``.
+    ///
+    /// The 17-byte floor is the same one the string path has always enforced:
+    /// 16 bytes of IV plus at least one byte of ciphertext. A shorter payload
+    /// is a truncated download, not a decryptable object.
+    public static func decrypt(_ ciphertext: Data, key hexKey: String) throws -> Data {
+        let keyBytes = try keyFromHex(hexKey)
+        guard ciphertext.count >= 17 else { throw PacelliCryptoError.ciphertextTooShort }
+        let iv = Array(ciphertext.prefix(16))
+        let ct = Array(ciphertext.dropFirst(16))
+        return Data(try aesCBC(.decrypt, input: ct, key: keyBytes, iv: iv))
     }
 
     /// Nil/empty short-circuit — never calls `encrypt` on empty input

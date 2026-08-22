@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Nothing reaches this bucket directly. Not a member, not an assistant, not a
+// stranger — every path is denied to every client.
+//
+// The first version of these rules mirrored `isMember` by reading Firestore
+// from a Storage rule (`firestore.exists`). It compiled, it deployed, and it
+// refused every request including a real member's, with both documented IAM
+// grants in place. Rather than ship an authorisation path that could not be
+// made to work, photo access moved to where every other privileged decision in
+// this project already lives: a Cloud Function that authenticates the caller,
+// checks the photo belongs to their household, and mints a short-lived signed
+// URL for that one object.
+//
+// The result is stricter than the rule it replaces. There is no standing
+// client credential for the bucket at all, a leaked URL expires in minutes,
+// and "who is a member" has exactly one definition — the one in
+// `middleware/auth.ts` that every other endpoint already uses.
+//
+// See functions/src/functions/photos.ts.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

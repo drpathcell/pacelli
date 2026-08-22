@@ -42,6 +42,11 @@ targets:
         product: FirebaseFirestore
       - package: Firebase
         product: FirebaseMessaging
+      # Photos. Firestore documents are capped at 1 MiB, so the encrypted
+      # image cannot live in one — it goes to Cloud Storage as an opaque blob
+      # and only its metadata and a small encrypted thumbnail stay in Firestore.
+      - package: Firebase
+        product: FirebaseStorage
       - package: GoogleSignIn
         product: GoogleSignIn
     settings:
