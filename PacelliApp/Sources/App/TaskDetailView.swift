@@ -136,6 +136,19 @@ struct TaskDetailView: View {
                 }
             }
 
+            Section {
+                PhotoStrip(
+                    subject: .task,
+                    subjectId: task.id,
+                    householdId: task.householdId)
+            } header: {
+                Text("Photos")
+            } footer: {
+                Text(
+                    "Photos are encrypted on this device before they are stored, like everything else. The original stays on your phone; everyone in the household can see it."
+                )
+            }
+
             Section("Subtasks") {
                 ForEach(subtasks) { subtask in
                     SubtaskRow(subtask: subtask) { toggleSubtask(subtask) }

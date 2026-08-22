@@ -42,11 +42,6 @@ targets:
         product: FirebaseFirestore
       - package: Firebase
         product: FirebaseMessaging
-      # Photos. Firestore documents are capped at 1 MiB, so the encrypted
-      # image cannot live in one — it goes to Cloud Storage as an opaque blob
-      # and only its metadata and a small encrypted thumbnail stay in Firestore.
-      - package: Firebase
-        product: FirebaseStorage
       - package: GoogleSignIn
         product: GoogleSignIn
     settings:
@@ -73,6 +68,17 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO   # parity with Flutter Info.plist
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Pacelli uses Face ID to unlock the app when you come back to it."   # app lock, NOT keychain gating — see BiometricLock
+        # Photos. There is deliberately NO NSPhotoLibraryUsageDescription:
+        # PhotosPicker reads a chosen image out of process and needs no
+        # library authorisation at all, so most people attach their first
+        # photo without iOS asking them anything. Only the camera prompts.
+        INFOPLIST_KEY_NSCameraUsageDescription: "Pacelli uses the camera so you can attach a photo to a task or a shopping item."
+        # Puts Documents/Photos in the iOS Files app under Pacelli, so the
+        # originals are genuinely yours: drag them out, back them up, or delete
+        # them. The app treats its own files as a cache and re-fetches, so a
+        # file removed here is not a broken photo.
+        INFOPLIST_KEY_UIFileSharingEnabled: YES
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
       configs:
         # aps-environment must match the provisioning profile or signing fails.
         # Debug builds run on the simulator and on development profiles;

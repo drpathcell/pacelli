@@ -59,68 +59,20 @@ enum AILinkService {
         var errorDescription: String? { message }
     }
 
-    // MARK: - Endpoint
-
-    /// Derived from the bundled Firebase plist rather than hardcoded, so a
-    /// project change cannot leave a stale host string behind in Swift. The
-    /// region is pinned to match `apiHandler`'s `region: "us-central1"` in
-    /// `functions/src/index.ts` — if that moves, this must move with it.
-    private static var baseURL: URL {
-        let projectId =
-            (Bundle.main.object(forInfoDictionaryKey: "FirebaseProjectID") as? String)
-            ?? plistProjectId
-            ?? "pacelli-35621"
-        return URL(string: "https://us-central1-\(projectId).cloudfunctions.net")!
-    }
-
-    private static var plistProjectId: String? {
-        guard
-            let url = Bundle.main.url(
-                forResource: "GoogleService-Info", withExtension: "plist"),
-            let data = try? Data(contentsOf: url),
-            let plist = try? PropertyListSerialization.propertyList(
-                from: data, format: nil) as? [String: Any]
-        else { return nil }
-        return plist["PROJECT_ID"] as? String
-    }
-
     // MARK: - Transport
+    //
+    // Was this type's own URLSession client until photos became the second
+    // caller. `FunctionsClient` is that code, verbatim, moved somewhere both
+    // can use it.
 
-    /// One POST, one `{success, data}` envelope, one decoded payload.
-    ///
-    /// The ID token is fetched per call rather than cached. Firebase already
-    /// caches it internally and refreshes it when it is close to expiry, so a
-    /// second cache here would only be a way to send an expired one.
     private static func post(
-        _ function: String,
-        body: [String: Any] = [:]
+        _ function: String, body: [String: Any] = [:]
     ) async throws -> Any {
-        guard let user = Auth.auth().currentUser else {
-            throw AILinkError(message: String(localized: "You need to be signed in."))
+        do {
+            return try await FunctionsClient.post(function, body: body)
+        } catch let e as FunctionsClient.APIError {
+            throw AILinkError(message: e.message)
         }
-        let token = try await user.getIDToken()
-
-        var request = URLRequest(url: baseURL.appendingPathComponent(function))
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        let json =
-            (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
-
-        // The API reports failure in the body as well as the status code, and
-        // the body is the half that carries the sentence worth showing.
-        if json["success"] as? Bool == true {
-            return json["data"] ?? [:]
-        }
-        if let message = json["error"] as? String, !message.isEmpty {
-            throw AILinkError(message: message)
-        }
-        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-        throw AILinkError(
-            message: String(localized: "The server refused the request (\(code))."))
     }
 
     // MARK: - API

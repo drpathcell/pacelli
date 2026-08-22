@@ -13,6 +13,8 @@ Firebase refresh token, exactly like a signed-in client would.
     ./scripts/pacelli.py task-done <id>
     ./scripts/pacelli.py checklists
     ./scripts/pacelli.py plans
+    ./scripts/pacelli.py photos
+    ./scripts/pacelli.py photo-save <id> /tmp/out.jpg
     ./scripts/pacelli.py item-add <checklistId> "White pepper" --qty 2
     ./scripts/pacelli.py unlink                # forget local credentials
 
@@ -192,6 +194,39 @@ def cmd_checklists(_) -> None:
             print(f"    [{mark}] {i['id'][:8]}  {i['title']}{qty}")
 
 
+def cmd_photos(a) -> None:
+    """Every picture in the household, or just the ones on one item."""
+    body = {"subjectId": a.subject} if a.subject else {}
+    rows = call("photosList", body)
+    if a.ids:
+        # Full ids, one per line — what a script wants. The pretty form
+        # truncates them, which is fine to read and useless to pipe.
+        for p in rows:
+            print(p["id"])
+        return
+    for p in rows:
+        state = "" if p.get("uploadState") == "ready" else f"  [{p.get('uploadState')}]"
+        seen = p.get("recognisedText") or ""
+        seen = f"  \u201c{seen[:40]}\u2026\u201d" if seen else ""
+        print(f"{p['id'][:8]}  {p.get('subjectType')}/{p.get('subjectId','')[:8]}"
+              f"  {p.get('createdAt','')[:16]}{state}{seen}")
+
+
+def cmd_photo_save(a) -> None:
+    """Fetch one picture and write it to disk.
+
+    This is the assistant actually looking at a photo rather than counting it:
+    the Cloud Function opens the household key server-side, decrypts the object
+    and hands back base64 — the same trust boundary every other endpoint has
+    always sat on for task titles and manual entries.
+    """
+    import base64
+    d = call("photosGet", {"photoId": a.photo_id, "includeImage": True})
+    raw = base64.b64decode(d["imageBase64"])
+    pathlib.Path(a.path).write_bytes(raw)
+    print(f"wrote {a.path}  {len(raw)} bytes  {d.get('width')}x{d.get('height')}")
+
+
 def cmd_connect_another(a) -> None:
     """Try to mint a pairing code from this assistant's own session.
 
@@ -266,6 +301,11 @@ def main() -> None:
 
     sub.add_parser("checklists").set_defaults(fn=cmd_checklists)
     sub.add_parser("plans").set_defaults(fn=cmd_plans)
+    p = sub.add_parser("photos"); p.add_argument("--subject")
+    p.add_argument("--ids", action="store_true")
+    p.set_defaults(fn=cmd_photos)
+    p = sub.add_parser("photo-save"); p.add_argument("photo_id")
+    p.add_argument("path"); p.set_defaults(fn=cmd_photo_save)
     p = sub.add_parser("connect-another"); p.add_argument("label")
     p.set_defaults(fn=cmd_connect_another)
     sub.add_parser("disconnect-self").set_defaults(fn=cmd_disconnect_self)

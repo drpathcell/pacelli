@@ -1,0 +1,78 @@
+appId: com.pacelli.pacelli
+---
+# Photos, part 1 — attach one to a task and see it come back.
+#
+# The image is put in the simulator's library by the driver
+# (`simctl addmedia`), because a freshly erased device has no photos and
+# PhotosPicker has nothing to show.
+#
+# What this proves on its own is small: a thumbnail appears. Everything that
+# matters happens outside Maestro and is asserted by check_photo_e2e.sh — that
+# the stored object is ciphertext, that the household key opens it again, and
+# that deleting the document takes the object with it.
+
+- stopApp
+- launchApp
+
+- runFlow:
+    when:
+      visible: "Continue as guest"
+    commands:
+      - tapOn: "Continue as guest"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- runFlow:
+    when:
+      notVisible: "Fix the boiler"
+    commands:
+      - tapOn: "New task"
+      - inputText: "Fix the boiler"
+      - pressKey: Enter
+      - extendedWaitUntil:
+          visible: "Fix the boiler"
+          timeout: 20000
+      - hideKeyboard
+
+- tapOn: "Fix the boiler"
+- extendedWaitUntil:
+    visible: "Photos"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "photo_add"
+    centerElement: true
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_photo_01_empty
+
+- tapOn:
+    id: "photo_add"
+- extendedWaitUntil:
+    visible: "Choose from library"
+    timeout: 10000
+- tapOn: "Choose from library"
+
+# The system picker runs out of process, and an erased simulator is NOT empty
+# — iOS seeds it with stock photos, so the driver's own image is simply one
+# more. Any cell will do; what is being proven is the pipeline, not which
+# picture went through it.
+#
+# The confirm button is "Done", not "Add". With maxSelectionCount above one
+# the picker never auto-dismisses, so skipping it leaves the sheet open and
+# the selection never reaches the binding.
+- extendedWaitUntil:
+    visible: "Select Photos"
+    timeout: 25000
+- takeScreenshot: /tmp/pacelli_photo_02_picker
+- tapOn:
+    point: "25%,35%"
+- tapOn: "Done"
+
+# THE assertion Maestro can make: the thumbnail is on the item. It came from
+# the Firestore document, not from Storage — the upload may still be running.
+- extendedWaitUntil:
+    visible:
+      id: "photo_thumb"
+    timeout: 40000
+- takeScreenshot: /tmp/pacelli_photo_03_attached

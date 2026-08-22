@@ -194,6 +194,14 @@ enum BurnService {
         await PushService.unregisterAllDevices()
         await log("Push tokens revoked on all devices")
 
+        // The plaintext originals. Every other store in this wipe holds
+        // ciphertext; this one holds readable pictures, so leaving it would be
+        // the single worst thing a burn could miss. The encrypted objects in
+        // Cloud Storage are already gone — deleting the `photos` documents took
+        // them, through onPhotoDeleted.
+        PhotoStore.deleteEverything()
+        await log("Photos removed from this device")
+
         await KeyManager.shared.clearKeys()
         await log("Keychain cleared")
 
