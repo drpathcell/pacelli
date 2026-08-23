@@ -16,6 +16,16 @@ on:
       # never ran a single functions test, because ci.yml has no job for them.
       # It burned a runner to check nothing.
       - 'functions/**'
+      # Same reasoning, finished on 2026-08-23. There is no job in this file
+      # that reads scripts/, fastlane/ or any markdown — the two scripts that
+      # ARE gated (verify_entitlements, verify_api_wire) are named explicitly in
+      # native-ci.yml's `paths`. A screenshot refresh and a change to
+      # submit_when_clear.py each ran the whole Flutter lane for 12 minutes and
+      # checked nothing about either. firestore.rules is deliberately NOT here:
+      # the rules job is real and must keep firing.
+      - 'scripts/**'
+      - 'fastlane/**'
+      - '**/*.md'
   pull_request:
     branches:
       - main
@@ -29,6 +39,16 @@ on:
       # never ran a single functions test, because ci.yml has no job for them.
       # It burned a runner to check nothing.
       - 'functions/**'
+      # Same reasoning, finished on 2026-08-23. There is no job in this file
+      # that reads scripts/, fastlane/ or any markdown — the two scripts that
+      # ARE gated (verify_entitlements, verify_api_wire) are named explicitly in
+      # native-ci.yml's `paths`. A screenshot refresh and a change to
+      # submit_when_clear.py each ran the whole Flutter lane for 12 minutes and
+      # checked nothing about either. firestore.rules is deliberately NOT here:
+      # the rules job is real and must keep firing.
+      - 'scripts/**'
+      - 'fastlane/**'
+      - '**/*.md'
 
 # Cancel superseded runs on the same branch to avoid stacking long iOS builds.
 concurrency:
