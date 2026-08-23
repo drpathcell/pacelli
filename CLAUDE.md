@@ -43,6 +43,7 @@ cd PacelliApp && xcodebuild -project PacelliApp.xcodeproj -scheme PacelliApp \
   -configuration Debug -destination 'generic/platform=iOS Simulator' build
 
 python3 scripts/asc.py status                 # what App Store Connect actually thinks
+python3 scripts/asc.py screenshots-verify X.Y.Z  # listing == repo, byte for byte
 python3 scripts/verify_api_wire.py            # REST API writes what the app can read
 ./scripts/check_ai_link_e2e.sh                # pair → read → revoke → locked out
 ./scripts/make_screenshots.sh                 # then: asc.py screenshots-sync <version>
