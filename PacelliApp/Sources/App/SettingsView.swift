@@ -478,6 +478,10 @@ struct PrivacyEncryptionView: View {
                 )
                 .font(.callout)
                 Text(
+                    "That folder is open to you, which means it is open to anyone holding your unlocked phone: \"Require Face ID\" locks Pacelli, not the Files app. If that matters more to you than reaching your pictures without the app, \"Free up space\" below removes the readable copies from this phone. The household keeps its photos either way."
+                )
+                .font(.callout)
+                Text(
                     "Location data is removed before a photo is stored. A picture taken at home carries your address in it otherwise."
                 )
                 .font(.callout)

@@ -25,6 +25,10 @@ struct ConnectAIView: View {
     @State private var creating = false
     @State private var errorMessage: String?
     @State private var copied = false
+    /// The code is the whole point of this screen, and it is drawn above the
+    /// field that makes it. Leaving the field focused after a create puts the
+    /// keyboard over the thing the user just asked for.
+    @FocusState private var labelFocused: Bool
 
     /// Drives the countdown and the expiry cut-off. One second is plenty for a
     /// ten-minute deadline and costs nothing while the screen is open.
@@ -113,6 +117,7 @@ struct ConnectAIView: View {
             Section {
                 TextField("Name it — \"Claude on my laptop\"", text: $label)
                     .accessibilityIdentifier("ai_link_label_field")
+                    .focused($labelFocused)
                     .submitLabel(.done)
                     .onSubmit(create)
                 if creating {
@@ -165,6 +170,7 @@ struct ConnectAIView: View {
 
     private func create() {
         guard !creating else { return }
+        labelFocused = false
         creating = true
         copied = false
         Task {

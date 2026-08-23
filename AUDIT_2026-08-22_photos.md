@@ -171,9 +171,41 @@ Carried, unchanged.
 
 ## Carried to 1.9.0
 
-1. A sentence on the Privacy screen: the app lock does not cover the Files folder.
+1. ~~A sentence on the Privacy screen: the app lock does not cover the Files
+   folder.~~ **Done in 1.8.0 (build 47).** A rebuild was forced by the
+   `PhotoIndexer` continuation crash below, so this went in with it rather than
+   waiting a release.
 2. `expirationDate` on the pairing-code pasteboard item.
 3. Encrypt the assistant label.
 4. `household_members` update/delete restricted to admins-or-self, gated on the
    burn E2E — carried from the 1.7.0 audit and now more relevant, since a
    member can be an LLM that can also read every photo.
+
+
+## [FIXED in build 47] `PhotoIndexer` trapped on every Vision failure path
+
+Found on 2026-08-23 while capturing the 1.8.0 screenshots — the app died the
+moment the capture flow left the photo screen, and the crash report named
+`CheckedContinuation.resume` with nothing pointing at Vision.
+
+`recogniseText` and `classify` both wrapped `VNImageRequestHandler.perform` in
+`withCheckedContinuation`, resuming from the request's completion handler and
+again from the `catch`. Vision is not either/or: when a request fails it calls
+that request's completion handler with the error **and** rethrows. Both halves
+ran, the continuation was resumed twice, and Swift trapped the process —
+`EXC_BREAKPOINT`, no exception name, no Vision symbol above the trap.
+
+Severity is the whole feature: indexing runs on every photo attached, so any
+Vision failure killed the app seconds after the user added a picture. It was
+live in build 46, which is what 1.8.0 would have shipped.
+
+The continuation is gone rather than guarded. `perform` is synchronous and
+leaves its output on the request, so the results are read after it returns and
+a throw yields an empty index. A shape that cannot be resumed twice beats a
+flag that says not to.
+
+**Why the harness was green.** `flow_photo_01_attach` ended on the line that
+asserts the thumbnail — while indexing was still running — and
+`flow_photo_02_gallery` opens with `stopApp`. A process that died between the
+two left no trace in either. The flow now waits out indexing and makes the app
+prove it is still alive before it ends.

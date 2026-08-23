@@ -76,3 +76,25 @@ appId: com.pacelli.pacelli
       id: "photo_thumb"
     timeout: 40000
 - takeScreenshot: /tmp/pacelli_photo_03_attached
+
+# The crash that shipped in build 46 happened HERE, after the thumbnail. The
+# on-device indexer runs on after the attach returns, and this flow used to end
+# on the line above — while `flow_photo_02` opens with `stopApp`, so a process
+# that died in between left no trace at all. Both Vision requests resumed their
+# continuation twice on the failure path and trapped, and the whole photo E2E
+# stayed green for it.
+#
+# So the flow no longer ends at the thumbnail: indexing is given room to finish
+# and the app is then asked to prove it is still running.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 20000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Privacy & encryption"
+    timeout: 20000
+- assertVisible: "Privacy & encryption"

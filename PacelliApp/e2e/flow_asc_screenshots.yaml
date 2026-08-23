@@ -4,6 +4,11 @@ appId: com.pacelli.pacelli
 # Seeds a fresh guest household with presentable demo data, then captures.
 # Set the status bar first:
 #   xcrun simctl status_bar <SIM> override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3
+#
+# TEN shots, which is Apple's maximum. Filenames set the order on the product
+# page, not capture order, so the flow runs in whatever order the app can
+# actually survive and the numbering says what the listing should read like.
+# Photos are 1.8.0's headline, so they take 02 and 03.
 - launchApp
 - runFlow:
     when:
@@ -34,7 +39,9 @@ appId: com.pacelli.pacelli
     timeout: 15000
 - hideKeyboard
 - tapOn: "Water the plants"
-# Task detail: category + subtasks
+# Task detail: category + subtasks. NOT captured here — the photo goes on this
+# same screen later, and one shot showing subtasks AND a photo is worth more
+# than two showing half of it each.
 - scrollUntilVisible:
     element: "Add a subtask"
     direction: DOWN
@@ -53,16 +60,6 @@ appId: com.pacelli.pacelli
     timeout: 15000
 - hideKeyboard
 - tapOn: "Balcony pots"
-# ── Photos (1.8.0) — NOT CAPTURED YET ──
-# An attach was driven here and it worked, but it left the app in a state the
-# Checklists section immediately after could not recover from ("Groceries"
-# never appeared). Backed out rather than shipped half-working: the set below
-# is the known-good one, and the gallery shot is still owed.
-#
-# When it goes back in, put it AFTER the checklist and plan sections rather
-# than in the middle of the task flow, and take the gallery shot from the
-# Search tab where flow_photo_02 already does it reliably.
-- takeScreenshot: /tmp/asc_03_task_detail
 - tapOn:
     id: "BackButton"
 - extendedWaitUntil:
@@ -108,7 +105,7 @@ appId: com.pacelli.pacelli
 # the screenshot — harmless in a test, fatal in a store listing.
 - tapOn: "Check Milk"
 - hideKeyboard
-- takeScreenshot: /tmp/asc_04_checklist
+- takeScreenshot: /tmp/asc_05_checklist
 # ── Templates (1.6.0) ──
 # Saved from this very list, then shown on the Checklists screen, because the
 # Templates section is invisible until one exists — a screenshot of the empty
@@ -139,7 +136,7 @@ appId: com.pacelli.pacelli
 - extendedWaitUntil:
     visible: "Templates"
     timeout: 15000
-- takeScreenshot: /tmp/asc_05_templates
+- takeScreenshot: /tmp/asc_06_templates
 # ── Plans ──
 - tapOn: "Plans"
 - tapOn: "New weekly plan"
@@ -166,9 +163,116 @@ appId: com.pacelli.pacelli
 - scrollUntilVisible:
     element: "Pasta night"
     direction: UP
-- takeScreenshot: /tmp/asc_06_plan
+- takeScreenshot: /tmp/asc_07_plan
 - tapOn:
     id: "BackButton"
+# ── Photos (1.8.0) ──
+# Deliberately AFTER checklists and plans. Driven from inside the task-seeding
+# section, the attach left the app in a state the Checklists section could not
+# recover from — "Groceries" never appeared. Everything that needs a clean tab
+# switch has already happened by the time we get here, and the flow returns to
+# the Tasks root before Settings so nothing downstream inherits picker state.
+#
+# The picker's confirm button is "Done", not "Add": with maxSelectionCount
+# above one it never auto-dismisses, so skipping it leaves the sheet open and
+# the selection never reaches the binding. An erased simulator is not empty —
+# iOS seeds it with stock photos — so no addmedia is needed here.
+- tapOn: "Tasks"
+- extendedWaitUntil:
+    visible: "Water the plants"
+    timeout: 20000
+- tapOn: "Water the plants"
+- extendedWaitUntil:
+    visible: "Photos"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "photo_add"
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: "photo_add"
+- extendedWaitUntil:
+    visible: "Choose from library"
+    timeout: 10000
+- tapOn: "Choose from library"
+- extendedWaitUntil:
+    visible: "Select Photos"
+    timeout: 25000
+# THREE, not one. The gallery shot further down is a wall of pictures or it is
+# an advertisement for an empty screen — a single thumbnail alone on 2868
+# pixels of white sells nothing. Same reasoning as the Templates section: never
+# photograph an empty state.
+# Coordinates, because the picker runs out of process and Maestro cannot see
+# inside it. An erased iOS 26 simulator seeds SIX stock photos, in a
+# three-column grid that occupies only the top third of the sheet: row one
+# centres on 26% of the screen height, row two on 42%, columns on 16/50/83%.
+# Anything below ~48% is empty sheet — a tap there selects nothing, "Done"
+# stays disabled, the picker never dismisses, and the failure surfaces much
+# later as a missing thumbnail. Cost a capture run on 2026-08-23.
+- tapOn:
+    point: "16%,26%"
+- tapOn:
+    point: "50%,26%"
+- tapOn:
+    point: "83%,26%"
+- tapOn: "Done"
+# The thumbnail comes from the Firestore document, not from Storage — the
+# upload may still be running when this passes, and while it is the thumbnail
+# wears an "arriving" badge.
+#
+# The shot is NOT taken here. `PhotoStrip` holds its photos in `@State` loaded
+# once on appear, and the app has no snapshot listeners at all, so a screen
+# that is already open never learns the upload finished — the badge would sit
+# there for the whole capture. Honest in the app; in a store screenshot it
+# reads as a picture that failed to load. So the attach happens now, the
+# Settings section runs (which is the real delay), and the task is reopened
+# afterwards to capture a strip that has reloaded.
+- extendedWaitUntil:
+    visible:
+      id: "photo_thumb"
+    timeout: 40000
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 20000
+# A second subject. The gallery's whole point is that a picture says what it is
+# a picture of, and a wall where every caption reads "Water the plants" does
+# not show that at all.
+- tapOn: "Weekly food shop"
+- extendedWaitUntil:
+    visible: "Photos"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "photo_add"
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: "photo_add"
+- extendedWaitUntil:
+    visible: "Choose from library"
+    timeout: 10000
+- tapOn: "Choose from library"
+- extendedWaitUntil:
+    visible: "Select Photos"
+    timeout: 25000
+# Row two, and photos the first session did not take.
+- tapOn:
+    point: "16%,42%"
+- tapOn:
+    point: "50%,42%"
+- tapOn: "Done"
+- extendedWaitUntil:
+    visible:
+      id: "photo_thumb"
+    timeout: 40000
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 20000
 # ── Security ──
 # Two screens, not one: the Face ID toggle (1.5.0) lives in Settings, while
 # the encryption story lives one level down in Privacy & encryption. The
@@ -189,7 +293,7 @@ appId: com.pacelli.pacelli
 - extendedWaitUntil:
     visible: "Encrypted before upload"
     timeout: 15000
-- takeScreenshot: /tmp/asc_09_privacy
+- takeScreenshot: /tmp/asc_10_privacy
 - tapOn:
     id: "BackButton"
 - extendedWaitUntil:
@@ -199,22 +303,39 @@ appId: com.pacelli.pacelli
     element: "Require Face ID"
     direction: DOWN
     centerElement: true
-- takeScreenshot: /tmp/asc_08_lock
+- takeScreenshot: /tmp/asc_09_lock
 # ── Connect an AI (1.7.0) ──
-# Captured here because we are already in Settings; numbered 02 because the
-# headline feature of this release belongs near the front of the listing.
+# Captured here because we are already in Settings.
 #
 # The code on screen is real, and that is fine: it belongs to a throwaway
 # guest household on a simulator that gets erased, it is single-use, and it
 # is dead ten minutes after capture. Showing the empty state instead would
 # be safer in a way that protects nothing and explains nothing.
+# UP, not DOWN. "Connect an AI" sits in the Household section, ABOVE the
+# Privacy rows the previous shot left us at. Scrolling DOWN for it runs to the
+# bottom of the list and rubber-bands, and Maestro's visibility check passes on
+# a frame of that bounce — so the scroll reports COMPLETED, the tap that
+# follows reports COMPLETED, and it lands on a list still moving under it.
+# Nothing navigates and the next assertion fails 45 seconds later. 2026-08-23.
 - scrollUntilVisible:
     element:
       id: "settings_connect_ai"
-    direction: DOWN
+    direction: UP
     centerElement: true
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn:
     id: "settings_connect_ai"
+- waitForAnimationToEnd:
+    timeout: 5000
+- runFlow:
+    when:
+      notVisible:
+        id: "ai_link_label_field"
+    commands:
+      - tapOn: "Connect an AI"
+      - waitForAnimationToEnd:
+          timeout: 5000
 - extendedWaitUntil:
     visible:
       id: "ai_link_create"
@@ -229,20 +350,76 @@ appId: com.pacelli.pacelli
     visible:
       id: "ai_link_code_value"
     timeout: 30000
-- takeScreenshot: /tmp/asc_02_connect_ai
+# Creating the code hands focus straight back to the label field, so the
+# keyboard comes back up and eats the bottom half of the frame — the earlier
+# `hideKeyboard` is spent by then. Dismiss it again, on this side of the
+# create, and let it animate away before the shutter.
+- tapOn: "Pairing code"
+- hideKeyboard
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: /tmp/asc_04_connect_ai
+- tapOn:
+    id: "BackButton"
+# "Connect an AI", not "Privacy & encryption". Coming back lands on the Settings
+# list at the offset we left it — centred on the row we just tapped — and the
+# Privacy rows are below the fold from there.
+- extendedWaitUntil:
+    visible: "Connect an AI"
+    timeout: 15000
+# ── The photo shot, now that the strip will reload ──
+# Everything above bought the upload the better part of a minute. Reopening the
+# task rebuilds `PhotoStrip` from the server, so the badge is gone if the
+# upload landed — and if it did not, this fails here rather than shipping a
+# thumbnail that looks broken to everyone browsing the store.
+- tapOn: "Tasks"
+- extendedWaitUntil:
+    visible: "Water the plants"
+    timeout: 20000
+- tapOn: "Water the plants"
+- extendedWaitUntil:
+    visible: "Photos"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: "arriving"
+    timeout: 90000
+- scrollUntilVisible:
+    element: "Balcony pots"
+    direction: UP
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: /tmp/asc_02_task_detail
 - tapOn:
     id: "BackButton"
 - extendedWaitUntil:
-    visible: "Privacy & encryption"
-    timeout: 15000
-# ── Search ──
-# Deliberately LAST, though it is numbered 06. .searchable presents its field
-# over the whole screen including the tab bar, and a tap on another tab while
-# it is up is swallowed: Maestro reports COMPLETED, the app never moves, and
-# every later step runs against the wrong screen. Cost an hour on 2026-08-14.
-# Filenames set the order on the product page, not capture order, so this can
-# run last and still appear sixth.
+    visible: "New task"
+    timeout: 20000
+# ── Search, and the photo gallery that lives inside it ──
+# Deliberately LAST, though it is numbered 03 and 08. .searchable presents its
+# field over the whole screen including the tab bar, and a tap on another tab
+# while it is up is swallowed: Maestro reports COMPLETED, the app never moves,
+# and every later step runs against the wrong screen. Cost an hour on
+# 2026-08-14.
+#
+# The gallery shot is taken BEFORE the search field is ever invoked, which is
+# the order flow_photo_02 already proves. Switching segments is a Picker tap,
+# not a search interaction, so it is safe on either side.
 - tapOn: "Search"
+- extendedWaitUntil:
+    visible:
+      id: "search_mode"
+    timeout: 15000
+- tapOn: "Photos"
+- extendedWaitUntil:
+    visible:
+      id: "gallery_cell"
+    timeout: 30000
+# Provenance is the point of the screen: the photo says what it is a picture
+# of, in the household's own words.
+- assertVisible: "Water the plants"
+- takeScreenshot: /tmp/asc_03_photos
+- tapOn: "Everything"
 - tapOn: "Search everything"
 # "week" spans a task and a plan; a term that matches one row makes search
 # look like it found almost nothing.
@@ -251,4 +428,4 @@ appId: com.pacelli.pacelli
     visible: "Weekly food shop"
     timeout: 25000
 - hideKeyboard
-- takeScreenshot: /tmp/asc_07_search
+- takeScreenshot: /tmp/asc_08_search

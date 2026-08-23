@@ -42,52 +42,60 @@ enum PhotoIndexer {
         return Index(text: await text, labelsJSON: await labels)
     }
 
-    private static func recogniseText(_ image: CGImage) async -> String {
-        await withCheckedContinuation { continuation in
-            let request = VNRecognizeTextRequest { request, _ in
-                let lines = (request.results as? [VNRecognizedTextObservation] ?? [])
-                    .compactMap { $0.topCandidates(1).first?.string }
-                continuation.resume(returning: lines.joined(separator: " "))
-            }
-            // `.accurate` because this runs once, at import, on one photo —
-            // there is no live camera feed to keep up with, and the whole value
-            // is in reading a serial number correctly the first time.
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
+    // Vision is not either/or: when a request fails, `perform` calls that
+    // request's completion handler with the error AND rethrows. Both halves of
+    // a do/catch therefore run, and a `CheckedContinuation` resumed from both
+    // traps the process — EXC_BREAKPOINT in `CheckedContinuation.resume`, with
+    // nothing in the log naming Vision. It cost the 1.8.0 screenshot capture on
+    // 2026-08-23, and the photo E2E could not have caught it: `flow_photo_01`
+    // ends the moment the thumbnail appears, while indexing is still running,
+    // and `flow_photo_02` opens with `stopApp`.
+    //
+    // There is no continuation here any more. `perform` is synchronous and
+    // leaves its output on the request, so the results are simply read after it
+    // returns and a throw means an empty index. A shape that cannot be resumed
+    // twice is worth more than a guard against resuming twice.
 
-            let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                continuation.resume(returning: "")
-            }
+    private static func recogniseText(_ image: CGImage) async -> String {
+        let request = VNRecognizeTextRequest()
+        // `.accurate` because this runs once, at import, on one photo —
+        // there is no live camera feed to keep up with, and the whole value
+        // is in reading a serial number correctly the first time.
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return ""
         }
+
+        return (request.results ?? [])
+            .compactMap { $0.topCandidates(1).first?.string }
+            .joined(separator: " ")
     }
 
     private static func classify(_ image: CGImage) async -> String? {
-        await withCheckedContinuation { continuation in
-            let request = VNClassifyImageRequest { request, _ in
-                let picked = (request.results as? [VNClassificationObservation] ?? [])
-                    .filter { $0.confidence >= minimumConfidence }
-                    .prefix(maximumLabels)
-                    .map { ["label": $0.identifier, "confidence": Double($0.confidence)] }
+        let request = VNClassifyImageRequest()
 
-                guard !picked.isEmpty,
-                      let data = try? JSONSerialization.data(withJSONObject: Array(picked)),
-                      let json = String(data: data, encoding: .utf8)
-                else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: json)
-            }
-
-            let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                continuation.resume(returning: nil)
-            }
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return nil
         }
+
+        let picked = (request.results ?? [])
+            .filter { $0.confidence >= minimumConfidence }
+            .prefix(maximumLabels)
+            .map { ["label": $0.identifier, "confidence": Double($0.confidence)] }
+
+        guard !picked.isEmpty,
+              let data = try? JSONSerialization.data(withJSONObject: Array(picked)),
+              let json = String(data: data, encoding: .utf8)
+        else { return nil }
+
+        return json
     }
 }
