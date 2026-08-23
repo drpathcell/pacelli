@@ -109,7 +109,14 @@ reversible moment. Cancelling a `WAITING_FOR_REVIEW` version drops it to
 `DEVELOPER_REJECTED`, unlocks the metadata, and keeps the build and notes.
 
 **Screenshots must show the release.** 1.6.0 was submitted once with 1.5.0's
-screenshots and had to be cancelled and redone.
+screenshots and had to be cancelled and redone; 1.8.0 came one command from
+doing the same with a set that had been stale since 1.5.0. `submit_when_clear`
+now refuses to call `submit` unless every screenshot on the listing byte-matches
+`fastlane/metadata/ios/en-GB/screenshots` — checked AFTER the version exists,
+because `version_create` is where the staleness comes from (Apple copies the
+previous version's screenshots onto a new one). Bailing there is cheap: version,
+build and notes survive, so `screenshots-sync` then a re-run continues from that
+point. `./scripts/asc.py screenshots-verify X.Y.Z` runs the same check alone.
 
 ## Repo skills (`.claude/skills/`)
 

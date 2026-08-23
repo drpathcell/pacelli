@@ -356,7 +356,8 @@ def screenshots_in(set_id: str):
         "GET",
         f"/appScreenshotSets/{set_id}/appScreenshots",
         params={"limit": 50,
-                "fields[appScreenshots]": "fileName,fileSize,assetDeliveryState"},
+                "fields[appScreenshots]": "fileName,fileSize,assetDeliveryState,"
+                                          "sourceFileChecksum"},
     )["data"]
 
 
@@ -479,6 +480,76 @@ def screenshots_sync(version_string: str, folder: Path, locale: str,
     print(f"synced {len(ids)} screenshot(s) to {version_string} / {locale} / {display_type}")
 
 
+def screenshots_verify(version_string: str, folder: Path, locale: str,
+                       display_type: str = DISPLAY_TYPE) -> list[str]:
+    """Do the screenshots on the listing match the ones on disk, byte for byte?
+
+    This exists because a version can be submitted with the previous release's
+    screenshots and nothing anywhere complains. 1.6.0 went out advertising a
+    Checklists screen it no longer had and had to be cancelled and redone; 1.8.0
+    came within one command of shipping a photos release whose listing showed no
+    photos, with a set that had been stale since 1.5.0.
+
+    Comparison is `sourceFileChecksum` — the md5 `upload_one` sent with the
+    commit — against the md5 of the local file, so it answers the only question
+    worth asking: are the bytes on the product page the bytes in the repo? Name
+    and size are compared too, since a checksum Apple has not returned would
+    otherwise silently pass.
+
+    Returns a list of complaints. Empty means they match.
+    """
+    problems: list[str] = []
+    v = find_version(version_string)
+    if not v:
+        return [f"no ASC version {version_string}"]
+
+    local = {}
+    for f in sorted(folder.glob("*.png")):
+        raw = f.read_bytes()
+        local[f.name] = (len(raw), hashlib.md5(raw).hexdigest())
+    if not local:
+        return [f"no PNGs in {folder}"]
+
+    locs = {l["attributes"]["locale"]: l["id"] for l in localizations(v["id"])}
+    if locale not in locs:
+        return [f"no localization {locale} on {version_string}"]
+
+    set_id = None
+    for st in screenshot_sets(locs[locale]):
+        if st["attributes"]["screenshotDisplayType"] == display_type:
+            set_id = st["id"]
+    if set_id is None:
+        return [f"{version_string} has no {display_type} screenshot set at all"]
+
+    remote = {}
+    for sh in screenshots_in(set_id):
+        a = sh["attributes"]
+        state = (a.get("assetDeliveryState") or {}).get("state")
+        if state != "COMPLETE":
+            problems.append(f"{a['fileName']} is {state}, not COMPLETE")
+        remote[a["fileName"]] = (a.get("fileSize"), a.get("sourceFileChecksum"))
+
+    for name in sorted(set(local) - set(remote)):
+        problems.append(f"{name} is in {folder} but not on the listing")
+    for name in sorted(set(remote) - set(local)):
+        problems.append(f"{name} is on the listing but no longer in {folder}")
+
+    for name in sorted(set(local) & set(remote)):
+        lsize, lmd5 = local[name]
+        rsize, rmd5 = remote[name]
+        if rmd5 is None:
+            if rsize != lsize:
+                problems.append(
+                    f"{name} differs: {lsize} bytes locally, {rsize} on the "
+                    f"listing (Apple returned no checksum to compare)")
+        elif rmd5 != lmd5:
+            problems.append(
+                f"{name} on the listing is a different image "
+                f"({rmd5[:8]}… vs {lmd5[:8]}… locally)")
+
+    return problems
+
+
 def submission_cancel():
     """Pull an in-flight submission back so its version becomes editable."""
     done = 0
@@ -545,6 +616,18 @@ def cmd_screenshots_sync(a):
     screenshots_sync(a.version, Path(a.dir), a.locale, a.display_type)
 
 
+def cmd_screenshots_verify(a):
+    problems = screenshots_verify(a.version, Path(a.dir), a.locale,
+                                  a.display_type)
+    if problems:
+        print(f"screenshots for {a.version} DO NOT match {a.dir}:")
+        for pr in problems:
+            print(f"  - {pr}")
+        print(f"\nfix: ./scripts/asc.py screenshots-sync {a.version}")
+        raise SystemExit(1)
+    print(f"screenshots for {a.version} match {a.dir}")
+
+
 def cmd_submission_cancel(a):
     if not a.yes:
         print("This pulls the version out of the review queue and loses its "
@@ -567,6 +650,13 @@ def main():
     ss.add_argument("--locale", default="en-GB")
     ss.add_argument("--display-type", default=DISPLAY_TYPE)
     ss.set_defaults(fn=cmd_screenshots_sync)
+
+    sv = sub.add_parser("screenshots-verify")
+    sv.add_argument("version")
+    sv.add_argument("--dir", default="fastlane/metadata/ios/en-GB/screenshots")
+    sv.add_argument("--locale", default="en-GB")
+    sv.add_argument("--display-type", default=DISPLAY_TYPE)
+    sv.set_defaults(fn=cmd_screenshots_verify)
 
     sc = sub.add_parser("submission-cancel")
     sc.add_argument("--yes", action="store_true")

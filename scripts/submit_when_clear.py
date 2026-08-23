@@ -60,6 +60,16 @@ def main() -> int:
     ap.add_argument("--whats-new-file", type=pathlib.Path)
     ap.add_argument("--review-notes-file", type=pathlib.Path)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--screenshots-dir",
+        default="fastlane/metadata/ios/en-GB/screenshots",
+        help="checked against the listing before submitting")
+    ap.add_argument(
+        "--allow-stale-screenshots", action="store_true",
+        help="submit even when the listing's screenshots are not the ones on "
+             "disk. There is one honest reason to use this — the repo's set is "
+             "mid-edit and the listing already holds what you meant to ship — "
+             "and it is not the reason you are about to use it.")
     a = ap.parse_args()
 
     lock = acquire_lock()
@@ -114,6 +124,41 @@ def main() -> int:
         asc.whats_new(a.version, a.whats_new_file.read_text().strip(), None)
     if a.review_notes_file:
         asc.review_notes(a.version, a.review_notes_file.read_text().strip())
+
+    # The last gate, and deliberately AFTER the version exists rather than
+    # before. A version can be submitted carrying the PREVIOUS release's
+    # screenshots and nothing anywhere complains — 1.6.0 went out advertising a
+    # Checklists screen it no longer had and had to be cancelled and redone, and
+    # 1.8.0 came one command from shipping a photos release whose listing had
+    # shown no photos since 1.5.0.
+    #
+    # Checking earlier would have missed both, because `version_create` is where
+    # the staleness comes from: Apple copies the previous version's metadata and
+    # screenshots onto a newly created one. Before creation there is nothing to
+    # compare; after it, the listing is holding last release's pictures and
+    # saying so. So the check runs here, with everything else already in place
+    # and only `submit` left.
+    #
+    # Bailing here is cheap: the version, build and notes all survive, the state
+    # is still PREPARE_FOR_SUBMISSION, so `screenshots-sync` works and re-running
+    # this picks up exactly where it stopped.
+    if not a.allow_stale_screenshots:
+        folder = pathlib.Path(a.screenshots_dir)
+        if not folder.is_absolute():
+            folder = HERE.parent / folder
+        problems = asc.screenshots_verify(a.version, folder, "en-GB")
+        if problems:
+            print(f"NOT SUBMITTED: the screenshots on {a.version} are not the "
+                  f"ones in {a.screenshots_dir}")
+            for pr in problems:
+                print(f"  - {pr}")
+            print(f"\n  ./scripts/asc.py screenshots-sync {a.version}")
+            print("  then re-run this — the version, build and notes are "
+                  "already in place.")
+            print("  (or --allow-stale-screenshots, if you can say why)")
+            return 1
+        print(f"screenshots on {a.version} match {a.screenshots_dir}")
+
     asc.submit(a.version)
     print(f"SUBMITTED {a.version} (build {a.build}) for review")
     return 0
