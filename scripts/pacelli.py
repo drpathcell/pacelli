@@ -165,7 +165,7 @@ def cmd_tasks(a) -> None:
     for t in call("tasksList", {"status": a.status} if a.status else {}):
         mark = "x" if t.get("status") == "completed" else " "
         due = f"  due {t['dueDate'][:10]}" if t.get("dueDate") else ""
-        print(f"[{mark}] {t['id'][:8]}  {t['title']}{due}")
+        print(f"[{mark}] {t['id']}  {t['title']}{due}")
 
 
 def cmd_task_add(a) -> None:
@@ -175,23 +175,51 @@ def cmd_task_add(a) -> None:
     if a.priority:
         body["priority"] = a.priority
     t = call("tasksCreate", body)
-    print(f"added {t['id'][:8]}  {t['title']}")
+    print(f"added {t['id']}  {t['title']}")
 
 
 def cmd_task_done(a) -> None:
-    call("tasksComplete", {"taskId": a.task_id})
-    print("completed")
+    # `tasksComplete` returns false for a task id it cannot find; it does not
+    # raise. This printed "completed" regardless, so on 2026-08-24 it reported
+    # four tasks done and changed nothing — the id had been copied from this
+    # script's own truncated `tasks` output, which no command could accept back.
+    # Both halves of that are fixed: ids print in full, and a false is a
+    # failure.
+    task_id = _resolve_task_id(a.task_id)
+    if not call("tasksComplete", {"taskId": task_id}):
+        raise SystemExit(
+            f"tasksComplete refused {task_id!r} — no such task in this "
+            f"household, or it is already completed. Nothing was changed.")
+    print(f"completed {task_id}")
+
+
+def _resolve_task_id(given: str) -> str:
+    """Accept a full id or an unambiguous prefix.
+
+    Convenience, but also a guard: a prefix that matches nothing, or matches
+    more than one task, stops here rather than being sent to the API to fail
+    quietly.
+    """
+    matches = [t["id"] for t in call("tasksList", {})
+               if t["id"] == given or t["id"].startswith(given)]
+    if not matches:
+        raise SystemExit(f"no task id starts with {given!r}")
+    if len(matches) > 1:
+        raise SystemExit(
+            f"{given!r} is ambiguous — matches {len(matches)}: "
+            + ", ".join(m[:12] for m in matches))
+    return matches[0]
 
 
 def cmd_checklists(_) -> None:
     for c in call("checklistsList"):
         items = c.get("items") or []
         done = sum(1 for i in items if i.get("isChecked"))
-        print(f"{c['id'][:8]}  {c['title']}  ({done}/{len(items)})")
+        print(f"{c['id']}  {c['title']}  ({done}/{len(items)})")
         for i in items:
             mark = "x" if i.get("isChecked") else " "
             qty = f"  x{i['quantity']}" if i.get("quantity") else ""
-            print(f"    [{mark}] {i['id'][:8]}  {i['title']}{qty}")
+            print(f"    [{mark}] {i['id']}  {i['title']}{qty}")
 
 
 def cmd_photos(a) -> None:
@@ -208,7 +236,7 @@ def cmd_photos(a) -> None:
         state = "" if p.get("uploadState") == "ready" else f"  [{p.get('uploadState')}]"
         seen = p.get("recognisedText") or ""
         seen = f"  \u201c{seen[:40]}\u2026\u201d" if seen else ""
-        print(f"{p['id'][:8]}  {p.get('subjectType')}/{p.get('subjectId','')[:8]}"
+        print(f"{p['id']}  {p.get('subjectType')}/{p.get('subjectId','')[:8]}"
               f"  {p.get('createdAt','')[:16]}{state}{seen}")
 
 
@@ -266,10 +294,10 @@ def cmd_plans(_) -> None:
     missing — `plansList` alone would pass with the index absent.
     """
     for p in call("plansList"):
-        print(f"{p['id'][:8]}  {p['title']}  {p.get('status', '')}")
+        print(f"{p['id']}  {p['title']}  {p.get('status', '')}")
         for e in call("plansGet", {"planId": p["id"]}).get("entries") or []:
             date = f"  {e['entryDate'][:10]}" if e.get("entryDate") else ""
-            print(f"    {e['id'][:8]}  {e['title']}{date}")
+            print(f"    {e['id']}  {e['title']}{date}")
 
 
 def cmd_item_add(a) -> None:
@@ -277,7 +305,7 @@ def cmd_item_add(a) -> None:
     if a.qty:
         body["quantity"] = a.qty
     i = call("checklistItemsAdd", body)
-    print(f"added {i['id'][:8]}  {i['title']}")
+    print(f"added {i['id']}  {i['title']}")
 
 
 def cmd_item_toggle(a) -> None:

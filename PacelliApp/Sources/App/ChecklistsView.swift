@@ -309,7 +309,8 @@ struct ChecklistDetailView: View {
     var body: some View {
         List {
             Section("Checklist") {
-                TextField("Title", text: $title)
+                TextField("Title", text: $title, axis: .vertical)
+                    .lineLimit(1...4)
             }
 
             Section("Items") {

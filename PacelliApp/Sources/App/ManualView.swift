@@ -132,7 +132,8 @@ private struct NewManualEntrySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Title", text: $title)
+                TextField("Title", text: $title, axis: .vertical)
+                    .lineLimit(1...4)
                 TextField("Write it down…", text: $content, axis: .vertical)
                     .lineLimit(6...16)
             }
@@ -206,7 +207,8 @@ struct ManualEntryView: View {
 
     var body: some View {
         Form {
-            TextField("Title", text: $title)
+            TextField("Title", text: $title, axis: .vertical)
+                    .lineLimit(1...4)
             TextField("Content", text: $content, axis: .vertical)
                 .lineLimit(8...24)
             Toggle("Pinned", isOn: $isPinned)

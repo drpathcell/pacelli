@@ -79,7 +79,19 @@ struct TaskDetailView: View {
     var body: some View {
         Form {
             Section("Task") {
-                TextField("Title", text: $title)
+                // Wraps instead of truncating. Opening a task whose title
+                // was longer than the field showed "Spike: photograph 20 shelf
+                // price labels…" and no way to read the rest — reported by
+                // Juan, 2026-08-24. The Notes field directly below has always
+                // done this correctly; the title simply never got the same
+                // treatment.
+                //
+                // Safe to make multi-line here: nothing in this screen hangs
+                // an .onSubmit on the title, so no return key behaviour is
+                // swallowed. (The subtask field's .onSubmit is deliberately
+                // left single-line for exactly that reason.)
+                TextField("Title", text: $title, axis: .vertical)
+                    .lineLimit(1...4)
                 TextField("Notes", text: $notes, axis: .vertical)
                     .lineLimit(1...6)
             }
