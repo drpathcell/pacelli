@@ -81,6 +81,9 @@ YAML
 # failed pipeline and set -e kills the script with no FAIL line. Zero
 # notifications is the NORMAL state at the start of this check.
 delivered_count() {
+  # E2E-HONESTY-WAIVER[H4]: this returns a COUNT, and zero is a real answer —
+  # the three lines above say why. The caller compares the number; nothing here
+  # is being proved by this line's exit status.
   grep -rl "$BODY" "$UN"/*/DeliveredNotifications.plist 2>/dev/null | wc -l | tr -d ' ' || true
 }
 
