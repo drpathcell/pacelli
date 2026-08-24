@@ -66,7 +66,10 @@ struct PhotoStrip: View {
                 .padding(.vertical, 2)
             }
         }
-        .task { await reload() }
+        // A live subscription, not a read. `.task(id:)` restarts it if the
+        // strip is recycled onto a different item, and cancels it — which
+        // removes the Firestore listener — when the view goes away.
+        .task(id: subjectId) { await observe() }
         .confirmationDialog("Add a photo", isPresented: $showChooser, titleVisibility: .hidden) {
             Button("Take a photo") { showCamera = true }
             Button("Choose from library") { showLibrary = true }
@@ -94,7 +97,6 @@ struct PhotoStrip: View {
                 Task {
                     try? await PhotoService.delete(photoId: photo.id, householdId: householdId)
                     viewing = nil
-                    await reload()
                 }
             }
         }
@@ -104,9 +106,12 @@ struct PhotoStrip: View {
             message: { Text(errorMessage ?? "") })
     }
 
-    private func reload() async {
-        photos = (try? await PhotosRepository.fetch(
-            subjectId: subjectId, householdId: householdId)) ?? []
+    private func observe() async {
+        let stream = await PhotosRepository.observe(
+            subjectId: subjectId, householdId: householdId)
+        for await latest in stream {
+            photos = latest
+        }
     }
 
     private func attachPicked(_ items: [PhotosPickerItem]) async {
@@ -124,7 +129,9 @@ struct PhotoStrip: View {
             _ = try await PhotoService.attach(
                 imageData: data, to: subject, subjectId: subjectId,
                 householdId: householdId)
-            await reload()
+            // No reload: Firestore's latency compensation fires the listener
+            // on the local write before the round trip, so the thumbnail is
+            // on screen sooner than a re-read would have put it there.
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription
                 ?? String(localized: "Couldn't add that photo.")
