@@ -240,36 +240,47 @@ data.
 
 ---
 
-## 8. Things to decide
+## 8. Decided (2026-08-24, Juan)
 
-1. **Does the paired AI assistant see purchase history?** It currently sees
-   household data by default. A grocery list is one thing; a year of what a
-   family bought, when, and for how much is a different order of disclosure.
-   This may want to be the second thing gated by the permissions model being
-   built for burn in 1.10.0 — the shape is already there.
+All five settled before any code. Recorded here so the plan stops being
+provisional.
 
-2. **What gets stripped from a receipt image?** A receipt carries the store,
-   the date and time, the card's last four digits, often a loyalty number, and
-   sometimes a name. The 1.8.0 photo layer strips location metadata from
-   photos; a receipt's sensitive content is in the *pixels*, which is a
-   different problem and needs its own answer.
+1. **The paired AI assistant sees purchase history**, along with everything else
+   in the app. No separate gate. *(Consequence: the AI-visibility question does
+   NOT need the 1.10.0 permissions model, which stays scoped to burn.)*
 
-3. **Is the readable copy of a receipt written to the Files-visible folder**
-   like other photos? `AUDIT_2026-08-22_photos.md` accepted that folder sitting
-   outside the app lock as a considered trade for photos. A year of receipts is
-   a heavier thing to leave outside it, and the trade deserves re-taking rather
-   than inheriting.
+2. **Parse the receipt, then delete the image.** Once the line items are
+   confirmed the photo has done its job. The numbers are kept; the card last
+   four, the loyalty number and any name are not kept at all, rather than kept
+   encrypted. Least data held.
 
-4. **Is Open Food Facts contributed back to?** Scanning products it does not
-   know is exactly how its coverage improves, and Irish own-brand coverage is
-   likely to be the weak spot. Worth deciding deliberately, not drifting into.
+   **Known cost, accepted:** old receipts cannot be re-read if the parser later
+   improves — and there is no corpus to improve the parser *with*. The parser is
+   built once, on the spike set (§6), which lives on Juan's Mac outside the app.
+   After that it is what it is unless samples are deliberately kept. For a
+   family app that is the right trade, but it is a trade, and it argues for
+   spending real effort on the spike rather than shipping a parser and planning
+   to tune it in the field. **There will be no field.**
 
-5. **Does the shopping list get a `store` at all?** Price history is meaningless
-   without knowing where — but asking "which shop?" every time is friction. The
-   receipt names the shop; a scanning session could ask once, or guess from the
-   last receipt.
+3. **No readable copy of a receipt in the Files-visible folder.** A receipt is
+   not a picture anyone browses, and a year of them sitting outside the app lock
+   is a heavier disclosure than `AUDIT_2026-08-22_photos.md` signed off on for
+   photos. Encrypted copy only — and since (2) deletes it after parsing, mostly
+   moot, which is a good sign the two decisions agree.
 
----
+4. **Open Food Facts contribution is opt-in, asked once.** One prompt the first
+   time an unknown product is scanned, then remembered. Contributing sends
+   *product* data to a public database, never household data — but in an app
+   built on the premise that nothing leaves without you knowing, that is a
+   choice to be made rather than a default to inherit.
+
+5. **The shop is asked once, when a scanning session starts.** One tap at the
+   door, then silence. This matters more than it looks: shelf-label prices
+   captured during a session are the freshest prices the household has, and
+   inferring the store from a receipt later would leave every un-receipted
+   session's prices unattributed. Needs a per-household store list that grows —
+   the chains actually used, plus free text, not a hardcoded list of Irish
+   supermarkets.
 
 ## 9. What this reuses
 
