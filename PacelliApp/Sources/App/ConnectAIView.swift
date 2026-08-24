@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 /// Settings → Connect an AI.
 ///
@@ -90,7 +91,22 @@ struct ConnectAIView: View {
                             .accessibilityIdentifier("ai_link_code_value")
                         Spacer()
                         Button {
-                            UIPasteboard.general.string = code.code
+                            // The pairing code is a bearer secret with a
+                            // ten-minute life, and the general pasteboard has
+                            // none — it would sit there until something else
+                            // was copied, long after the code stopped being
+                            // usable but not after it stopped being sensitive.
+                            // Expiry is pinned to the code's OWN expiry, so
+                            // the clipboard and the server agree.
+                            //
+                            // `localOnly` is deliberately NOT set: Universal
+                            // Clipboard is the actual transport here — you copy
+                            // on the phone and paste into an assistant running
+                            // on a Mac. Bounding the lifetime is the fix;
+                            // breaking the workflow is not.
+                            UIPasteboard.general.setItems(
+                                [[UTType.utf8PlainText.identifier: code.code]],
+                                options: [.expirationDate: code.expiresAt])
                             copied = true
                         } label: {
                             Image(systemName: copied ? "checkmark" : "doc.on.doc")
