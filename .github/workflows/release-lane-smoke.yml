@@ -1,0 +1,105 @@
+name: Release lane smoke
+
+# The release lane only ever runs on a tag, which means it is only ever tested
+# at the exact moment it is needed. On 2026-08-13 that bill came due: a fastlane
+# bump (0c7d541) pulled excon 1.7.0 into Gemfile.lock, excon 1.7 requires ruby
+# >= 3.3, the runners were on 3.2, and nothing noticed for a day — until a real
+# ship attempt failed at `bundle install`, with a build waiting behind it.
+#
+# This job is that `bundle install`, run where it is cheap and early instead of
+# expensive and late. It also loads the Fastfile, because a Fastfile that no
+# longer parses is the same class of failure and currently surfaces in the same
+# place: at tag time.
+#
+# It deliberately does NOT hardcode the ruby version. Pinning it here would
+# create exactly the drift this is meant to catch — a smoke test passing on 3.3
+# while the release lane had moved on. The version is read out of release.yml,
+# so the two cannot disagree; if that grep stops finding anything, the job
+# fails rather than quietly falling back to a default.
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'fastlane/**'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-lane-smoke.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'fastlane/**'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-lane-smoke.yml'
+  # Weekly, because the lane can rot without anyone touching the repo: a yanked
+  # gem, a runner image whose default toolchain moved. Nothing in the paths
+  # above would fire for either.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: release-lane-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bundle:
+    name: bundle install + Fastfile loads
+    # ubuntu, not macOS: Gemfile.lock carries the linux platforms, and every
+    # failure this guards against — a gem demanding a newer ruby, a resolution
+    # conflict, a Fastfile syntax error — is platform-independent. The macOS
+    # runner costs ten times as much and would catch nothing extra here.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FASTLANE_SKIP_UPDATE_CHECK: 'true'
+      FASTLANE_OPT_OUT_USAGE: 'true'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read the ruby version the release lane pins
+        id: ruby
+        run: |
+          set -euo pipefail
+          V="$(grep -oE "ruby-version:[[:space:]]*'[^']+'" \
+                 .github/workflows/release.yml \
+               | head -1 | grep -oE "'[^']+'" | tr -d "'")"
+          if [[ -z "$V" ]]; then
+            echo "::error::could not read ruby-version from release.yml." \
+                 "If the release lane stopped pinning one, this smoke test is" \
+                 "no longer testing the same thing it ships on — fix that" \
+                 "rather than defaulting here."
+            exit 1
+          fi
+          echo "Release lane pins ruby $V"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ steps.ruby.outputs.version }}
+          bundler-cache: true
+
+      - name: bundle install is satisfied by the lock
+        run: bundle check
+
+      - name: The Fastfile parses and fastlane loads it
+        # `lanes` is offline and does nothing but read the Fastfile. It fails
+        # on a syntax error, a missing plugin, or an action that no longer
+        # exists in the installed fastlane — all of which currently wait until
+        # a tag to announce themselves.
+        run: bundle exec fastlane lanes
+
+      - name: The release lane's own lane still exists
+        # Named explicitly: `lanes` succeeding proves the file loads, not that
+        # the lane release.yml invokes is still in it. Renaming native_beta
+        # would otherwise pass here and fail at ship time.
+        run: |
+          set -euo pipefail
+          bundle exec fastlane lanes | grep -q 'ios native_beta' \
+            || { echo "::error::fastlane has no ios native_beta lane, but" \
+                      ".github/workflows/release.yml runs it."; exit 1; }
+          echo "ios native_beta is present."

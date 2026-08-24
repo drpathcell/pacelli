@@ -17,6 +17,7 @@ on:
       - 'functions/tsconfig.json'
       - 'scripts/verify_entitlements.py'
       - 'scripts/verify_api_wire.py'
+      - 'scripts/check_*'
       - '.github/workflows/native-ci.yml'
   pull_request:
     branches:
@@ -31,6 +32,7 @@ on:
       - 'functions/tsconfig.json'
       - 'scripts/verify_entitlements.py'
       - 'scripts/verify_api_wire.py'
+      - 'scripts/check_*'
       - '.github/workflows/native-ci.yml'
 
 concurrency:
@@ -49,6 +51,26 @@ jobs:
       - uses: actions/checkout@v5
       - name: verify_entitlements
         run: python3 scripts/verify_entitlements.py
+
+  # Four harnesses in this repo have reported COMPLETED while proving nothing,
+  # and each one either hid a real bug or nearly produced a bug report against
+  # correct code — the worst of them shipped as build 46's photo crash. None of
+  # them was a bug in a flow. All of them were a green run that had never been
+  # required to show it could go red.
+  #
+  # This runs its own --self-test first, and that ordering is the point: a
+  # linter nobody has seen reject anything is in exactly the position of the
+  # E2Es it is judging.
+  e2e-honesty:
+    name: E2E harnesses can fail
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: The checker can fail
+        run: python3 scripts/check_e2e_honesty.py --self-test
+      - name: The harnesses can fail
+        run: python3 scripts/check_e2e_honesty.py
 
   # The other half of the entitlements argument: that job keeps the extension's
   # reach honest, this one keeps the two WRITERS honest. Both are greps, both
