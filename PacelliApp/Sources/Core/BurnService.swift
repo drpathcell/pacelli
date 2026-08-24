@@ -115,15 +115,26 @@ enum BurnService {
             refs.append(contentsOf: snap.documents.map(\.reference))
         }
 
-        // Other members' docs now; own member doc is reserved for the end.
+        // Other members' docs — OWNER ONLY. Removing other people became an
+        // owner action in the 2026-08-24 rules change, and it always should
+        // have been: someone deleting their own account has no business
+        // evicting the household's other people on the way out. Ask the
+        // household doc, never the member row's `role` — that field is written
+        // by the client, so it is a claim, not a fact.
         let ownMemberDocID = "\(uid)_\(householdId)"
+        let householdDoc = try? await db.collection("households")
+            .document(householdId).getDocument()
+        let isOwner = (householdDoc?.data()?["created_by"] as? String) == uid
+
         let members = try await db.collection("household_members")
             .whereField("household_id", isEqualTo: householdId)
             .getDocuments()
-        refs.append(
-            contentsOf: members.documents
-                .filter { $0.documentID != ownMemberDocID }
-                .map(\.reference))
+        let otherMembers = members.documents.filter { $0.documentID != ownMemberDocID }
+        if isOwner {
+            refs.append(contentsOf: otherMembers.map(\.reference))
+        } else if !otherMembers.isEmpty {
+            await log("Leaving \(otherMembers.count) other membership(s) in place")
+        }
 
         // Batched deletes, ≤400 per batch, ×3 retry with backoff.
         await log("Deleting \(refs.count) record(s)…")
@@ -132,13 +143,18 @@ enum BurnService {
         }
 
         // FINAL batch: own member doc + household doc — last, so isMember()
-        // held for everything above.
+        // held for everything above. The household doc goes only when nobody
+        // is left in it. Deleting it out from under surviving members is
+        // precisely the orphan state the sweep above exists to clean up, and
+        // a non-owner can no longer remove those members to avoid it.
+        var finalRefs = [db.collection("household_members").document(ownMemberDocID)]
+        if isOwner || otherMembers.isEmpty {
+            finalRefs.append(db.collection("households").document(householdId))
+        } else {
+            await log("Household kept — other members remain")
+        }
         try await commitWithRetry(
-            [
-                db.collection("household_members").document(ownMemberDocID),
-                db.collection("households").document(householdId),
-            ],
-            label: "final (membership + household)", log: log)
+            finalRefs, label: "final (membership + household)", log: log)
     }
 
     private static func commitWithRetry(

@@ -1,5 +1,27 @@
 rules_version = '2';
 
+// ⚠️  DEPLOY ORDER — READ BEFORE `firebase deploy --only firestore:rules`
+//
+// The 2026-08-24 change to `household_members` delete (owner-or-self, was
+// any-co-member) is NOT safe to deploy against the currently LIVE app.
+// `BurnService` in 1.8.0 and earlier deletes every other member's row
+// unconditionally, so a non-owner burning their account on the live build
+// would hit permission-denied, retry three times and fail — breaking App
+// Store Guideline 5.1.1(v) account deletion for exactly the people least
+// likely to be the household owner.
+//
+// This is the 2026-08-10 mistake in a new costume: that rules deploy was
+// checked against TestFlight builds 36/37 and not the build actually LIVE,
+// and it locked Juan and Chloe out of accepting invitations for a day.
+//
+// ORDER: ship the app first, confirm READY_FOR_SALE, THEN deploy these rules.
+//   1. 1.9.0 goes live with the owner-gated BurnService.wipeHousehold
+//   2. `python3 scripts/asc.py status` shows 1.9.0 READY_FOR_SALE
+//   3. only then: firebase deploy --only firestore:rules
+//
+// Everything else in this file is backwards-compatible with 1.8.0 and could
+// go out today; it is held back only to keep the deploy a single event.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -58,6 +80,44 @@ service cloud.firestore {
              .data.created_by == request.auth.uid;
     }
 
+    // ── Helper: household owner ──────────────────────────────────────
+    // Anchored on `households.created_by`, which `create` pins to the caller
+    // and `update` now freezes. The member doc's own `role` field is NOT
+    // usable for this: the client writes it, so anyone holding a join code
+    // could simply have set `role: 'admin'` on their own row. `create` pins
+    // that too now, but created_by is the anchor because it is the field the
+    // rest of this file already trusts.
+    function isHouseholdOwner(householdId) {
+      return isAuth()
+        && exists(/databases/$(database)/documents/households/$(householdId))
+        && get(/databases/$(database)/documents/households/$(householdId))
+             .data.created_by == request.auth.uid;
+    }
+
+    // ── Helper: the role claimed on a membership is one the caller may claim ──
+    // 'admin' is only truthful on the founding write, when the household doc
+    // does not exist yet (createHousehold writes household + member in ONE
+    // batch, and rules never see a batch's own uncommitted writes). Every
+    // other join is a 'member'. The assistant role is written by a Cloud
+    // Function via the admin SDK, which bypasses rules entirely, so pinning
+    // this does not touch AI linking.
+    function roleOnCreateIsHonest(householdId) {
+      return !('role' in request.resource.data)
+        || request.resource.data.role == 'member'
+        || (request.resource.data.role == 'admin' && ownerOrUnborn(householdId));
+    }
+
+    // 'admin' is truthful in exactly two places: the founding write, when the
+    // household doc is not committed yet, and the founder's own recovery write
+    // when their member doc was lost but the household is provably theirs.
+    // Two document accesses, and only on the rare 'admin' branch — the common
+    // join path never reaches this.
+    function ownerOrUnborn(householdId) {
+      return !exists(/databases/$(database)/documents/households/$(householdId))
+        || get(/databases/$(database)/documents/households/$(householdId))
+             .data.created_by == request.auth.uid;
+    }
+
     // ── Profiles ─────────────────────────────────────────────────
     // Any authenticated user can read profiles (needed for household
     // member display). Users can only write their own profile.
@@ -76,7 +136,15 @@ service cloud.firestore {
       // this field, so a household attributed to someone else would hand them a
       // way in.
       allow create: if isAuth() && request.resource.data.created_by == request.auth.uid;
-      allow read, update: if isMember(householdId);
+      allow read: if isMember(householdId);
+      // created_by is FROZEN after creation. Both joinAuthorised()'s founder
+      // branch and isHouseholdOwner() trust this field, so a member able to
+      // rewrite it could promote themselves to owner and then remove everyone
+      // else — and since 1.7.0 an AI assistant is a member like any other.
+      // Rename uses updateData(["name": ...]), which carries the existing
+      // created_by through untouched, so this costs the app nothing.
+      allow update: if isMember(householdId)
+        && request.resource.data.created_by == resource.data.created_by;
       allow delete: if isMember(householdId);
     }
 
@@ -96,10 +164,27 @@ service cloud.firestore {
       // household ID walk in.
       allow create: if isAuth()
         && request.resource.data.user_id == request.auth.uid
-        && joinAuthorised(request.resource.data.household_id);
-      allow update, delete: if isAuth() && (
+        && joinAuthorised(request.resource.data.household_id)
+        && roleOnCreateIsHonest(request.resource.data.household_id);
+      // Nothing in the app has ever UPDATED a member doc — the write path is
+      // create-then-delete. Self-only, with identity and role frozen, keeps
+      // that from being a door an assistant can walk through later.
+      allow update: if isAuth()
+        && resource != null
+        && resource.data.user_id == request.auth.uid
+        && request.resource.data.user_id == resource.data.user_id
+        && request.resource.data.household_id == resource.data.household_id
+        && request.resource.data.role == resource.data.role;
+      // Leaving is yours; removing OTHER PEOPLE is the owner's. Until now any
+      // member could delete any member, which after 1.7.0 meant a paired AI
+      // assistant could evict the household's own people.
+      // The self branch stays first and unconditional: burn's orphan sweep
+      // deletes legacy member docs with no household_id at all, and
+      // isHouseholdOwner() cannot be asked about a household that is not named.
+      allow delete: if isAuth() && (
         resource.data.user_id == request.auth.uid ||
-        isMember(resource.data.household_id)
+        (('household_id' in resource.data)
+         && isHouseholdOwner(resource.data.household_id))
       );
     }
 

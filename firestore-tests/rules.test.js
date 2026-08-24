@@ -1,6 +1,7 @@
 /**
  * Rules tests for `household_members` — locks the self-delete guarantee
- * that the burn orphan-sweep depends on.
+ * that the burn orphan-sweep depends on, and the owner-only cascade that
+ * replaced "any co-member may delete any member" on 2026-08-24.
  *
  * Run with: `npm test` (spins up the Firestore emulator automatically).
  *
@@ -102,11 +103,24 @@ describe('household_members rule — self-delete', () => {
     );
   });
 
-  test('co-member CAN delete another user\'s member doc in same household (burn cascade)', async () => {
+  // CONTRACT CHANGED 2026-08-24. This used to assert that ANY co-member could
+  // delete any other member's doc, in the name of the burn cascade. That was
+  // the hole `AUDIT_2026-08-21_ai_link.md` reported: since 1.7.0 a paired AI
+  // assistant is a co-member, so "any co-member" included it, and it could
+  // evict the household's own people.
+  //
+  // The cascade is now the OWNER's, anchored on `households.created_by` rather
+  // than on the member row's own `role` field, which the client writes.
+  // `BurnService.wipeHousehold` was changed to match: a non-owner burning
+  // their account leaves other memberships — and the household doc — standing.
+  // Full boundary lives in member-authority.test.js; these two keep the burn
+  // cascade itself pinned where the burn tests will look for it.
+  test('household OWNER CAN delete another member\'s doc (burn cascade)', async () => {
     const ownerUid = 'user-owner';
     const otherUid = 'user-other';
     const hid = 'house-shared';
     await seed(async (db) => {
+      await setDoc(doc(db, 'households', hid), { created_by: ownerUid });
       await setDoc(doc(db, 'household_members', `${ownerUid}_${hid}`), {
         user_id: ownerUid,
         household_id: hid,
@@ -121,6 +135,30 @@ describe('household_members rule — self-delete', () => {
     await assertSucceeds(
       deleteDoc(
         doc(ownerCtx.firestore(), 'household_members', `${otherUid}_${hid}`)
+      )
+    );
+  });
+
+  test('a non-owner co-member CANNOT delete another member\'s doc', async () => {
+    const ownerUid = 'user-owner';
+    const otherUid = 'user-other';
+    const hid = 'house-shared';
+    await seed(async (db) => {
+      await setDoc(doc(db, 'households', hid), { created_by: ownerUid });
+      await setDoc(doc(db, 'household_members', `${ownerUid}_${hid}`), {
+        user_id: ownerUid,
+        household_id: hid,
+      });
+      await setDoc(doc(db, 'household_members', `${otherUid}_${hid}`), {
+        user_id: otherUid,
+        household_id: hid,
+      });
+    });
+
+    const otherCtx = testEnv.authenticatedContext(otherUid);
+    await assertFails(
+      deleteDoc(
+        doc(otherCtx.firestore(), 'household_members', `${ownerUid}_${hid}`)
       )
     );
   });
