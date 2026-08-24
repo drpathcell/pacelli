@@ -28,6 +28,7 @@
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"
+BUNDLE="${BUNDLE:-com.pacelli.pacelli}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MAESTRO="$HOME/.maestro/bin/maestro"
 E2E="$ROOT/PacelliApp/e2e"
@@ -41,6 +42,23 @@ done
 
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
+# ── liveness after every flow ───────────────────────────────────────────────
+# A flow can pass while the app dies the moment after its last assertion, and
+# the next flow's `stopApp` clears away the evidence. Build 46 shipped exactly
+# that, with the photo harness green. The YAML cannot fix it — "tap Done,
+# assert the thumbnail" and "tap Settings, assert Privacy" have the same shape,
+# and only meaning separates the work from a liveness poke. So the driver asks
+# the simulator instead, after every flow.
+#
+# The lock flows are the one place the process check has to be skipped by hand:
+# flow_lock_02 deliberately leaves the app on the lock screen after a REFUSED
+# face, which is a healthy process, but the flows also background the app and a
+# backgrounded app can be jetsammed on a loaded machine. The crash-report half
+# still runs and is the half that matters here.
+PACELLI_CRASH_BASELINE="$(mktemp -t pacelli_crash_baseline)"
+export PACELLI_CRASH_BASELINE
+alive() { "$ROOT/scripts/check_app_alive.sh" "$SIM" "$BUNDLE" "${1:-}"; }
+
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 
 # Simulator biometrics, without touching a menu.
@@ -93,6 +111,7 @@ lock_flag() {
 say "1/3  The toggle exists and turns on"
 "$MAESTRO" test -e SIM="$SIM" "$E2E/flow_lock_01_enable.yaml" \
   || fail "flow_lock_01_enable — toggle missing or would not turn on"
+alive "flow_lock_01_enable"
 
 # Maestro reports COMPLETED for a tap that landed on nothing, so the flow
 # passing is not evidence the lock is on. Check the state it was supposed to
@@ -122,12 +141,14 @@ sleep 3
 face_nomatch; sleep 3
 "$MAESTRO" test -e SIM="$SIM" "$E2E/flow_lock_02_locked.yaml" \
   || fail "flow_lock_02_locked — household visible after backgrounding + a REFUSED face"
+alive "flow_lock_02_locked"
 ok "locked after backgrounding; a refused face does not get in"
 
 say "3/3  The right face gets back in"
 face_match; sleep 3
 "$MAESTRO" test -e SIM="$SIM" "$E2E/flow_lock_03_unlocked.yaml" \
   || fail "flow_lock_03_unlocked — a matching face did not let us back in"
+alive "flow_lock_03_unlocked"
 ok "matching face unlocked"
 
 printf '\n\033[32mThe lock locks, refuses the wrong face, and opens for the right one.\033[0m\n'

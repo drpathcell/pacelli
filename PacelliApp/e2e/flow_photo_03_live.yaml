@@ -1,0 +1,52 @@
+appId: com.pacelli.pacelli
+---
+# Photos, part 3 — the strip is LIVE.
+#
+# Pacelli had no Firestore snapshot listeners at all until 2026-08-24. Every
+# screen read once into @State on appear, so an open screen never learned
+# anything: the "arriving" badge on a photo you had just attached sat there
+# until the view was torn down and rebuilt, and a photo the OTHER phone added
+# simply was not there. It is why the screenshot capture flow has to leave a
+# task and come back.
+#
+# Proving a listener works needs a change the APP DID NOT MAKE, arriving while
+# nobody is touching the phone. So this flow parks on the task detail with the
+# thumbnail on screen and then waits — and while it waits, check_photo_e2e.sh
+# deletes the photo document straight through the Firestore REST API, as the
+# paired assistant, from another process entirely.
+#
+# A one-shot fetch cannot pass this. Nothing here navigates, re-enters the
+# view, or pulls to refresh after the thumbnail is asserted; the only way it
+# can disappear is a listener delivering the change. Revert
+# PhotosRepository.observe to the old `fetch` and this flow times out — that is
+# its negative control, and it is the whole reason the flow exists.
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "New task"
+    timeout: 45000
+
+- tapOn: "Fix the boiler"
+- extendedWaitUntil:
+    visible:
+      id: "photo_thumb"
+    timeout: 30000
+
+# It IS there. Asserting the before-state matters: without it, the wait below
+# would pass just as happily against a task that never had a photo, which is
+# the "assert what you typed" mistake wearing a different hat.
+- assertVisible:
+    id: "photo_thumb"
+- takeScreenshot: /tmp/pacelli_photo_07_live_before
+
+# From here on, nothing touches the phone. The driver is deleting the document
+# server-side. 120s covers the delete plus the round trip; a listener clears
+# the strip in about one.
+- extendedWaitUntil:
+    notVisible:
+      id: "photo_thumb"
+    timeout: 120000
+- assertNotVisible:
+    id: "photo_thumb"
+- takeScreenshot: /tmp/pacelli_photo_08_live_after

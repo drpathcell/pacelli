@@ -42,6 +42,19 @@ done
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
+# ── liveness after every flow ───────────────────────────────────────────────
+# A flow can pass while the app dies the moment after its last assertion, and
+# the next flow's `stopApp` clears away the evidence. That is not a hypothesis:
+# it is how build 46 shipped a crash on every photo attached, with this very
+# harness green. No amount of care in the YAML fixes it — "tap Done, assert the
+# thumbnail" and "tap Settings, assert Privacy" have the same shape, and only
+# meaning separates the work from a liveness poke.
+#
+# So the driver asks the simulator instead, after every flow.
+PACELLI_CRASH_BASELINE="$(mktemp -t pacelli_crash_baseline)"
+export PACELLI_CRASH_BASELINE
+alive() { "$ROOT/scripts/check_app_alive.sh" "$SIM" "$BUNDLE" "${1:-}"; }
+
 
 [[ -d "$APP" ]]     || fail "app bundle not found: $APP (build it first)"
 [[ -x "$MAESTRO" ]] || fail "maestro not found at $MAESTRO"
@@ -56,7 +69,11 @@ cleanup() {
 trap cleanup EXIT
 cli() { HOME="$CLI_HOME" python3 "$ROOT/scripts/pacelli.py" "$@"; }
 
-flow() { say "maestro $1"; "$MAESTRO" --device "$SIM" test "$E2E/$1" || fail "flow $1"; }
+flow() {
+  say "maestro $1"
+  "$MAESTRO" --device "$SIM" test "$E2E/$1" || fail "flow $1"
+  alive "$1"
+}
 
 # A JPEG with structure in it, so "is this a real image" is answerable.
 if [[ ! -f "$FIXTURE" ]]; then
@@ -156,6 +173,23 @@ print(f"\033[32mOK: {len(raw)} bytes at rest, no JPEG in them; "
 PY
 
 # ── deletion reaches the bucket ───────────────────────────────────────
+say "the strip is live: an external delete clears it with nobody touching the phone"
+# The flow parks on the task detail with the thumbnail on screen and waits. The
+# delete below happens while it waits, from this process, through the REST API
+# — a change the app did not make and cannot have cached. A one-shot fetch
+# cannot pass it; that is the point.
+"$MAESTRO" --device "$SIM" test "$E2E/flow_photo_03_live.yaml" \
+  > /tmp/pacelli_photo_live.log 2>&1 &
+LIVE_PID=$!
+
+# Give it time to launch, open the task and assert the before-state. If the
+# delete landed first the flow would pass without ever having seen the
+# thumbnail, which would make it worthless.
+sleep 30
+kill -0 "$LIVE_PID" 2>/dev/null \
+  || { sed 's/\x1b\[[0-9;]*m//g' /tmp/pacelli_photo_live.log | tail -20
+       fail "flow_photo_03_live exited before the delete — it never got to the wait"; }
+
 say "deleting the photo"
 python3 - "$CLI_HOME" "$PHOTO_ID" "$ROOT" <<'PY' || exit 1
 import importlib.util, json, os, pathlib, sys, time, urllib.error, urllib.request
@@ -189,4 +223,13 @@ else:
     sys.exit("\033[31mFAIL: the object OUTLIVED its document — burn would orphan blobs\033[0m")
 PY
 
-printf '\n\033[32mPASS — plaintext on the device, ciphertext on the server, visible to the assistant, and gone when deleted\033[0m\n'
+wait "$LIVE_PID" || {
+  sed 's/\x1b\[[0-9;]*m//g' /tmp/pacelli_photo_live.log | tail -25
+  fail "the strip did not clear. The photo was deleted server-side and the open
+      screen never learned — which is what PhotosRepository.observe exists to
+      fix, so either the listener is gone or it is not reaching this view."
+}
+ok "the open strip cleared itself from a change the app did not make"
+alive "flow_photo_03_live"
+
+printf '\n\033[32mPASS — plaintext on the device, ciphertext on the server, visible to the assistant, gone when deleted, and the open screen noticed\033[0m\n'

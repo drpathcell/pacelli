@@ -39,6 +39,19 @@ done
 
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
+# ── liveness after every flow ───────────────────────────────────────────────
+# A flow can pass while the app dies the moment after its last assertion, and
+# the next flow's `stopApp` clears away the evidence. That is not a hypothesis:
+# it is how build 46 shipped a crash on every photo attached, with this very
+# harness green. No amount of care in the YAML fixes it — "tap Done, assert the
+# thumbnail" and "tap Settings, assert Privacy" have the same shape, and only
+# meaning separates the work from a liveness poke.
+#
+# So the driver asks the simulator instead, after every flow.
+PACELLI_CRASH_BASELINE="$(mktemp -t pacelli_crash_baseline)"
+export PACELLI_CRASH_BASELINE
+alive() { "$ROOT/scripts/check_app_alive.sh" "$SIM" "$BUNDLE" "${1:-}"; }
+
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 
 [[ -d "$APP" ]]     || fail "app bundle not found: $APP (build it first)"
@@ -118,6 +131,7 @@ ok "installed"
 say "2/5  Launch and confirm the device registers a push token"
 "$MAESTRO" --device "$SIM" test "$ROOT/PacelliApp/e2e/flow_push_optin.yaml" \
   || fail "flow_push_optin"
+alive "flow_push_optin"
 HH=""
 for _ in $(seq 1 12); do
   HH="$(python3 "$ROOT/scripts/push_probe.py" household || true)"
@@ -139,6 +153,7 @@ say "4/5  Opt in"
 tap_switch "Tell me when someone adds a task"
 "$MAESTRO" --device "$SIM" test "$ROOT/PacelliApp/e2e/flow_push_grant.yaml" \
   || fail "flow_push_grant (permission not granted?)"
+alive "flow_push_grant"
 for _ in $(seq 1 12); do
   [[ "$(python3 "$ROOT/scripts/push_probe.py" activity)" == "True" ]] && break
   sleep 3

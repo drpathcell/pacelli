@@ -32,6 +32,19 @@ done
 
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
+# ── liveness after every flow ───────────────────────────────────────────────
+# A flow can pass while the app dies the moment after its last assertion, and
+# the next flow's `stopApp` clears away the evidence. That is not a hypothesis:
+# it is how build 46 shipped a crash on every photo attached, with this very
+# harness green. No amount of care in the YAML fixes it — "tap Done, assert the
+# thumbnail" and "tap Settings, assert Privacy" have the same shape, and only
+# meaning separates the work from a liveness poke.
+#
+# So the driver asks the simulator instead, after every flow.
+PACELLI_CRASH_BASELINE="$(mktemp -t pacelli_crash_baseline)"
+export PACELLI_CRASH_BASELINE
+alive() { "$ROOT/scripts/check_app_alive.sh" "$SIM" "$BUNDLE" "${1:-}"; }
+
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 
 [[ -d "$APP" ]]     || fail "app bundle not found: $APP (build it first)"
@@ -56,6 +69,7 @@ xcrun simctl keychain "$SIM" reset >/dev/null 2>&1 \
 say "2/4  Send feedback through the UI as that stranger"
 "$MAESTRO" --device "$SIM" test -e MESSAGE="$MESSAGE" \
   "$ROOT/PacelliApp/e2e/flow_feedback_e2e.yaml" || fail "flow_feedback_e2e"
+alive "flow_feedback_e2e"
 ok "app reported the feedback sent"
 
 say "3/4  Read it back — the half that was broken"

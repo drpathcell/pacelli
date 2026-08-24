@@ -63,6 +63,7 @@
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"
+BUNDLE="${BUNDLE:-com.pacelli.pacelli}"
 FLUSH_S="${FLUSH_S:-10}"
 BUILD=1
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -80,6 +81,19 @@ done
 
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL: %s\033[0m\n' "$*" >&2; exit 1; }
+# ── liveness after every flow ───────────────────────────────────────────────
+# A flow can pass while the app dies the moment after its last assertion, and
+# the next flow's `stopApp` clears away the evidence. That is not a hypothesis:
+# it is how build 46 shipped a crash on every photo attached, with this very
+# harness green. No amount of care in the YAML fixes it — "tap Done, assert the
+# thumbnail" and "tap Settings, assert Privacy" have the same shape, and only
+# meaning separates the work from a liveness poke.
+#
+# So the driver asks the simulator instead, after every flow.
+PACELLI_CRASH_BASELINE="$(mktemp -t pacelli_crash_baseline)"
+export PACELLI_CRASH_BASELINE
+alive() { "$ROOT/scripts/check_app_alive.sh" "$SIM" "$BUNDLE" "${1:-}"; }
+
 ok()   { printf '\033[32mOK: %s\033[0m\n' "$*"; }
 
 mkdir -p /tmp/pv
@@ -128,6 +142,7 @@ ok "erased, then installed $(basename "$APP") on $SIM"
 say "1/4  Write an item with a quantity"
 "$MAESTRO" --device "$SIM" test "$E2E/flow_qty_01_write.yaml" \
   || fail "flow_qty_01_write — could not create the item.
+alive "flow_qty_01_write"
   If this stopped at \"New task\", check the app is not showing
   \"Couldn't start guest mode\": that is the unsigned-build trap, not the network."
 
@@ -138,6 +153,7 @@ ok "flushed"
 say "3/4  Cold read — a fresh process, straight out of Firestore"
 "$MAESTRO" --device "$SIM" test "$E2E/flow_qty_02_coldread.yaml" \
   || fail "flow_qty_02_coldread — the quantity did not survive the round trip.
+alive "flow_qty_02_coldread"
   Either the write stored something the read cannot decrypt, or the read is
   not using PacelliCrypto.readMigrating. Compare /tmp/pv/qty_01_written.png
   with /tmp/pv/qty_02_after_cold_read.png."

@@ -27,9 +27,11 @@ caught by CI instead of by a screenshot session.
                                 it out of the input field
   H2  no assertion after the    the flow's last interaction is never checked;
       last interaction          it taps and walks away
-  H3  invisible death window    a flow that does not poke the app one more time
-                                after its work, whose successor opens with
-                                `stopApp` — the gap where build 46's crash lived
+  H3  invisible death window    a driver that runs a Maestro flow without then
+                                asking whether the app is still alive — the gap
+                                where build 46's crash lived for a week. Static
+                                rules about flow shape cannot see it; the
+                                simulator can, so the drivers ask it
   H4  swallowed failure         a shell harness that cannot fail: no `set -e`,
                                 or an assertion routed through `|| true`
   H5  no negative control       a harness that never states how it would fail.
@@ -243,57 +245,61 @@ def check_h2(flow: Flow) -> list[Finding]:
 
 
 # ── H3 ──────────────────────────────────────────────────────────────────────
-def check_h3(flow: Flow, successor: Flow | None) -> list[Finding]:
-    """The window a crash can die in, unseen.
+def check_h3(path: Path) -> list[Finding]:
+    """Every Maestro flow a driver runs must be followed by a liveness probe.
 
-    A flow that finishes its work and stops, followed by a flow that opens with
-    `stopApp`, cannot tell a healthy process from a dead one: the successor
-    kills the app it never looked at. That is where build 46's photo crash
-    lived for a week.
+    This started as a rule about the SHAPE of a flow: it should reach a
+    known-good state, poke the app once more, and assert on that. Two versions
+    of it were written and both were wrong, for the same reason — "tap Done,
+    assert the thumbnail" and "tap Settings, assert Privacy" are structurally
+    identical. Only meaning separates the work from a liveness poke, and
+    meaning is not greppable. The first version flagged flow_photo_01, which
+    already had the tail; the second missed the pre-fix flow_photo_01, which is
+    the case the rule exists for.
 
-    The property that closes it is a POKE — the flow must reach a known-good
-    state, then ask the app to do one more thing, then check the answer. So the
-    flow's final interaction has to be preceded (ignoring screenshots and other
-    inert steps) by an assertion. If instead the last interaction follows other
-    interactions, it IS the work, and nothing after it exercises the process.
+    So the property moved out of the YAML and into the run. After every flow,
+    the driver asks the simulator whether the process is still there and
+    whether a crash report was written — `scripts/check_app_alive.sh`. That
+    cannot be fooled by the shape of anything, and it goes red on the build 46
+    crash directly rather than by inference.
 
-      poke     … assert(work landed) … tapOn(somewhere else) … assert(arrived)
-      no poke  … tapOn(Qty) … inputText … tapOn(add) … assert(it is in the list)
-
-    H2 supplies the other half: something must assert after that last
-    interaction.
-
-    Only fires where such a successor exists, so it names real blind windows
-    rather than lecturing every flow in the directory.
+    What is left to check statically is that the drivers actually ask: one
+    `alive` call for every flow they run, and a crash baseline set before the
+    first one.
     """
-    if successor is None:
+    if path.suffix != ".sh":
         return []
-    first = next((s for s in successor.steps if s.kind != "inert"), None)
-    if first is None or first.command != "stopApp":
-        return []
+    text = path.read_text()
+    rel = rel_to_root(path)
 
-    last_interaction = None
-    for step in flow.steps:
-        if step.interacts:
-            last_interaction = step
-    if last_interaction is None:
+    runs = len(re.findall(r'"\$MAESTRO"[^\n]*\btest\b', text))
+    if runs == 0:
         return []
 
-    # What precedes it, ignoring inert steps?
-    preceding = [
-        s for s in flow.steps
-        if s.line < last_interaction.line and s.kind != "inert"]
-    if preceding and preceding[-1].asserts:
-        return []  # a poke from a known-good state
+    out: list[Finding] = []
+    # `hierarchy` and the synthetic /tmp/tap_switch.yaml helper are not flows;
+    # they neither advance the app's state nor deserve a probe.
+    runs -= len(re.findall(r'"\$MAESTRO"[^\n]*/tmp/tap_switch\.yaml', text))
+    probes = len(re.findall(r"^\s*alive\s+", text, re.M))
 
-    return [Finding(
-        "H3", flow.rel, last_interaction.line,
-        f"`{last_interaction.command}` is this flow's last interaction and it "
-        f"follows other interactions, so it IS the work — nothing exercises the "
-        f"app afterwards. {successor.name} opens with `stopApp`, so a process "
-        f"that dies in between leaves no trace at all; that is exactly where "
-        f"build 46's photo crash lived. Reach a known-good state, then poke: "
-        f"navigate somewhere else and assert you arrived.")]
+    if probes < runs:
+        out.append(Finding(
+            "H3", rel, 1,
+            f"runs {runs} Maestro flow(s) but only {probes} liveness probe(s). A "
+            f"flow can pass while the app dies the moment after its last "
+            f"assertion, and the next flow's `stopApp` clears the evidence — "
+            f"that is how build 46 shipped a crash on every photo attached with "
+            f"this suite green. Call `alive \"<flow>\"` after each one."))
+
+    if "PACELLI_CRASH_BASELINE=" not in text:
+        out.append(Finding(
+            "H3", rel, 1,
+            "no PACELLI_CRASH_BASELINE stamp. Without one, check_app_alive.sh "
+            "cannot tell a crash from this run apart from the real build 46 "
+            "reports still sitting in ~/Library/Logs/DiagnosticReports — so it "
+            "skips the crash half entirely and quietly checks less than it "
+            "looks like it does."))
+    return out
 
 
 # ── H4 ──────────────────────────────────────────────────────────────────────
@@ -333,8 +339,21 @@ def check_h4(path: Path) -> list[Finding]:
         r"(shutdown|boot|bootstatus|uninstall|terminate|erase|addmedia|privacy)"
         r"|rm|mkdir|kill|pkill|osascript\s+-e\s+.quit|open|defaults\s+delete)\b")
 
+    # Command substitutions routinely span lines:
+    #
+    #     ROW="$(xcrun simctl spawn "$SIM" launchctl list 2>/dev/null \\
+    #            | grep -F "UIKitApplication:$BUNDLE" | head -1 || true)"
+    #
+    # so the `|| true` and the `$(` that makes it a capture are not on the same
+    # line, and a line-at-a-time regex sees only the `|| true`. Tracking depth
+    # is crude — `)` is counted wherever it appears — but it is only ever used
+    # to answer "are we still inside an unclosed $(", and it never suppresses a
+    # finding on a line that opens and closes its own substitution.
+    depth = 0
     in_cleanup = False
     for i, line in enumerate(text.splitlines(), start=1):
+        inside_capture = depth > 0
+        depth = max(0, depth + line.count("$(") - line.count(")"))
         if re.match(r"^\s*(cleanup|teardown)\s*\(\)", line):
             in_cleanup = True
         elif in_cleanup and re.match(r"^\}", line):
@@ -356,7 +375,7 @@ def check_h4(path: Path) -> list[Finding]:
         # there yet" without pipefail killing the run, and the assertion is the
         # `[[ -n "$VAR" ]] || fail` on the line below. Six of the seven findings
         # from the previous cut were this idiom, correctly written.
-        if re.search(r"\$\([^()]*\|\|\s*true\s*\)", code):
+        if inside_capture or re.search(r"\$\([^()]*\|\|\s*true\s*\)", code):
             continue
         out.append(Finding(
             "H4", rel, i,
@@ -383,23 +402,10 @@ def run(flow_dir: Path, script_dir: Path | None) -> list[Finding]:
 
     flows = {p.name: parse_flow(p) for p in sorted(flow_dir.glob("flow_*.yaml"))}
 
-    # successor within a numbered family
-    by_family: dict[str, list[tuple[str, Flow]]] = {}
-    for name, flow in flows.items():
-        fam = family_of(name)
-        if fam:
-            by_family.setdefault(fam[0], []).append((fam[1], flow))
-    successors: dict[str, Flow] = {}
-    for fam, members in by_family.items():
-        members.sort(key=lambda t: t[0])
-        for (_, a), (_, b) in zip(members, members[1:]):
-            successors[a.name] = b
-
     for name, flow in flows.items():
         for check, result in (
             ("H1", lambda: check_h1(flow)),
             ("H2", lambda: check_h2(flow)),
-            ("H3", lambda: check_h3(flow, successors.get(name))),
         ):
             if check in flow.waivers:
                 continue
@@ -410,6 +416,8 @@ def run(flow_dir: Path, script_dir: Path | None) -> list[Finding]:
             p for p in script_dir.glob("check_*")
             if p.suffix in (".sh", ".py") and p.is_file())
         for p in harnesses:
+            if "H3" not in {m.group(1) for m in WAIVER.finditer(p.read_text())}:
+                findings.extend(check_h3(p))
             findings.extend(check_h4(p))
             findings.extend(check_h5(p))
 
@@ -430,21 +438,15 @@ def self_test() -> int:
         "H2": ("flow_probe_02_a.yaml",
                'appId: x\n---\n- launchApp\n- assertVisible: "Home"\n- tapOn: "Toggle"\n'
                '- takeScreenshot: /tmp/x\n'),
-        "H3": ("flow_probe_03_01_work.yaml",
-               'appId: x\n---\n- launchApp\n- assertVisible: "Home"\n- tapOn: "New"\n'
-               '- inputText: "thing"\n- pressKey: Enter\n- assertVisible: "thing"\n'),
+
     }
     failures: list[str] = []
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
         for _, (fname, body) in fixtures.items():
             (d / fname).write_text(body)
-        # H3 needs a successor that opens with stopApp
-        (d / "flow_probe_03_02_next.yaml").write_text(
-            'appId: x\n---\n- stopApp\n- launchApp\n- assertVisible: "Home"\n')
-
         found = {f.check for f in run(d, None)}
-        for check in ("H1", "H2", "H3"):
+        for check in ("H1", "H2"):
             if check not in found:
                 failures.append(f"{check} did not fire against its own fixture")
 
@@ -452,9 +454,13 @@ def self_test() -> int:
         s = d / "scripts"
         s.mkdir()
         (s / "check_probe.sh").write_text(
-            "#!/usr/bin/env bash\ngrep -q thing file || true\n")  # proving line, no set -e
+            "#!/usr/bin/env bash\n"
+            '"$MAESTRO" --device "$SIM" test "$E2E/flow_a.yaml"\n'
+            "grep -q thing file || true\n")  # a flow with no probe, no baseline,
+                                             # a proving line behind `|| true`,
+                                             # no set -e and no NEGATIVE-CONTROL
         found = {f.check for f in run(d, s)}
-        for check in ("H4", "H5"):
+        for check in ("H3", "H4", "H5"):
             if check not in found:
                 failures.append(f"{check} did not fire against its own fixture")
 
@@ -467,7 +473,15 @@ def self_test() -> int:
         (clean / "flow_ok_02_b.yaml").write_text(
             'appId: x\n---\n- stopApp\n- launchApp\n- assertVisible: "Home"\n')
         (clean / "scripts" / "check_ok.sh").write_text(
-            "#!/usr/bin/env bash\n# NEGATIVE-CONTROL: delete the grep\nset -euo pipefail\n"
+            "#!/usr/bin/env bash\n# NEGATIVE-CONTROL: delete the grep\n"
+            "set -euo pipefail\n"
+            'PACELLI_CRASH_BASELINE="$(mktemp)"\n'
+            '"$MAESTRO" --device "$SIM" test "$E2E/flow_a.yaml"\n'
+            'alive "flow_a"\n'
+            # a multi-line capture: the `|| true` here is the capture idiom and
+            # must NOT be reported, or check_app_alive.sh cannot be written the
+            # way every other driver in this repo already writes one.
+            'ROW="$(some thing \\\n       | grep -F x | head -1 || true)"\n'
             "grep -q thing file\n")
         residue = run(clean, clean / "scripts")
         if residue:

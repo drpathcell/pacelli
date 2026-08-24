@@ -94,7 +94,19 @@ appId: com.pacelli.pacelli
     visible: "New task"
     timeout: 20000
 - tapOn: "Settings"
-- extendedWaitUntil:
-    visible: "Privacy & encryption"
+# Privacy & encryption is BELOW THE FOLD on Settings — the sections run
+# Appearance, Account, Household, Reminders, and only then Privacy. Asserting
+# it directly does not work, and both places that did were written and
+# committed without ever being run: this tail on 2026-08-23, and the one in
+# flow_qty_01 earlier today. Both failed the first time a real run reached
+# them.
+#
+# scrollUntilVisible is the right instrument regardless: it drives the app, so
+# a dead process fails it, AND it fails on timeout, so it asserts. That is the
+# poke this tail exists to be.
+- scrollUntilVisible:
+    element:
+      text: "Privacy & encryption"
+    centerElement: true
     timeout: 20000
 - assertVisible: "Privacy & encryption"
