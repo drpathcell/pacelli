@@ -237,6 +237,87 @@ unit price rejected.
 **The photos come off the phone with `scripts/pacelli.py photos` and
 `photo-save <id> <path>`** — the loop is already proven working.
 
+## 6b. How the parser improves without keeping a single image
+
+Written 2026-08-24 after Juan asked the obvious question. §8.2 keeps the
+decision to delete receipt images; what it does *not* require is a frozen
+parser. The earlier claim that there would be "no field tuning" was an
+overstatement — it confused *no images* with *no corpus*, and a corpus does not
+have to be pixels.
+
+Two different things go wrong when a receipt is read, and only one of them
+needs the photograph:
+
+| Failure | Needs the image? |
+|---|---|
+| **OCR misread the glyphs** — `4.95` read as `4.35` | Yes |
+| **The text was read correctly and structured wrongly** — wrong column, item split across lines, `TSC GRND COFF 227G` not matched to `Coffee` | **No** |
+
+Nearly all improvement over time is the second kind: layout rules, column
+detection, retailer quirks, matching receipt strings to household products.
+Those need the OCR *output*, not the pixels.
+
+### Layer 1 — the text skeleton, kept always
+
+Per receipt, encrypted like everything else: the retailer and date, the printed
+total, and for each line the parser identified as an item line, the raw OCR
+string, the amount, and normalised bounding-box geometry.
+
+**Nothing else.** Not the header, footer, address, till number, cashier, time of
+day, card digits or loyalty number. This is a **whitelist** — keep what was
+recognised as an item line, rather than trying to remove what wasn't. That
+direction matters: a blacklist that misses something fails silently and you
+believe the result is clean.
+
+Geometry is kept because column detection is the parser's hardest job, and
+normalised boxes let a future version re-derive structure with no image. Size is
+negligible — a thirty-line receipt is a couple of kilobytes; a decade of weekly
+shops is about a megabyte.
+
+### Layer 2 — corrections are the training data
+
+Every time a human fixes a match or a price, store the pair: OCR string → what
+it actually was, with the retailer. This is the highest-signal data in the
+system, it is a few bytes, and it is generated exactly when someone has already
+proved they know the right answer.
+
+### Layer 3 — accuracy becomes measured rather than assumed
+
+The reconciliation check (§5) already knows whether a parse was right. Record
+the outcome per receipt and the app can say *"reconciled 47 of the last 52"* —
+and, far more usefully, **notice when that number falls**, which is what happens
+the week Dunnes changes their receipt layout.
+
+Same discipline as the E2E work: a number that is able to go bad, that somebody
+looks at. Without it, a parser that quietly degrades produces household
+statistics that are quietly wrong, which is the outcome §5 exists to prevent.
+
+### Layer 4 — re-parse the history on upgrade
+
+Statistics already compute on device, so a new version can re-run an improved
+parser over every stored skeleton and update `purchases`. No server, no network,
+nothing leaves the phone.
+
+**One rule that must not be broken: a human correction always wins over a
+re-parse.** Otherwise upgrading silently undoes work somebody did by hand, which
+is worse than never re-parsing at all.
+
+### Layer 5 — images only for failures, only by choice
+
+A receipt that fails to reconcile is precisely the one worth having pixels for.
+Offer to keep *that* image, explicitly, and delete it the moment the parse is
+fixed. Receipts that reconcile are still deleted immediately, as decided.
+
+### What this costs, honestly
+
+- **The whitelist can leak.** A loyalty number on a line shaped like an item
+  line would be kept. Needs a digit-shape guard — a long run of digits with no
+  currency amount beside it is not an item.
+- **The skeleton is a superset of `purchases`** — raw OCR strings rather than
+  matched products. Not a new category of data, but more of it, held longer.
+- **Layer 4 is where the damage would be** if the correction-wins rule is ever
+  weakened.
+
 ## 7. Sequencing
 
 This is three or four releases. Compressing it into one produces a feature
@@ -271,13 +352,14 @@ provisional.
    four, the loyalty number and any name are not kept at all, rather than kept
    encrypted. Least data held.
 
-   **Known cost, accepted:** old receipts cannot be re-read if the parser later
-   improves — and there is no corpus to improve the parser *with*. The parser is
-   built once, on the spike set (§6), which lives on Juan's Mac outside the app.
-   After that it is what it is unless samples are deliberately kept. For a
-   family app that is the right trade, but it is a trade, and it argues for
-   spending real effort on the spike rather than shipping a parser and planning
-   to tune it in the field. **There will be no field.**
+   **Correction, same day:** this was first written as "the parser is built once
+   and there will be no field tuning". That does not follow, and §6b replaces
+   it. Deleting the *image* does not mean keeping no corpus — a redacted text
+   skeleton, the corrections people make, and a measured reconciliation rate
+   are enough to keep improving the parser and to re-read the whole history on
+   upgrade, with no pixels retained. What remains true is that the spike set is
+   the only material available before the first version ships, so it is still
+   worth being fussy with the camera.
 
 3. **No readable copy of a receipt in the Files-visible folder.** A receipt is
    not a picture anyone browses, and a year of them sitting outside the app lock
