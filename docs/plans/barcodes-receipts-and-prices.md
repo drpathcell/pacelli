@@ -199,10 +199,29 @@ because someone will make decisions with them.
 
 ## 6. The experiment to run before building anything
 
-**Photograph twenty real receipts** from the shops actually used — Tesco,
-Dunnes, SuperValu, Lidl, Aldi — and try to parse them offline in a throwaway
-script. Measure one number: on how many does the sum of extracted line items
-equal the printed total?
+**Scope narrowed by Juan, 2026-08-24: Dunnes only, and no old receipts.**
+
+So the corpus is one retailer's layout, gathered from ordinary shopping. That is
+a scope statement rather than a problem, but it has to be written down next to
+decision 8.2, because the two compound:
+
+> the parser is built once, on this corpus, and the images are deleted after
+> parsing — so **1.12.0 means "receipts work at Dunnes"**, and any other shop
+> falls back to entering a total by hand until a receipt from it exists.
+
+One standing task covers that without asking for a special trip: photograph the
+receipt if you ever happen to shop somewhere else. No due date, no urgency.
+
+**What to gather:**
+- **20 shelf labels — one visit.** They are all on the shelves at once; this is
+  two minutes, not twenty trips. Straight on, whole label, barcode and both
+  prices visible.
+- **Dunnes receipts — as they happen.** Flat, whole receipt including the TOTAL
+  line, overlapping photos if it is long. No cropping and no correcting: the
+  parser has to see what the camera saw.
+
+**Measure one number:** on how many receipts does the sum of extracted line
+items equal the printed total?
 
 - **Comfortably above 90%** — build it as described.
 - **Around 50–70%** — the feature is still worth having but it is an
@@ -212,13 +231,11 @@ equal the printed total?
   useful spend statistics without any of this machinery, and the barcode half
   stands on its own.
 
-Do the same for shelf labels: twenty photographs, how often is the correct price
-extracted and the unit price rejected.
+Do the same for shelf labels: how often is the correct price extracted and the
+unit price rejected.
 
-This costs an evening with a camera and a Python script, and it decides the
-shape of three releases. It should happen before a line of Swift is written.
-
----
+**The photos come off the phone with `scripts/pacelli.py photos` and
+`photo-save <id> <path>`** — the loop is already proven working.
 
 ## 7. Sequencing
 
