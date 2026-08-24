@@ -62,3 +62,13 @@ appId: com.pacelli.pacelli
     timeout: 30000
 - takeScreenshot: /tmp/pacelli_fb_02_sent
 - tapOn: "OK"
+
+# The alert has to actually go away. A tap that lands beside the button leaves
+# it exactly where it was and Maestro reports COMPLETED either way — which is
+# how flow_lock_01 spent months tapping a Toggle label and passing. Asserting
+# the dismissal also proves the app survived the send, which is the last thing
+# this flow does that could kill it.
+- extendedWaitUntil:
+    notVisible: "Thank you!"
+    timeout: 10000
+- assertVisible: "Send feedback"

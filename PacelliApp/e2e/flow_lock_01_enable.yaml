@@ -38,3 +38,12 @@ appId: com.pacelli.pacelli
 - tapOn:
     point: "86%,52%"
 - takeScreenshot: /tmp/pv/lock_01_enabled
+
+# E2E-HONESTY-WAIVER[H2]: Maestro cannot read a Toggle's value — the very
+# limitation that makes the point-tap above necessary also makes the outcome
+# unassertable from inside this flow. It is asserted, and has to stay asserted,
+# by the driver: check_lock_e2e.sh reads
+# `pacelli.biometricLock.enabled` out of the app's own container plist and
+# fails with "the toggle tap did not enable the lock" if it is not true. If
+# that check ever goes away, this waiver is a lie and this flow is back to
+# proving nothing.

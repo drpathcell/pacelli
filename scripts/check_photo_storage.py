@@ -21,6 +21,11 @@ proven here with a download URL minted BEFORE the delete and replayed after it.
     ./scripts/check_photo_storage.py --cred ~/.config/pacelli/credentials.json
 
 `check_ai_link_e2e.sh` mints a credential in about two minutes.
+
+NEGATIVE-CONTROL: drop the `onPhotoDeleted` trigger and the replay after
+delete must still return the bytes, failing the run. The download URL is
+minted BEFORE the delete precisely so this control is available: a blob that
+outlives its document is otherwise invisible.
 """
 from __future__ import annotations
 

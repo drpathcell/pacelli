@@ -19,6 +19,12 @@
 # NOTE: this proves the STATE MACHINE. It cannot prove Secure Enclave
 # behaviour — the simulator's Face ID is a menu item, not hardware. Real
 # biometric matching needs a device and a face.
+#
+# NEGATIVE-CONTROL: change the tap point in flow_lock_01_enable.yaml back to
+# `tapOn: id: settings_biometric_lock_toggle` and step 2 must fail with "the
+# toggle tap did not enable the lock". That form taps the label, changes
+# nothing and reports COMPLETED — the plist read is the only thing standing
+# between this harness and a permanent false green.
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"

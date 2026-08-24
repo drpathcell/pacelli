@@ -65,3 +65,24 @@ appId: com.pacelli.pacelli
 - assertVisible: "Add an item"
 - assertVisible: "347"
 - takeScreenshot: /tmp/pv/qty_01_written
+
+# A poke, and not decoration. Everything above is this flow's WORK, and
+# flow_qty_02 opens with `stopApp` — so a process that died the instant after
+# the write would leave no trace here at all, and the cold read next door would
+# find nothing and blame the server or the encryption. That is the shape that
+# let build 46's photo crash ship: flow_photo_01 ended at its own success and
+# flow_photo_02 killed the corpse.
+#
+# So: leave the checklist, come back to a screen that has to be rendered from
+# scratch, and assert we arrived. It costs three seconds and it is the only
+# thing in this flow that can tell a live app from a dead one.
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "New checklist"
+    timeout: 20000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Privacy & encryption"
+    timeout: 20000
+- assertVisible: "Privacy & encryption"

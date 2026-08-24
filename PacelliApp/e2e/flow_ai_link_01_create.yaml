@@ -71,7 +71,13 @@ appId: com.pacelli.pacelli
     timeout: 30000
 - takeScreenshot: /tmp/pacelli_ai_02_code
 
-# Hands the code to the driver, and proves the copy button does what the
-# screen implies it does.
+# Hands the code to the driver, which is also the only place the copy can be
+# checked: the pasteboard is outside the app and outside Maestro.
+#
+# E2E-HONESTY-WAIVER[H2]: check_ai_link_e2e.sh reads the simulator pasteboard
+# with `xcrun simctl pbpaste` immediately after this flow and fails unless it
+# holds an 8-character code — so the tap IS checked, one process over. The
+# comment here used to claim this flow "proves the copy button works", which it
+# never did on its own.
 - tapOn:
     id: "ai_link_code_copy"

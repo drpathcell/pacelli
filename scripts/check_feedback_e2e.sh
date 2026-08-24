@@ -9,6 +9,10 @@
 #   ./scripts/check_feedback_e2e.sh [--sim UDID] [--app PATH]
 #
 # Fresh install => brand-new anonymous account => genuinely a stranger.
+#
+# NEGATIVE-CONTROL: point `read_feedback.py` at a different collection and
+# step 3 must fail with "never came back in plaintext". The read-back half is
+# the half that was broken, so it is the half that has to be falsifiable.
 set -euo pipefail
 trap 'rc=$?; [[ $rc -ne 0 ]] && printf "\033[31maborted at line $LINENO (exit $rc)\033[0m\n" >&2' ERR
 

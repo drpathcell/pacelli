@@ -248,11 +248,22 @@ def check_h3(flow: Flow, successor: Flow | None) -> list[Finding]:
 
     A flow that finishes its work and stops, followed by a flow that opens with
     `stopApp`, cannot tell a healthy process from a dead one: the successor
-    kills the app it never looked at. The fix is a poke — one more interaction
-    after the work, and an assertion on it, so the flow ends by proving the
-    process is still answering.
+    kills the app it never looked at. That is where build 46's photo crash
+    lived for a week.
 
-    Only fires when there IS such a successor, so it names real blind windows
+    The property that closes it is a POKE — the flow must reach a known-good
+    state, then ask the app to do one more thing, then check the answer. So the
+    flow's final interaction has to be preceded (ignoring screenshots and other
+    inert steps) by an assertion. If instead the last interaction follows other
+    interactions, it IS the work, and nothing after it exercises the process.
+
+      poke     … assert(work landed) … tapOn(somewhere else) … assert(arrived)
+      no poke  … tapOn(Qty) … inputText … tapOn(add) … assert(it is in the list)
+
+    H2 supplies the other half: something must assert after that last
+    interaction.
+
+    Only fires where such a successor exists, so it names real blind windows
     rather than lecturing every flow in the directory.
     """
     if successor is None:
@@ -261,22 +272,28 @@ def check_h3(flow: Flow, successor: Flow | None) -> list[Finding]:
     if first is None or first.command != "stopApp":
         return []
 
-    asserts = [s for s in flow.steps if s.asserts]
-    if len(asserts) < 2:
-        poked = False
-    else:
-        # An honest tail is: assert (the work) … interact (the poke) … assert.
-        poked = any(
-            s.interacts and asserts[-2].line < s.line < asserts[-1].line
-            for s in flow.steps)
-    if poked:
+    last_interaction = None
+    for step in flow.steps:
+        if step.interacts:
+            last_interaction = step
+    if last_interaction is None:
         return []
+
+    # What precedes it, ignoring inert steps?
+    preceding = [
+        s for s in flow.steps
+        if s.line < last_interaction.line and s.kind != "inert"]
+    if preceding and preceding[-1].asserts:
+        return []  # a poke from a known-good state
+
     return [Finding(
-        "H3", flow.rel, flow.steps[-1].line if flow.steps else 1,
-        f"ends without asking the app to do one more thing, and {successor.name} "
-        f"opens with `stopApp` — a process that dies in between leaves no trace "
-        f"at all. This is exactly where build 46's photo crash lived. End with "
-        f"an interaction and an assertion on it.")]
+        "H3", flow.rel, last_interaction.line,
+        f"`{last_interaction.command}` is this flow's last interaction and it "
+        f"follows other interactions, so it IS the work — nothing exercises the "
+        f"app afterwards. {successor.name} opens with `stopApp`, so a process "
+        f"that dies in between leaves no trace at all; that is exactly where "
+        f"build 46's photo crash lived. Reach a known-good state, then poke: "
+        f"navigate somewhere else and assert you arrived.")]
 
 
 # ── H4 ──────────────────────────────────────────────────────────────────────
@@ -414,7 +431,8 @@ def self_test() -> int:
                'appId: x\n---\n- launchApp\n- assertVisible: "Home"\n- tapOn: "Toggle"\n'
                '- takeScreenshot: /tmp/x\n'),
         "H3": ("flow_probe_03_01_work.yaml",
-               'appId: x\n---\n- launchApp\n- tapOn: "Add"\n- assertVisible: "Done"\n'),
+               'appId: x\n---\n- launchApp\n- assertVisible: "Home"\n- tapOn: "New"\n'
+               '- inputText: "thing"\n- pressKey: Enter\n- assertVisible: "thing"\n'),
     }
     failures: list[str] = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -446,6 +464,8 @@ def self_test() -> int:
         (clean / "flow_ok_01_a.yaml").write_text(
             'appId: x\n---\n- launchApp\n- tapOn: "Add"\n- assertVisible: "Done"\n'
             '- tapOn: "Back"\n- assertVisible: "Home"\n')
+        (clean / "flow_ok_02_b.yaml").write_text(
+            'appId: x\n---\n- stopApp\n- launchApp\n- assertVisible: "Home"\n')
         (clean / "scripts" / "check_ok.sh").write_text(
             "#!/usr/bin/env bash\n# NEGATIVE-CONTROL: delete the grep\nset -euo pipefail\n"
             "grep -q thing file\n")

@@ -15,6 +15,12 @@
 # document takes the object with it.
 #
 #   ./scripts/check_photo_e2e.sh [--sim UDID] [--app PATH]
+#
+# NEGATIVE-CONTROL: make PhotoService upload the plaintext JPEG instead of the
+# sealed bytes and the ciphertext assertion must fail; or drop the
+# `onPhotoDeleted` trigger and the replayed download URL must still resolve
+# after the document is gone. Neither has been run red yet — do it before
+# trusting a green run.
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"

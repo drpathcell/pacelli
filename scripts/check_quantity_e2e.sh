@@ -55,6 +55,11 @@
 # cold read then finds an empty checklist — a failure that looks exactly like
 # broken decryption and is nothing of the sort. The sleep is the fix, and it has
 # to live out here because Maestro has no way to express "wait for the network".
+#
+# NEGATIVE-CONTROL: write `quantity` raw in ChecklistsRepository and step 4 must
+# fail with "not encrypted in storage"; revert `.onSubmit` on the Qty field and
+# step 2 must fail to create the item. Both have been seen red — the second is
+# a bug that shipped.
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"

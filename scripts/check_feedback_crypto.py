@@ -13,6 +13,11 @@ So the compatibility is a test, not an assumption. Swift writes the vectors:
     python3 scripts/check_feedback_crypto.py
 
 Exits non-zero if any vector fails to open or round-trip.
+
+NEGATIVE-CONTROL: change one byte of the HKDF info string in either
+FeedbackSeal.swift or read_feedback.py, regenerate the vectors, and every
+vector must fail to unseal. Seen red for real: this is the drift that left
+four unreadable messages in Firestore until 2026-08-11.
 """
 
 import base64

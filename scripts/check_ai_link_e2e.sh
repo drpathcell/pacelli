@@ -26,6 +26,11 @@
 #   ./scripts/check_ai_link_e2e.sh [--sim UDID] [--app PATH]
 #
 # Exits non-zero with a named FAIL on the first broken link.
+#
+# NEGATIVE-CONTROL: comment out the `role` check in `createLink` and the
+# assistant-connects-assistant case must fail; or hand `cli link` a code that
+# has already been redeemed and the link must be refused. Both have been seen
+# red — the first is the MEDIUM this harness was written to close.
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"

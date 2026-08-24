@@ -14,6 +14,10 @@
 #   3. with them ON, a notification actually arrives.
 #
 #   ./scripts/check_push_e2e.sh [--sim UDID] [--app PATH]
+#
+# NEGATIVE-CONTROL: remove a push string from the string catalog without
+# rebuilding and the catalog check must fail; or skip the toggle tap and the
+# device_tokens row must never appear. The first has been seen red.
 set -euo pipefail
 trap 'rc=$?; [[ $rc -ne 0 ]] && printf "\033[31maborted at line $LINENO (exit $rc)\033[0m\n" >&2' ERR
 

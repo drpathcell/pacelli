@@ -13,6 +13,12 @@
 #   ./scripts/check_reminders_e2e.sh [--sim UDID] [--app PATH] [--lead MINUTES]
 #
 # Exits non-zero with a named FAIL on the first broken link.
+#
+# NEGATIVE-CONTROL: replace `tap_switch` with `tapOn: id:` and the
+# `reminders_enabled` read-back must fail with "the toggle did not stick"; read
+# the pref with `defaults read` instead of `plutil` and it must fail with
+# "does not exist" for a key that is plainly in the file. Both seen red,
+# 2026-08-11.
 set -euo pipefail
 
 SIM="${SIM:-EA8C6A85-98F9-43AE-A0EE-338D5F1526B6}"

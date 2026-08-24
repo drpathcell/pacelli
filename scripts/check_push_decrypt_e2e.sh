@@ -22,6 +22,11 @@
 #
 # NOTE: verifies the DECRYPTION. It cannot verify keychain access-group
 # ISOLATION — the simulator does not enforce entitlements. That needs a device.
+#
+# NEGATIVE-CONTROL: stop the extension unwrapping `enc_title` and the body must
+# come back as the generic fallback rather than "$TITLE", failing the run. A
+# plain grep would pass on the fallback, which is why this reads the DISPLAYED
+# body instead.
 set -euo pipefail
 trap 'rc=$?; [[ $rc -ne 0 ]] && printf "\033[31maborted at line $LINENO (exit $rc)\033[0m\n" >&2' ERR
 

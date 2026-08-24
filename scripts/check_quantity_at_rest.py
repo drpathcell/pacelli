@@ -26,6 +26,12 @@ plaintext, green. So this checks, in order:
 
 Step 2 is the control. Without it a change to Firestore's on-disk format would
 turn this check green forever while proving nothing.
+
+NEGATIVE-CONTROL: built in, and it is the point of the script. It refuses to
+report "no plaintext found" unless it first finds a plaintext timestamp in
+the same LevelDB — proving it could have seen plaintext had there been any.
+The first failing run of the quantity E2E wrote no item at all, which a naive
+at-rest check would have called green.
 """
 import argparse
 import pathlib
