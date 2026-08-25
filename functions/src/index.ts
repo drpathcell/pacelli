@@ -19,6 +19,7 @@ import * as search from "./functions/search";
 import * as feedback from "./functions/feedback";
 import * as aiLink from "./functions/ai-link";
 import * as photos from "./functions/photos";
+import * as burn from "./functions/burn";
 
 // Firestore-triggered push. Exported straight through — these are triggers,
 // not HTTP handlers, so they do not go via apiHandler.
@@ -58,6 +59,12 @@ function apiHandler(
       } else if (e instanceof RateLimitError) {
         res.set("Retry-After", String(e.retryAfterSec));
         res.status(429).json({ success: false, error: e.message });
+      } else if (e instanceof burn.BurnRefused) {
+        // A refused burn is not an error in the server — it is the feature
+        // working. It carries its own status so a 403 never arrives dressed
+        // as a 500, which is the difference between the app saying "the owner
+        // has not allowed this" and "something went wrong".
+        res.status(e.statusCode).json({ success: false, error: e.message });
       } else {
         console.error("[API Error]", e);
         res.status(500).json({
@@ -116,6 +123,24 @@ export const aiLinkList = apiHandler(async (ctx) => {
 export const aiLinkRevoke = apiHandler(async (ctx, body) => {
   return aiLink.revokeLink(ctx, body.assistantUid as string);
 }, "write");
+
+// ═══════════════════════════════════════════════════════════════════
+//  BURNING HOUSEHOLD DATA
+// ═══════════════════════════════════════════════════════════════════
+
+// Wiping the household's shared content is the owner's call, and the check
+// lives here rather than in firestore.rules because a burn is indistinguishable
+// from ordinary deletion at the rules layer — see functions/burn.ts.
+//
+// Account deletion is NOT here and must never be: Guideline 5.1.1(v) makes it
+// ungateable, so it stays on the client where no permission is consulted.
+export const burnHousehold = apiHandler(async (ctx) => {
+  return burn.burnHouseholdData(ctx);
+}, "write");
+
+export const burnPolicy = apiHandler(async (ctx) => {
+  return burn.getBurnPolicy(ctx);
+}, "read");
 
 /**
  * UNAUTHENTICATED on purpose — the caller has no credential yet; the pairing

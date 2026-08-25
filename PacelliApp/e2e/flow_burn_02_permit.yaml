@@ -1,0 +1,41 @@
+appId: com.pacelli.pacelli
+---
+# NEGATIVE-CONTROL: set burnPolicyService.set to write `nobody` regardless of
+# the choice, or drop the owner branch from firestore.rules so the write is
+# refused, and the final `burnHouseholdButton` assertion goes red. Ran as part
+# of check_burn_e2e.sh, which uses the resulting policy to prove the server
+# then ALLOWS a burn it previously refused.
+#
+# Path 2 of 3: the owner widens the policy to everyone, and the burn action
+# comes back. Deliberately does NOT press it — the burn itself is exercised by
+# the driver through the API, where its result can be read rather than inferred
+# from a screen going green.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Delete data"
+    direction: DOWN
+- tapOn: "Delete data"
+- extendedWaitUntil:
+    id: "burnPermissionLink"
+    timeout: 20000
+- tapOn:
+    id: "burnPermissionLink"
+- extendedWaitUntil:
+    visible: "Who can erase shared data"
+    timeout: 15000
+- tapOn:
+    id: "burnPermission_everyone"
+- tapOn:
+    id: "burnPermissionSave"
+- extendedWaitUntil:
+    id: "burnHouseholdButton"
+    timeout: 20000
+- takeScreenshot: /tmp/pacelli_burn_02_permitted

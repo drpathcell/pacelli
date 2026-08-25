@@ -30,24 +30,17 @@ appId: com.pacelli.pacelli
 # id "BackButton" (labelled with the previous screen's title).
 - tapOn:
     id: "BackButton"
-# Burn all data (guest account: wipes the sim test data)
-- extendedWaitUntil:
-    visible: "Burn all data"
-    timeout: 15000
-- tapOn: "Burn all data"
-- extendedWaitUntil:
-    visible: "Before you burn"
-    timeout: 15000
-- takeScreenshot: /tmp/pacelli_st_04_burn_warnings
-# The screen title is ALSO "Burn all data" — target the button by id.
+# The burn tail that used to live here is gone. In 1.10.0 "Burn all data" split
+# into two operations with different rules — burning the household's shared
+# data is the owner's to permit, deleting your own account never is — and one
+# flow that pressed one button could not have told them apart. They are
+# flow_burn_01_restrict / _02_permit / _03_delete_account, driven by
+# check_burn_e2e.sh, which also proves the refusal is the server's.
+#
+# NEGATIVE-CONTROL: rename the "Privacy & encryption" row and this flow fails
+# at the extendedWaitUntil above rather than scrolling past it.
 - tapOn:
-    id: "burnButton"
+    id: "BackButton"
 - extendedWaitUntil:
-    visible: "Burn all data and delete my account"
+    visible: "Appearance"
     timeout: 15000
-- tapOn: "Burn all data and delete my account"
-# Wipe runs; app must land back on Welcome with a clean slate.
-- extendedWaitUntil:
-    visible: "Continue as guest"
-    timeout: 60000
-- takeScreenshot: /tmp/pacelli_st_05_back_to_welcome

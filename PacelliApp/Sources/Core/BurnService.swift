@@ -4,9 +4,30 @@ import Foundation
 import GoogleSignIn
 import PacelliKit
 
-/// "Burn all data" — full data wipe. Port of the Dart
-/// `wipeAllData`/`_wipeHouseholdData` (firebase_data_repository.dart) plus
-/// the burn screen's local-cleanup steps.
+/// Deleting your account, and burning the household's data.
+///
+/// **These were one button until 1.10.0 and they are now two operations, for a
+/// reason that is not cosmetic.** App Store Guideline 5.1.1(v) requires in-app
+/// account deletion — it is why guest mode and burn exist at all, after the 1.0
+/// rejection — so it can never be gated. Wiping what the household SHARES is a
+/// different act, affecting people who are not in the room, and the household
+/// owner now controls who may do it.
+///
+/// So the split is:
+///
+///   - `deleteMyAccountData` — this file, client-side, ungateable. The
+///     caller's membership, profile, keys and tokens. It touches shared
+///     content in exactly one case: when the caller is the last member, where
+///     "shared" no longer means anything and leaving the data would be
+///     abandoning it, not protecting anyone.
+///   - `burnHouseholdData` — a call to the `burnHousehold` Cloud Function,
+///     which checks the household's `burn_permission` itself. Not enforced in
+///     `firestore.rules`, and it cannot be: a burn is a few hundred ordinary
+///     deletes and rules cannot tell it apart from tidying up. See
+///     `functions/src/functions/burn.ts`.
+///
+/// Port lineage: the Dart `wipeAllData`/`_wipeHouseholdData`
+/// (firebase_data_repository.dart) plus the burn screen's local-cleanup steps.
 ///
 /// Audit contract (pacelli-security-audit §Phase 5):
 /// - delete ALL Firestore docs, batched ≤400, retried with backoff
@@ -26,6 +47,12 @@ enum BurnService {
         case notSignedIn
         case verificationFailed(surviving: Int)
         case needsRecentLogin
+        /// The server refused the burn. Its sentence is carried through
+        /// verbatim: it names the policy in force, which is the one useful
+        /// fact, and flattening it into "something went wrong" would send the
+        /// user to ask the owner a question the app already knows the answer
+        /// to.
+        case refused(String)
 
         var errorDescription: String? {
             switch self {
@@ -37,12 +64,54 @@ enum BurnService {
                     "Deletion verification found \(surviving) surviving record(s). Nothing has been hidden — please retry.")
             case .needsRecentLogin:
                 String(localized: "Deleting your account needs a recent sign-in. Please confirm your identity.")
+            case .refused(let message):
+                message
             }
         }
     }
 
-    /// Firestore wipe + server-side verification. Throws on any failure.
-    static func wipeFirestoreData(log: @escaping @MainActor (String) -> Void) async throws {
+    // MARK: - Burning the household's shared data
+
+    /// Wipes everything the household shares — tasks, checklists, plans,
+    /// photos, the manual, live invites and join codes — through the
+    /// `burnHousehold` Cloud Function.
+    ///
+    /// The function does the checking and the deleting. Nothing here decides
+    /// whether the caller is allowed: a client-side guard would be a second
+    /// implementation of the rule, and the one that drifts is always the one
+    /// that says yes.
+    ///
+    /// It does NOT dissolve the household. Everyone who was in it is still in
+    /// it afterwards, looking at an empty app — which is what "burn the data"
+    /// means, as distinct from "delete my account".
+    @discardableResult
+    static func burnHouseholdData(log: @escaping @MainActor (String) -> Void) async throws -> Int {
+        await log("Asking the server to erase household data…")
+        do {
+            let data = try await FunctionsClient.postObject("burnHousehold")
+            let total = data["total"] as? Int ?? 0
+            if let deleted = data["deleted"] as? [String: Int] {
+                for (collection, count) in deleted.sorted(by: { $0.key < $1.key }) {
+                    await log("\(collection): \(count) record(s)")
+                }
+            }
+            await log("Household data erased — \(total) record(s)")
+            return total
+        } catch let error as FunctionsClient.APIError {
+            // Includes the 403 a restricted member gets. It is the feature
+            // working, not a fault, and it says which policy is in force.
+            throw BurnError.refused(error.message)
+        }
+    }
+
+    // MARK: - Deleting your own account
+
+    /// Deletes everything that is the caller's alone, then proves it.
+    ///
+    /// Never gated, never asks about `burn_permission`: Guideline 5.1.1(v).
+    /// Shared content survives — with one exception, below, where there is
+    /// nobody left for it to be shared with.
+    static func deleteMyAccountData(log: @escaping @MainActor (String) -> Void) async throws {
         guard let uid = Auth.auth().currentUser?.uid else { throw BurnError.notSignedIn }
         await log("Finding your households…")
 
@@ -55,14 +124,12 @@ enum BurnService {
         await log("Found \(householdIds.count) household(s)")
 
         for householdId in householdIds {
-            // Drive config FIRST — its rule needs the member doc to still exist.
-            try? await db.collection("household_drive_config")
-                .document(householdId).delete()
-            try await wipeHousehold(householdId, uid: uid, log: log)
+            try await leaveHousehold(householdId, uid: uid, log: log)
         }
 
         // Orphan sweep — SERVER source; the local cache can show stale
-        // zero-doc results after the batch deletes.
+        // zero-doc results after the batch deletes. Legacy member rows with no
+        // household_id at all are only reachable here.
         let orphanSnap = try await db.collection("household_members")
             .whereField("user_id", isEqualTo: uid)
             .getDocuments(source: .server)
@@ -91,17 +158,46 @@ enum BurnService {
         await log("Verified: no household records remain")
     }
 
-    /// All household-scoped docs; own member doc + household doc LAST.
-    private static func wipeHousehold(
+    /// Leaves one household. Removes the caller's own membership and nothing
+    /// of anyone else's — **unless the caller is the last member out**, in
+    /// which case the household's content is theirs alone and is deleted with
+    /// them.
+    ///
+    /// That exception is what keeps 5.1.1(v) satisfied without handing a
+    /// restricted member a way around the burn policy: nobody else can be
+    /// harmed by wiping a household nobody else is in. It is also why the
+    /// household document is deleted only in the same branch — deleting it out
+    /// from under surviving members is precisely the orphan state the sweep
+    /// above exists to clean up.
+    ///
+    /// Removing OTHER people's memberships was in this path until 1.10.0 and
+    /// is gone. Someone deleting their own account has no business evicting a
+    /// household's other people, whether or not they founded it.
+    private static func leaveHousehold(
         _ householdId: String, uid: String, log: @escaping @MainActor (String) -> Void
     ) async throws {
-        var refs: [DocumentReference] = []
+        let ownMemberDocID = "\(uid)_\(householdId)"
 
-        // Same collection list as Dart _wipeHouseholdData (order irrelevant
-        // within the batches; membership doc survives until the final batch).
-        // Single source of truth, shared with HouseholdService.discardOwnEmptyHouseholds:
-        // "what burn deletes" and "what makes a household non-empty" must never
-        // drift apart, or a household could be discarded while still holding data.
+        let members = try await db.collection("household_members")
+            .whereField("household_id", isEqualTo: householdId)
+            .getDocuments()
+        let otherMembers = members.documents.filter { $0.documentID != ownMemberDocID }
+
+        guard otherMembers.isEmpty else {
+            await log("Leaving \(otherMembers.count) member(s) and their shared data in place")
+            try await commitWithRetry(
+                [db.collection("household_members").document(ownMemberDocID)],
+                label: "membership", log: log)
+            return
+        }
+
+        await log("You are the last member — this household's data goes with you")
+
+        // Drive config FIRST — its rule needs the member doc to still exist.
+        try? await db.collection("household_drive_config")
+            .document(householdId).delete()
+
+        var refs: [DocumentReference] = []
         let collections =
             HouseholdService.householdContentCollections
             + ["household_invites", "household_join_codes"]
@@ -115,46 +211,19 @@ enum BurnService {
             refs.append(contentsOf: snap.documents.map(\.reference))
         }
 
-        // Other members' docs — OWNER ONLY. Removing other people became an
-        // owner action in the 2026-08-24 rules change, and it always should
-        // have been: someone deleting their own account has no business
-        // evicting the household's other people on the way out. Ask the
-        // household doc, never the member row's `role` — that field is written
-        // by the client, so it is a claim, not a fact.
-        let ownMemberDocID = "\(uid)_\(householdId)"
-        let householdDoc = try? await db.collection("households")
-            .document(householdId).getDocument()
-        let isOwner = (householdDoc?.data()?["created_by"] as? String) == uid
-
-        let members = try await db.collection("household_members")
-            .whereField("household_id", isEqualTo: householdId)
-            .getDocuments()
-        let otherMembers = members.documents.filter { $0.documentID != ownMemberDocID }
-        if isOwner {
-            refs.append(contentsOf: otherMembers.map(\.reference))
-        } else if !otherMembers.isEmpty {
-            await log("Leaving \(otherMembers.count) other membership(s) in place")
-        }
-
-        // Batched deletes, ≤400 per batch, ×3 retry with backoff.
         await log("Deleting \(refs.count) record(s)…")
         for (i, chunk) in refs.chunked(into: 400).enumerated() {
             try await commitWithRetry(chunk, label: "batch \(i + 1)", log: log)
         }
 
         // FINAL batch: own member doc + household doc — last, so isMember()
-        // held for everything above. The household doc goes only when nobody
-        // is left in it. Deleting it out from under surviving members is
-        // precisely the orphan state the sweep above exists to clean up, and
-        // a non-owner can no longer remove those members to avoid it.
-        var finalRefs = [db.collection("household_members").document(ownMemberDocID)]
-        if isOwner || otherMembers.isEmpty {
-            finalRefs.append(db.collection("households").document(householdId))
-        } else {
-            await log("Household kept — other members remain")
-        }
+        // held for everything above.
         try await commitWithRetry(
-            finalRefs, label: "final (membership + household)", log: log)
+            [
+                db.collection("household_members").document(ownMemberDocID),
+                db.collection("households").document(householdId),
+            ],
+            label: "final (membership + household)", log: log)
     }
 
     private static func commitWithRetry(

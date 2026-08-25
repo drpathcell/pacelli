@@ -1,0 +1,39 @@
+appId: com.pacelli.pacelli
+---
+# NEGATIVE-CONTROL: gate `deleteAccountButton` behind `policy.mayBurn` — the
+# mistake this whole split exists to prevent — and this flow fails at the
+# button while flows 01 and 02 stay green. That asymmetry is the point: the
+# permission screen is allowed to hide a burn, and is never allowed to hide
+# this.
+#
+# Path 3 of 3, and the one App Review cares about. Runs LAST because it really
+# does delete the signed-in account. Guest/test account only.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "My Household"
+    timeout: 30000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Delete data"
+    direction: DOWN
+- tapOn: "Delete data"
+- extendedWaitUntil:
+    id: "deleteAccountButton"
+    timeout: 20000
+- tapOn:
+    id: "deleteAccountButton"
+- extendedWaitUntil:
+    visible: "Delete my account"
+    timeout: 15000
+- tapOn: "Delete my account"
+# Deletion runs; the app must land back on Welcome with a clean slate. A
+# screen that stops on "Working…" fails here rather than being reported as a
+# pass by a flow that ended one step earlier.
+- extendedWaitUntil:
+    visible: "Continue as guest"
+    timeout: 60000
+- takeScreenshot: /tmp/pacelli_burn_03_account_deleted

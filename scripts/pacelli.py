@@ -115,6 +115,16 @@ def call(fn: str, payload: dict | None = None) -> dict:
     return d.get("data")
 
 
+def call_raw(fn: str, payload: dict | None = None) -> dict:
+    """The whole {success, error} envelope, without exiting on failure.
+
+    `call` above turns a refusal into sys.exit, which is right for every
+    command whose failure is a fault. A REFUSED BURN IS NOT A FAULT — it is
+    the burn policy working, and the E2E has to be able to see the difference
+    between "the server said no" and "the script fell over"."""
+    return _post(f"{API}/{fn}", payload or {}, bearer=_id_token())
+
+
 # ── commands ────────────────────────────────────────────────────────────
 
 
@@ -286,6 +296,39 @@ def cmd_disconnect_self(_) -> None:
     print("disconnected and local credentials removed")
 
 
+def cmd_burn_policy(_) -> None:
+    d = call("burnPolicy")
+    print(f"permission : {d.get('permission')}")
+    allowed = d.get("allowed_uids") or []
+    print(f"allowed    : {', '.join(allowed) if allowed else '(none)'}")
+    print(f"is_owner   : {d.get('is_owner')}")
+    print(f"may_burn   : {d.get('may_burn')}")
+
+
+def cmd_burn(a) -> None:
+    """Burn the household's SHARED data. Destructive and not undoable.
+
+    Deliberately awkward: it refuses to run without --yes-i-mean-it, because a
+    tab-completed `burn` in a terminal is exactly how somebody erases a real
+    household while testing. `--expect-refusal` inverts the exit code, which is
+    what the E2E uses to prove a restricted caller is actually stopped by the
+    server rather than merely by a hidden button."""
+    if not a.yes_i_mean_it and not a.expect_refusal:
+        sys.exit("refusing: pass --yes-i-mean-it (this deletes the household's shared data)")
+    d = call_raw("burnHousehold")
+    if a.expect_refusal:
+        if d.get("success"):
+            sys.exit("FAIL: the burn was ALLOWED — expected the server to refuse it")
+        print(f"refused as expected: {d.get('error')}")
+        return
+    if not d.get("success"):
+        sys.exit(f"error: {d.get('error')}")
+    data = d.get("data") or {}
+    for collection, count in sorted((data.get("deleted") or {}).items()):
+        print(f"{collection}: {count}")
+    print(f"total: {data.get('total', 0)}")
+
+
 def cmd_plans(_) -> None:
     """Plans, with their entries.
 
@@ -337,6 +380,11 @@ def main() -> None:
     p = sub.add_parser("connect-another"); p.add_argument("label")
     p.set_defaults(fn=cmd_connect_another)
     sub.add_parser("disconnect-self").set_defaults(fn=cmd_disconnect_self)
+    sub.add_parser("burn-policy").set_defaults(fn=cmd_burn_policy)
+    p = sub.add_parser("burn")
+    p.add_argument("--yes-i-mean-it", action="store_true")
+    p.add_argument("--expect-refusal", action="store_true")
+    p.set_defaults(fn=cmd_burn)
     p = sub.add_parser("item-add"); p.add_argument("checklist_id"); p.add_argument("title")
     p.add_argument("--qty"); p.set_defaults(fn=cmd_item_add)
     p = sub.add_parser("item-toggle"); p.add_argument("item_id"); p.set_defaults(fn=cmd_item_toggle)

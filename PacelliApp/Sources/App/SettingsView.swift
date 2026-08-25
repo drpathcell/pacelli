@@ -348,15 +348,15 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink {
-                        BurnDataView(appState: appState)
+                        BurnDataView(current: current, appState: appState)
                     } label: {
-                        Label("Burn all data", systemImage: "flame")
+                        Label("Delete data", systemImage: "flame")
                             .foregroundStyle(.red)
                     }
                 } header: {
                     Text("Danger zone")
                 } footer: {
-                    Text("Permanently deletes your household data and your account.")
+                    Text("Burn the household's shared data, or delete your account. Two separate things since 1.10.0.")
                 }
             }
             .navigationTitle("Settings")

@@ -3,6 +3,19 @@ rules_version = '2';
 // Deployed 2026-08-25, after 1.9.0 reached READY_FOR_SALE. The owner-or-self
 // delete on `household_members` needs the 1.9.0 BurnService to be the live one;
 // the deploy was held from 2026-08-24 until Apple released it.
+//
+// ── 1.10.0 burn policy: the deploy order is the OPPOSITE of that one ──
+// The `burnPolicyValid` / `burnPolicyUnchanged` rules below are additive and
+// backwards-compatible with the live 1.9.0 build, which writes no
+// `burn_permission` field at all: create omits it (valid), and rename carries
+// it through untouched (unchanged). So they are safe to deploy TODAY, and they
+// MUST be deployed — along with the `burnHousehold` function — BEFORE 1.10.0
+// reaches the store, or the owner's Settings screen saves into a rule that
+// refuses it.
+//
+// Do not pattern-match the paragraph above and hold these back. The August
+// hazard was a rule STRICTER than the live app; this is a rule the live app
+// never touches.
 
 
 service cloud.firestore {
@@ -77,6 +90,42 @@ service cloud.firestore {
              .data.created_by == request.auth.uid;
     }
 
+    // ── Helper: the burn policy is the owner's, and only the owner's ──
+    // `burn_permission` decides who may destroy everything the household
+    // shares. `households` update has always been open to any member, so
+    // without this a restricted member could widen their own permission and
+    // then burn — the setting would be decoration with a lock drawn on it.
+    //
+    // Ownership is read off `resource.data.created_by` rather than through
+    // isHouseholdOwner(), which would `get()` the very document being written.
+    // Same answer, one fewer document access.
+    //
+    // The BURN ITSELF is not enforced here and cannot be. A burn is a few
+    // hundred ordinary deletes, and every content collection must allow a
+    // member to delete a task — rules cannot tell "burning" from "tidying up".
+    // That check lives in the `burnHousehold` Cloud Function, which reads this
+    // field. This rule protects the input that function trusts.
+    function burnPolicyUnchanged() {
+      return request.resource.data.get('burn_permission', 'owner')
+               == resource.data.get('burn_permission', 'owner')
+        && request.resource.data.get('burn_allowed_uids', [])
+               == resource.data.get('burn_allowed_uids', []);
+    }
+
+    // A value outside the set would be read as 'owner' by the function, which
+    // fails closed — but silently, and a setting that silently means something
+    // other than what it says is how a household ends up believing it is
+    // protected. Refuse it at the door instead. The size cap is not a security
+    // boundary; it stops the document growing without limit.
+    function burnPolicyValid() {
+      return (!('burn_permission' in request.resource.data)
+              || request.resource.data.burn_permission
+                   in ['owner', 'selected', 'everyone', 'nobody'])
+        && (!('burn_allowed_uids' in request.resource.data)
+            || (request.resource.data.burn_allowed_uids is list
+                && request.resource.data.burn_allowed_uids.size() <= 50));
+    }
+
     // ── Helper: the role claimed on a membership is one the caller may claim ──
     // 'admin' is only truthful on the founding write, when the household doc
     // does not exist yet (createHousehold writes household + member in ONE
@@ -118,7 +167,9 @@ service cloud.firestore {
       // created_by must be the caller: joinAuthorised()'s founder branch trusts
       // this field, so a household attributed to someone else would hand them a
       // way in.
-      allow create: if isAuth() && request.resource.data.created_by == request.auth.uid;
+      allow create: if isAuth()
+        && request.resource.data.created_by == request.auth.uid
+        && burnPolicyValid();
       allow read: if isMember(householdId);
       // created_by is FROZEN after creation. Both joinAuthorised()'s founder
       // branch and isHouseholdOwner() trust this field, so a member able to
@@ -126,8 +177,13 @@ service cloud.firestore {
       // else — and since 1.7.0 an AI assistant is a member like any other.
       // Rename uses updateData(["name": ...]), which carries the existing
       // created_by through untouched, so this costs the app nothing.
+      // The burn policy rides on this document, so update splits: any member
+      // may rename the household, but only the owner may change who is allowed
+      // to destroy its contents.
       allow update: if isMember(householdId)
-        && request.resource.data.created_by == resource.data.created_by;
+        && request.resource.data.created_by == resource.data.created_by
+        && burnPolicyValid()
+        && (burnPolicyUnchanged() || request.auth.uid == resource.data.created_by);
       allow delete: if isMember(householdId);
     }
 
