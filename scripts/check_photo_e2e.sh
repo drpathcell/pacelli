@@ -65,6 +65,8 @@ cleanup() {
     HOME="$CLI_HOME" python3 "$ROOT/scripts/pacelli.py" disconnect-self >/dev/null 2>&1 || true
   fi
   rm -rf "$CLI_HOME"
+  # Guest teardown LAST: the CLI cleanup above needs a live household.
+  "$ROOT/scripts/teardown_guest.sh" "$SIM" || true
 }
 trap cleanup EXIT
 cli() { HOME="$CLI_HOME" python3 "$ROOT/scripts/pacelli.py" "$@"; }

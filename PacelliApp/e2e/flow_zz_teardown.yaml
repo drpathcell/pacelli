@@ -1,0 +1,58 @@
+appId: com.pacelli.pacelli
+---
+# Teardown: delete the guest account this run created.
+#
+# Every harness that signs in as a guest was leaving that account, its
+# household and its content on the SERVER forever — the simulator erase at the
+# start of the next run wipes the device, not Firebase. 106 abandoned guest
+# accounts had accumulated by 2026-08-25, one per run since May.
+#
+# This uses the app's own shipped account deletion rather than a back door,
+# which means it also exercises the 5.1.1(v) path on every single E2E run
+# instead of only in the burn harness.
+#
+# Deliberately tolerant. It runs from a trap, AFTER the assertions that matter,
+# and often against an app left in an unknown state by a failure. Nothing here
+# may turn a passing run red or a failing run confusing, so every step is
+# guarded by `runFlow: when:` and the driver treats a non-zero exit as a note,
+# not a failure. The scheduled sweepAbandonedGuests function is the backstop.
+#
+# NEGATIVE-CONTROL: point `deleteAccountButton` at an id that does not exist
+# and this flow fails at the confirm step rather than passing silently — which
+# is what a teardown that quietly does nothing would look like, and is exactly
+# the failure that let the orphans build up unnoticed.
+- stopApp
+- launchApp
+
+# Already signed out (a burn harness deleted the account itself, or sign-in
+# never happened) — nothing to tear down.
+- runFlow:
+    when:
+      notVisible: "Continue as guest"
+    commands:
+      - tapOn: "Settings"
+      - extendedWaitUntil:
+          visible: "Appearance"
+          timeout: 20000
+      - scrollUntilVisible:
+          element: "Delete data"
+          direction: DOWN
+          centerElement: true
+          timeout: 20000
+      - tapOn: "Delete data"
+      - extendedWaitUntil:
+          visible:
+            id: "deleteAccountButton"
+          timeout: 20000
+      - tapOn:
+          id: "deleteAccountButton"
+      - extendedWaitUntil:
+          visible: "Delete my account"
+          timeout: 15000
+      - tapOn: "Delete my account"
+      # Landing back on Welcome is the proof the account is actually gone. A
+      # teardown that stops on "Working…" is the silent no-op this exists to
+      # prevent.
+      - extendedWaitUntil:
+          visible: "Continue as guest"
+          timeout: 90000

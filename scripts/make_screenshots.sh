@@ -23,6 +23,13 @@ set -euo pipefail
 
 DEVICE="${DEVICE:-iPhone 17 Pro Max}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Delete the guest account this run created. The simulator erase at the top of
+# a run wipes the DEVICE, not Firebase — every guest sign-in was leaving an
+# account, a household, its key and its content on the server permanently. 106
+# had piled up by 2026-08-25. Runs from the EXIT trap so a failed run cleans up
+# too; never fatal; PACELLI_KEEP_GUEST=1 skips it for debugging.
+trap '"$ROOT/scripts/teardown_guest.sh" "$SIM" || true' EXIT
 MAESTRO="$HOME/.maestro/bin/maestro"
 E2E="$ROOT/PacelliApp/e2e"
 OUT="${OUT:-$ROOT/fastlane/metadata/ios/en-GB/screenshots}"

@@ -85,6 +85,8 @@ cleanup() {
       >/dev/null 2>&1 || true
   fi
   rm -rf "$CLI_HOME"
+  # Guest teardown LAST: the CLI cleanup above needs a live household.
+  "$ROOT/scripts/teardown_guest.sh" "$SIM" || true
 }
 trap cleanup EXIT
 

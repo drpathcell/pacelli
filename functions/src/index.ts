@@ -142,6 +142,18 @@ export const burnPolicy = apiHandler(async (ctx) => {
   return burn.getBurnPolicy(ctx);
 }, "read");
 
+// ═══════════════════════════════════════════════════════════════════
+//  MAINTENANCE
+// ═══════════════════════════════════════════════════════════════════
+
+// Daily sweep of abandoned guest households. Scheduled, so it has no HTTP
+// surface: there is no token to leak and no endpoint to guess. See
+// functions/maintenance.ts for the five conditions it requires before it
+// deletes anything, and for why the signal is `lastRefreshTime` and not
+// `lastSignInTime`.
+export { sweepAbandonedGuests_scheduled as sweepAbandonedGuests } from "./functions/maintenance";
+
+
 /**
  * UNAUTHENTICATED on purpose — the caller has no credential yet; the pairing
  * code IS the credential. It therefore does NOT go through apiHandler, which
