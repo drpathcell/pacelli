@@ -1,26 +1,9 @@
 rules_version = '2';
 
-// ⚠️  DEPLOY ORDER — READ BEFORE `firebase deploy --only firestore:rules`
-//
-// The 2026-08-24 change to `household_members` delete (owner-or-self, was
-// any-co-member) is NOT safe to deploy against the currently LIVE app.
-// `BurnService` in 1.8.0 and earlier deletes every other member's row
-// unconditionally, so a non-owner burning their account on the live build
-// would hit permission-denied, retry three times and fail — breaking App
-// Store Guideline 5.1.1(v) account deletion for exactly the people least
-// likely to be the household owner.
-//
-// This is the 2026-08-10 mistake in a new costume: that rules deploy was
-// checked against TestFlight builds 36/37 and not the build actually LIVE,
-// and it locked Juan and Chloe out of accepting invitations for a day.
-//
-// ORDER: ship the app first, confirm READY_FOR_SALE, THEN deploy these rules.
-//   1. 1.9.0 goes live with the owner-gated BurnService.wipeHousehold
-//   2. `python3 scripts/asc.py status` shows 1.9.0 READY_FOR_SALE
-//   3. only then: firebase deploy --only firestore:rules
-//
-// Everything else in this file is backwards-compatible with 1.8.0 and could
-// go out today; it is held back only to keep the deploy a single event.
+// Deployed 2026-08-25, after 1.9.0 reached READY_FOR_SALE. The owner-or-self
+// delete on `household_members` needs the 1.9.0 BurnService to be the live one;
+// the deploy was held from 2026-08-24 until Apple released it.
+
 
 service cloud.firestore {
   match /databases/{database}/documents {
