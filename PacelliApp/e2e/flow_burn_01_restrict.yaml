@@ -27,7 +27,8 @@ appId: com.pacelli.pacelli
     timeout: 15000
 # The policy is fetched from the server, so the screen may still be checking.
 - extendedWaitUntil:
-    id: "burnPermissionLink"
+    visible:
+      id: "burnPermissionLink"
     timeout: 20000
 - tapOn:
     id: "burnPermissionLink"
@@ -40,7 +41,8 @@ appId: com.pacelli.pacelli
     id: "burnPermissionSave"
 # Back on the burn screen, the button must be GONE and replaced by the reason.
 - extendedWaitUntil:
-    id: "burnNotPermitted"
+    visible:
+      id: "burnNotPermitted"
     timeout: 20000
 - assertNotVisible:
     id: "burnHouseholdButton"

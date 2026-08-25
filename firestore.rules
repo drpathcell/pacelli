@@ -1,22 +1,27 @@
 rules_version = '2';
 
-// Deployed 2026-08-25, after 1.9.0 reached READY_FOR_SALE. The owner-or-self
-// delete on `household_members` needs the 1.9.0 BurnService to be the live one;
-// the deploy was held from 2026-08-24 until Apple released it.
+// requires-live-version: 1.9.0
 //
-// ── 1.10.0 burn policy: the deploy order is the OPPOSITE of that one ──
-// The `burnPolicyValid` / `burnPolicyUnchanged` rules below are additive and
-// backwards-compatible with the live 1.9.0 build, which writes no
-// `burn_permission` field at all: create omits it (valid), and rename carries
-// it through untouched (unchanged). So they are safe to deploy TODAY, and they
-// MUST be deployed — along with the `burnHousehold` function — BEFORE 1.10.0
-// reaches the store, or the owner's Settings screen saves into a rule that
-// refuses it.
+// That line is READ BY A SCRIPT. `scripts/check_rules_deploy.py` asks App Store
+// Connect for the highest version READY_FOR_SALE and refuses the deploy if it
+// is below this number. Deploy with `./scripts/deploy_rules.sh` — never a bare
+// `firebase deploy --only firestore:rules`, which skips the guard and the
+// tests.
 //
-// Do not pattern-match the paragraph above and hold these back. The August
-// hazard was a rule STRICTER than the live app; this is a rule the live app
-// never touches.
-
+// It exists because the comment that used to sit here was not a guard. Twice a
+// rules change was written that the LIVE build could not satisfy, and both
+// times the only thing in the way was somebody remembering to read a comment:
+// 2026-08-10 (proof-of-authorisation checked against TestFlight 36/37 and not
+// live 1.1.0/35 — a day of nobody being able to accept an invitation), and
+// 2026-08-24 (owner-or-self member delete, which live 1.8.0's unconditional
+// BurnService would have turned into a broken Guideline 5.1.1(v) account
+// deletion for every non-owner).
+//
+// Current state, 2026-08-25: everything in this file is deployed. The
+// member-authority change needed 1.9.0 live and got it. The 1.10.0 burn-policy
+// rules below are additive and backwards-compatible with 1.9.0, which writes
+// no `burn_permission` field at all — so they went out ahead of the app rather
+// than behind it, and the number above did not need to move.
 
 service cloud.firestore {
   match /databases/{database}/documents {

@@ -24,7 +24,8 @@ appId: com.pacelli.pacelli
     direction: DOWN
 - tapOn: "Delete data"
 - extendedWaitUntil:
-    id: "burnPermissionLink"
+    visible:
+      id: "burnPermissionLink"
     timeout: 20000
 - tapOn:
     id: "burnPermissionLink"
@@ -36,6 +37,7 @@ appId: com.pacelli.pacelli
 - tapOn:
     id: "burnPermissionSave"
 - extendedWaitUntil:
-    id: "burnHouseholdButton"
+    visible:
+      id: "burnHouseholdButton"
     timeout: 20000
 - takeScreenshot: /tmp/pacelli_burn_02_permitted

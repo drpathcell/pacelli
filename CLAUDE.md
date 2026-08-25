@@ -46,8 +46,20 @@ python3 scripts/asc.py status                 # what App Store Connect actually 
 python3 scripts/asc.py screenshots-verify X.Y.Z  # listing == repo, byte for byte
 python3 scripts/verify_api_wire.py            # REST API writes what the app can read
 ./scripts/check_ai_link_e2e.sh                # pair → read → revoke → locked out
+./scripts/check_burn_e2e.sh                   # restricted burn refused BY THE SERVER
+./scripts/deploy_rules.sh                     # tests + guard + deploy. NEVER a bare
+                                              # `firebase deploy --only firestore:rules`
 ./scripts/make_screenshots.sh                 # then: asc.py screenshots-sync <version>
 ```
+
+**`firestore.rules` carries a `// requires-live-version:` header and a script
+reads it.** `deploy_rules.sh` runs the rules suite, then
+`check_rules_deploy.py`, which asks App Store Connect for the highest version
+READY_FOR_SALE and refuses the deploy if the file needs a newer one. Deploying
+by hand skips both. This exists because the comment it replaced was not a
+guard: 2026-08-10 shipped a rule the live build could not satisfy and locked
+people out of accepting invitations for a day, and 2026-08-24 nearly repeated it
+with account deletion.
 
 CI: `native-ci.yml` runs five jobs on every push — `entitlements`,
 `wire-contract`, `functions-tests`, `kit-tests`, `app-build`. `release.yml`

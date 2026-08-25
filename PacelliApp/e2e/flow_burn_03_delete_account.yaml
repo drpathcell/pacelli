@@ -22,7 +22,8 @@ appId: com.pacelli.pacelli
     direction: DOWN
 - tapOn: "Delete data"
 - extendedWaitUntil:
-    id: "deleteAccountButton"
+    visible:
+      id: "deleteAccountButton"
     timeout: 20000
 - tapOn:
     id: "deleteAccountButton"

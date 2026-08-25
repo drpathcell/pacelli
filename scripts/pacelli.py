@@ -42,7 +42,18 @@ CRED_PATH = pathlib.Path.home() / ".config/pacelli/credentials.json"
 TOKEN_SKEW_S = 120
 
 
-def _post(url: str, payload: dict, bearer: str | None = None) -> dict:
+def _post(
+    url: str, payload: dict, bearer: str | None = None, *, raise_http: bool = False
+) -> dict:
+    """POST and return the parsed body.
+
+    `raise_http=True` returns the API's own {success, error} envelope for a
+    non-2xx instead of exiting. Every command whose failure is a FAULT wants
+    the exit — but a 403 from `burnHousehold` is not a fault, it is the burn
+    policy working, and a caller that dies on it cannot tell the difference
+    between "the server refused" and "the script fell over". The burn E2E was
+    written before this existed and reported a correct refusal as
+    "the burn was ALLOWED"."""
     body = json.dumps(payload).encode()
     headers = {"Content-Type": "application/json"}
     if bearer:
@@ -54,9 +65,13 @@ def _post(url: str, payload: dict, bearer: str | None = None) -> dict:
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")
         try:
-            msg = json.loads(detail).get("error") or detail
+            parsed = json.loads(detail)
         except Exception:
-            msg = detail
+            parsed = None
+        msg = (parsed or {}).get("error") or detail
+        if raise_http:
+            return parsed if isinstance(parsed, dict) else {
+                "success": False, "error": msg, "status": e.code}
         sys.exit(f"error {e.code}: {msg}")
 
 
@@ -122,7 +137,7 @@ def call_raw(fn: str, payload: dict | None = None) -> dict:
     command whose failure is a fault. A REFUSED BURN IS NOT A FAULT — it is
     the burn policy working, and the E2E has to be able to see the difference
     between "the server said no" and "the script fell over"."""
-    return _post(f"{API}/{fn}", payload or {}, bearer=_id_token())
+    return _post(f"{API}/{fn}", payload or {}, bearer=_id_token(), raise_http=True)
 
 
 # ── commands ────────────────────────────────────────────────────────────
