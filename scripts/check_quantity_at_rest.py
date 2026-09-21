@@ -39,7 +39,7 @@ import re
 import subprocess
 import sys
 
-DEFAULT_SIM = "EA8C6A85-98F9-43AE-A0EE-338D5F1526B6"
+DEFAULT_SIM = "AA29A082-0F9B-4978-BB66-D6769D205ED5"  # iPhone 17 Pro Max, iOS 27.0 (sim prune 2026-09-21)
 BUNDLE_ID = "com.pacelli.pacelli"
 
 failures: list[str] = []
