@@ -14,6 +14,7 @@
 import * as admin from "firebase-admin";
 import { AuthContext } from "../middleware/auth";
 import { createFieldCrypto } from "../middleware/encryption";
+import { attachCatalogPhoto } from "./catalog-images";
 import {
   Checklist,
   ChecklistItem,
@@ -259,6 +260,18 @@ export async function addChecklistItem(
   // Update checklist timestamp
   await clDoc.ref.update({ updated_at: now });
 
+  // The picture is attached after the item exists and never blocks it: a row
+  // without a photo is still the shopping list; a photo without a row is nothing.
+  let photoId: string | null = null;
+  let photoError: string | null = null;
+  if (req.source?.imageUrl) {
+    try {
+      photoId = await attachCatalogPhoto(ctx, { itemId: ref.id, imageUrl: req.source.imageUrl, name: req.title });
+    } catch (e) {
+      photoError = String((e as Error)?.message ?? e);
+    }
+  }
+
   return {
     id: ref.id,
     checklistId: req.checklistId,
@@ -266,6 +279,8 @@ export async function addChecklistItem(
     title: req.title,
     quantity: req.quantity ?? null,
     source: req.source ?? null,
+    photoId,
+    photoError,
     isChecked: false,
     createdBy: ctx.uid,
     createdAt: now,

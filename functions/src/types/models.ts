@@ -87,6 +87,8 @@ export interface ChecklistItemSource {
   price?: number;
   pricePerUnit?: string;
   observedAt?: string;
+  /** Retailer CDN image; the server copies it into our bucket and attaches it as a photo. */
+  imageUrl?: string;
 }
 
 export interface ChecklistItem {
@@ -96,6 +98,10 @@ export interface ChecklistItem {
   title: string;
   quantity: string | null;
   source?: ChecklistItemSource | null;
+  /** Set on the add response when a catalogue picture was attached. */
+  photoId?: string | null;
+  /** Set on the add response when a picture was requested but could not be attached. */
+  photoError?: string | null;
   isChecked: boolean;
   createdBy: string | null;
   createdAt: string | null;

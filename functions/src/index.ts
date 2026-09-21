@@ -12,6 +12,7 @@ import { checkRateLimit, classifyOperation, RateLimitError } from "./middleware/
 import * as tasks from "./functions/tasks";
 import * as checklists from "./functions/checklists";
 import { ChecklistItemSource } from "./types/models";
+import { parseCatalogImageUrl, ALLOWED_IMAGE_HOST } from "./functions/catalog-images";
 import * as plans from "./functions/plans";
 import * as categories from "./functions/categories";
 import * as attachments from "./functions/attachments";
@@ -361,7 +362,11 @@ export const checklistItemsAdd = apiHandler(async (ctx, body) => {
       price: typeof s.price === "number" ? s.price : undefined,
       pricePerUnit: typeof s.pricePerUnit === "string" ? s.pricePerUnit : undefined,
       observedAt: typeof s.observedAt === "string" ? s.observedAt : undefined,
+      imageUrl: typeof s.imageUrl === "string" ? s.imageUrl : undefined,
     };
+    if (source.imageUrl !== undefined && !parseCatalogImageUrl(source.imageUrl)) {
+      throw new Error("source.imageUrl must be an https image on " + ALLOWED_IMAGE_HOST);
+    }
   }
   return checklists.addChecklistItem(ctx, {
     checklistId,

@@ -89,6 +89,7 @@ components:
         price: { type: number }
         pricePerUnit: { type: string }
         observedAt: { type: string, format: date-time }
+        imageUrl: { type: string, description: 'https image on images.cdn.dunnesstoresgrocery.com; the server copies it into the photo bucket and attaches it to the item as a photo document' }
 
     ChecklistItem:
       type: object
