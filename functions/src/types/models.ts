@@ -89,7 +89,17 @@ export interface ChecklistItemSource {
   observedAt?: string;
   /** Retailer CDN image; the server copies it into our bucket and attaches it as a photo. */
   imageUrl?: string;
+  brand?: string;
+  /** e.g. "450g · 3 servings" */
+  serving?: string;
+  /** Whitelisted label sections: Ingredients, Allergy Advice, Storage, Country... */
+  info?: { heading: string; text: string }[];
+  /** One table per profile ("per 100g", "per 125g portion"). */
+  nutrition?: { profile: string; entries: { name: string; amount: number; unit: string; trace?: boolean; dailyPercent?: number }[] }[];
 }
+
+/** Hard caps on the enrichment so a `source` stays a few KB inside an encrypted field. */
+export const SOURCE_LIMITS = { sections: 12, sectionChars: 1500, profiles: 4, entries: 40, totalBytes: 24_000 } as const;
 
 export interface ChecklistItem {
   id: string;

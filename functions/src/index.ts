@@ -11,7 +11,7 @@ import { authenticateRequest, AuthError } from "./middleware/auth";
 import { checkRateLimit, classifyOperation, RateLimitError } from "./middleware/rate-limiter";
 import * as tasks from "./functions/tasks";
 import * as checklists from "./functions/checklists";
-import { ChecklistItemSource } from "./types/models";
+import { ChecklistItemSource, SOURCE_LIMITS } from "./types/models";
 import { parseCatalogImageUrl, ALLOWED_IMAGE_HOST } from "./functions/catalog-images";
 import * as plans from "./functions/plans";
 import * as categories from "./functions/categories";
@@ -366,6 +366,42 @@ export const checklistItemsAdd = apiHandler(async (ctx, body) => {
     };
     if (source.imageUrl !== undefined && !parseCatalogImageUrl(source.imageUrl)) {
       throw new Error("source.imageUrl must be an https image on " + ALLOWED_IMAGE_HOST);
+    }
+    if (typeof s.brand === "string") source.brand = s.brand.slice(0, 200);
+    if (typeof s.serving === "string") source.serving = s.serving.slice(0, 200);
+    if (Array.isArray(s.info)) {
+      source.info = (s.info as unknown[]).slice(0, SOURCE_LIMITS.sections).map((x) => {
+        const o = x as Record<string, unknown>;
+        if (!o || typeof o.heading !== "string" || typeof o.text !== "string") {
+          throw new Error("source.info entries need string heading and text");
+        }
+        return { heading: o.heading.slice(0, 80), text: o.text.slice(0, SOURCE_LIMITS.sectionChars) };
+      });
+    }
+    if (Array.isArray(s.nutrition)) {
+      source.nutrition = (s.nutrition as unknown[]).slice(0, SOURCE_LIMITS.profiles).map((x) => {
+        const o = x as Record<string, unknown>;
+        if (!o || typeof o.profile !== "string" || !Array.isArray(o.entries)) {
+          throw new Error("source.nutrition entries need a profile and entries");
+        }
+        const entries = (o.entries as unknown[]).slice(0, SOURCE_LIMITS.entries).map((y) => {
+          const e = y as Record<string, unknown>;
+          if (!e || typeof e.name !== "string" || typeof e.amount !== "number" || !isFinite(e.amount)) {
+            throw new Error("source.nutrition entry needs string name and numeric amount");
+          }
+          return {
+            name: e.name.slice(0, 60),
+            amount: e.amount,
+            unit: typeof e.unit === "string" ? e.unit.slice(0, 12) : "",
+            ...(e.trace === true ? { trace: true } : {}),
+            ...(typeof e.dailyPercent === "number" && isFinite(e.dailyPercent) ? { dailyPercent: e.dailyPercent } : {}),
+          };
+        });
+        return { profile: o.profile.slice(0, 40), entries };
+      });
+    }
+    if (Buffer.byteLength(JSON.stringify(source), "utf8") > SOURCE_LIMITS.totalBytes) {
+      throw new Error(`source exceeds ${SOURCE_LIMITS.totalBytes} bytes`);
     }
   }
   return checklists.addChecklistItem(ctx, {

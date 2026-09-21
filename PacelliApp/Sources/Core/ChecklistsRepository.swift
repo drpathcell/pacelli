@@ -45,6 +45,11 @@ enum ChecklistsRepository {
             if let t = data["title"] as? String {
                 data["title"] = PacelliCrypto.decryptNullable(t, key: key) ?? t
             }
+            // Catalogue provenance from the API: ciphertext JSON, or absent.
+            // Undecryptable is treated as absent — the row must still show.
+            if let src = data["source"] as? String {
+                data["source"] = PacelliCrypto.decryptNullable(src, key: key) ?? NSNull()
+            }
             // `quantity` is mid-migration: ciphertext on anything written since
             // 1.7.0, plaintext on everything before it. See QuantityMigration.
             let qty = PacelliCrypto.readMigrating(data["quantity"] as? String, key: key)

@@ -71,11 +71,15 @@ public struct ChecklistItem: Identifiable, Equatable, Sendable {
     public let createdAt: Date?
     public var checkedAt: Date?
     public var checkedBy: String?
+    /// Retailer catalogue provenance (price, ingredients, nutrition), written
+    /// by the API only. Decrypted by the repository; nil when absent or invalid.
+    public var source: ChecklistItemSource?
 
     public init(
         id: String, checklistId: String, householdId: String = "", title: String,
         quantity: String? = nil, isChecked: Bool = false, createdBy: String? = nil,
-        createdAt: Date? = nil, checkedAt: Date? = nil, checkedBy: String? = nil
+        createdAt: Date? = nil, checkedAt: Date? = nil, checkedBy: String? = nil,
+        source: ChecklistItemSource? = nil
     ) {
         self.id = id
         self.checklistId = checklistId
@@ -87,6 +91,7 @@ public struct ChecklistItem: Identifiable, Equatable, Sendable {
         self.createdAt = createdAt
         self.checkedAt = checkedAt
         self.checkedBy = checkedBy
+        self.source = source
     }
 
     /// Mirrors Dart `ChecklistItem.fromMap` — `id` and `title` required.
@@ -104,10 +109,13 @@ public struct ChecklistItem: Identifiable, Equatable, Sendable {
             createdBy: map["created_by"] as? String,
             createdAt: DartISO8601.date(from: map["created_at"] as? String),
             checkedAt: DartISO8601.date(from: map["checked_at"] as? String),
-            checkedBy: map["checked_by"] as? String)
+            checkedBy: map["checked_by"] as? String,
+            // Already decrypted by the repository; a bad payload is nil, never a dropped row.
+            source: ChecklistItemSource.decode(map["source"] as? String))
     }
 
     /// Flat storage map. Mirrors Dart `addChecklistItem` doc shape.
+    /// `source` is intentionally absent: the app never writes it.
     public func toMap() -> [String: Any] {
         [
             "id": id,

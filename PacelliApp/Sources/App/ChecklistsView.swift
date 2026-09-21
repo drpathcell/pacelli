@@ -271,6 +271,9 @@ struct ChecklistDetailView: View {
     /// are standing in the shop, not after tapping through to a detail screen.
     @State private var itemPhotos: [String: Photo] = [:]
     @State private var photosForItem: ChecklistItem?
+    /// Tapping a row's picture opens the product detail (big picture, price,
+    /// ingredients, nutrition) — the thing you want in the aisle.
+    @State private var detailItem: ChecklistItem?
 
     init(
         checklist: Binding<Checklist>,
@@ -318,6 +321,8 @@ struct ChecklistDetailView: View {
                     ChecklistItemRow(
                         item: item,
                         thumbnail: itemPhotos[item.id]?.thumbnail,
+                        onDetail: (itemPhotos[item.id] != nil || item.source != nil)
+                            ? { detailItem = item } : nil,
                         onToggle: { toggle(item) },
                         onCommit: { newTitle, newQty in
                             updateItem(item, title: newTitle, quantity: newQty)
@@ -421,6 +426,12 @@ struct ChecklistDetailView: View {
                 Text("\"\(savedTemplateName ?? "")\" is now in Templates on the Checklists screen.")
             })
         .task { await loadItemPhotos() }
+        .sheet(item: $detailItem) { item in
+            ChecklistItemDetailView(
+                item: item,
+                photo: itemPhotos[item.id],
+                householdId: checklist.householdId)
+        }
         .sheet(item: $photosForItem) { item in
             NavigationStack {
                 List {
@@ -652,6 +663,9 @@ private struct ChecklistItemRow: View {
     let item: ChecklistItem
     /// Decrypted JPEG bytes straight out of the photo document — no network.
     let thumbnail: Data?
+    /// Present when there is something to show behind the picture (a photo or
+    /// catalogue information); nil keeps the thumbnail inert.
+    let onDetail: (() -> Void)?
     let onToggle: () -> Void
     /// (title, quantity) — called only when something actually changed.
     let onCommit: (String, String) -> Void
@@ -672,11 +686,13 @@ private struct ChecklistItemRow: View {
     init(
         item: ChecklistItem,
         thumbnail: Data? = nil,
+        onDetail: (() -> Void)? = nil,
         onToggle: @escaping () -> Void,
         onCommit: @escaping (String, String) -> Void
     ) {
         self.item = item
         self.thumbnail = thumbnail
+        self.onDetail = onDetail
         self.onToggle = onToggle
         self.onCommit = onCommit
         _title = State(initialValue: item.title)
@@ -695,12 +711,19 @@ private struct ChecklistItemRow: View {
             .accessibilityLabel(item.isChecked ? "Uncheck \(item.title)" : "Check \(item.title)")
 
             if let thumbnail, let image = UIImage(data: thumbnail) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 28, height: 28)
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                    .accessibilityIdentifier("checklist_item_thumb")
+                // A Button, not a tap gesture: in a List a gesture on the image
+                // would compete with the row and the TextFields for the touch.
+                Button(action: { onDetail?() }) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 28, height: 28)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                }
+                .buttonStyle(.plain)
+                .disabled(onDetail == nil)
+                .accessibilityIdentifier("checklist_item_thumb")
+                .accessibilityLabel("Show \(item.title)")
             }
 
             TextField("Item", text: $title)
