@@ -74,12 +74,28 @@ export interface Checklist {
   items: ChecklistItem[];
 }
 
+/**
+ * Where a checklist item came from, when an assistant built the list from a
+ * retailer catalogue (the Dunnes scraper, 2026-09-21). Stored encrypted as one
+ * JSON string under `source`; the app ignores the key until it has a UI for
+ * it, and its edits use updateData so the field survives them.
+ */
+export interface ChecklistItemSource {
+  retailer: string;
+  sku: string;
+  name?: string;
+  price?: number;
+  pricePerUnit?: string;
+  observedAt?: string;
+}
+
 export interface ChecklistItem {
   id: string;
   checklistId: string;
   householdId: string;
   title: string;
   quantity: string | null;
+  source?: ChecklistItemSource | null;
   isChecked: boolean;
   createdBy: string | null;
   createdAt: string | null;
@@ -318,6 +334,7 @@ export interface AddChecklistItemRequest {
   checklistId: string;
   title: string;
   quantity?: string;
+  source?: ChecklistItemSource;
 }
 
 // ── Plans ──

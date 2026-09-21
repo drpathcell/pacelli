@@ -17,6 +17,7 @@ import { createFieldCrypto } from "../middleware/encryption";
 import {
   Checklist,
   ChecklistItem,
+  ChecklistItemSource,
   CreateChecklistRequest,
   AddChecklistItemRequest,
 } from "../types/models";
@@ -37,7 +38,7 @@ function parseTimestamp(val: unknown): string | null {
 export async function listChecklists(
   ctx: AuthContext
 ): Promise<Checklist[]> {
-  const { dec, decMig } = createFieldCrypto(ctx.householdKey);
+  const { dec, decN, decMig } = createFieldCrypto(ctx.householdKey);
 
   const snapshot = await db()
     .collection("checklists")
@@ -63,6 +64,7 @@ export async function listChecklists(
           householdId: id.household_id,
           title: dec(id.title ?? ""),
           quantity: decMig(id.quantity),
+          source: parseSource(decN(id.source)),
           isChecked: id.is_checked ?? false,
           createdBy: id.created_by ?? null,
           createdAt: parseTimestamp(id.created_at),
@@ -92,7 +94,7 @@ export async function getChecklist(
   ctx: AuthContext,
   checklistId: string
 ): Promise<Checklist | null> {
-  const { dec, decMig } = createFieldCrypto(ctx.householdKey);
+  const { dec, decN, decMig } = createFieldCrypto(ctx.householdKey);
 
   const doc = await db().collection("checklists").doc(checklistId).get();
   if (!doc.exists) return null;
@@ -114,6 +116,7 @@ export async function getChecklist(
       householdId: id.household_id,
       title: dec(id.title ?? ""),
       quantity: decMig(id.quantity),
+      source: parseSource(decN(id.source)),
       isChecked: id.is_checked ?? false,
       createdBy: id.created_by ?? null,
       createdAt: parseTimestamp(id.created_at),
@@ -209,6 +212,19 @@ export async function deleteChecklist(
   return true;
 }
 
+/** Decrypted `source` JSON back to an object; anything unparseable is null, never an exception. */
+function parseSource(json: string | null): ChecklistItemSource | null {
+  if (!json) return null;
+  try {
+    const o = JSON.parse(json);
+    return o && typeof o === "object" && typeof o.retailer === "string" && typeof o.sku === "string"
+      ? (o as ChecklistItemSource)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Add Checklist Item ──
 
 export async function addChecklistItem(
@@ -232,6 +248,7 @@ export async function addChecklistItem(
     household_id: ctx.householdId,
     title: enc(req.title),
     quantity: encN(req.quantity ?? null),
+    source: encN(req.source ? JSON.stringify(req.source) : null),
     is_checked: false,
     created_by: ctx.uid,
     created_at: now,
@@ -248,6 +265,7 @@ export async function addChecklistItem(
     householdId: ctx.householdId,
     title: req.title,
     quantity: req.quantity ?? null,
+    source: req.source ?? null,
     isChecked: false,
     createdBy: ctx.uid,
     createdAt: now,

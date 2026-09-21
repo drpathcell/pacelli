@@ -78,12 +78,25 @@ components:
         items: { type: array, items: { $ref: '#/components/schemas/ChecklistItem' } }
         createdAt: { type: string, format: date-time }
 
+    ChecklistItemSource:
+      type: object
+      description: Where an item came from when an assistant built the list from a retailer catalogue. Encrypted at rest.
+      required: [retailer, sku]
+      properties:
+        retailer: { type: string, example: dunnes }
+        sku: { type: string }
+        name: { type: string }
+        price: { type: number }
+        pricePerUnit: { type: string }
+        observedAt: { type: string, format: date-time }
+
     ChecklistItem:
       type: object
       properties:
         id: { type: string }
         title: { type: string }
         quantity: { type: string }
+        source: { $ref: '#/components/schemas/ChecklistItemSource', nullable: true }
         isChecked: { type: boolean }
 
     Plan:
@@ -593,6 +606,7 @@ paths:
                 checklistId: { type: string }
                 title: { type: string }
                 quantity: { type: string }
+                source: { $ref: '#/components/schemas/ChecklistItemSource' }
       responses:
         '200':
           description: Item added

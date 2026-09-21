@@ -11,6 +11,7 @@ import { authenticateRequest, AuthError } from "./middleware/auth";
 import { checkRateLimit, classifyOperation, RateLimitError } from "./middleware/rate-limiter";
 import * as tasks from "./functions/tasks";
 import * as checklists from "./functions/checklists";
+import { ChecklistItemSource } from "./types/models";
 import * as plans from "./functions/plans";
 import * as categories from "./functions/categories";
 import * as attachments from "./functions/attachments";
@@ -344,10 +345,29 @@ export const checklistItemsAdd = apiHandler(async (ctx, body) => {
   const checklistId = body.checklistId as string;
   const title = body.title as string;
   if (!checklistId || !title) throw new Error("checklistId and title are required");
+  let source: ChecklistItemSource | undefined;
+  if (body.source !== undefined && body.source !== null) {
+    const s = body.source as Record<string, unknown>;
+    if (typeof s !== "object" || typeof s.retailer !== "string" || typeof s.sku !== "string") {
+      throw new Error("source must be an object with string retailer and sku");
+    }
+    if (s.price !== undefined && (typeof s.price !== "number" || !isFinite(s.price) || s.price < 0)) {
+      throw new Error("source.price must be a non-negative number");
+    }
+    source = {
+      retailer: s.retailer,
+      sku: s.sku,
+      name: typeof s.name === "string" ? s.name : undefined,
+      price: typeof s.price === "number" ? s.price : undefined,
+      pricePerUnit: typeof s.pricePerUnit === "string" ? s.pricePerUnit : undefined,
+      observedAt: typeof s.observedAt === "string" ? s.observedAt : undefined,
+    };
+  }
   return checklists.addChecklistItem(ctx, {
     checklistId,
     title,
     quantity: body.quantity as string | undefined,
+    source,
   });
 });
 
