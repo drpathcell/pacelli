@@ -35,7 +35,7 @@ const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 const bucket = () => admin.storage().bucket(PHOTO_BUCKET);
 
-/** `https://images.cdn.dunnesstoresgrocery.com/{variant}/{sku}_{n}.jpg` and nothing else. */
+/** `https://images.cdn.dunnesstoresgrocery.com/{variant}/{sku}_{n|default}.jpg` and nothing else. */
 export function parseCatalogImageUrl(url: unknown): { sku: string; index: string } | null {
   if (typeof url !== "string") return null;
   let u: URL;
@@ -45,7 +45,9 @@ export function parseCatalogImageUrl(url: unknown): { sku: string; index: string
     return null;
   }
   if (u.protocol !== "https:" || u.host !== ALLOWED_IMAGE_HOST) return null;
-  const m = /^\/(cell|detail|zoom)\/(\d{6,12})_(\d{1,2})\.jpg$/.exec(u.pathname);
+  // sku: 9-digit Dunnes codes and 13-digit EANs (non-food lines). index: a
+  // number up to 4 digits, or the literal "default" the EAN lines use.
+  const m = /^\/(cell|detail|zoom)\/(\d{6,14})_(\d{1,4}|default)\.jpg$/.exec(u.pathname);
   return m ? { sku: m[2], index: m[3] } : null;
 }
 

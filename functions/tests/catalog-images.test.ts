@@ -7,6 +7,12 @@ describe("parseCatalogImageUrl", () => {
     expect(parseCatalogImageUrl("https://images.cdn.dunnesstoresgrocery.com/zoom/100319104_2.jpg"))
       .toEqual({ sku: "100319104", index: "2" });
   });
+  it("accepts the two shapes 19% of the catalogue uses (3-digit index, EAN-13 with _default)", () => {
+    expect(parseCatalogImageUrl("https://images.cdn.dunnesstoresgrocery.com/cell/100676940_596.jpg"))
+      .toEqual({ sku: "100676940", index: "596" });
+    expect(parseCatalogImageUrl("https://images.cdn.dunnesstoresgrocery.com/detail/5099010109266_default.jpg"))
+      .toEqual({ sku: "5099010109266", index: "default" });
+  });
   it("rejects everything else", () => {
     for (const bad of [
       "http://images.cdn.dunnesstoresgrocery.com/cell/100319104_1.jpg",     // not https
@@ -15,6 +21,9 @@ describe("parseCatalogImageUrl", () => {
       "https://images.cdn.dunnesstoresgrocery.com/cell/../../etc/passwd",    // traversal
       "https://images.cdn.dunnesstoresgrocery.com/cell/100319104_1.png",     // not jpg
       "https://images.cdn.dunnesstoresgrocery.com/other/100319104_1.jpg",    // unknown variant
+      "https://images.cdn.dunnesstoresgrocery.com/cell/100319104_evil.jpg",  // index word other than default
+      "https://images.cdn.dunnesstoresgrocery.com/cell/100319104_12345.jpg", // index too long
+      "https://images.cdn.dunnesstoresgrocery.com/cell/123456789012345_1.jpg", // sku too long
       "", null, undefined, 42,
     ]) {
       expect(parseCatalogImageUrl(bad)).toBeNull();
