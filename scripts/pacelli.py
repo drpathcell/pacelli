@@ -367,8 +367,10 @@ def cmd_item_add(a) -> None:
 
 
 def cmd_item_toggle(a) -> None:
-    call("checklistItemsToggle", {"itemId": a.item_id})
-    print("toggled")
+    # The API needs the target state, not a flip: without isChecked it refuses
+    # every call ("itemId and isChecked are required"), which it always had.
+    call("checklistItemsToggle", {"itemId": a.item_id, "isChecked": not a.uncheck})
+    print("unchecked" if a.uncheck else "checked")
 
 
 def main() -> None:
@@ -402,7 +404,9 @@ def main() -> None:
     p.set_defaults(fn=cmd_burn)
     p = sub.add_parser("item-add"); p.add_argument("checklist_id"); p.add_argument("title")
     p.add_argument("--qty"); p.set_defaults(fn=cmd_item_add)
-    p = sub.add_parser("item-toggle"); p.add_argument("item_id"); p.set_defaults(fn=cmd_item_toggle)
+    p = sub.add_parser("item-toggle"); p.add_argument("item_id")
+    p.add_argument("--uncheck", action="store_true", help="untick instead of tick")
+    p.set_defaults(fn=cmd_item_toggle)
 
     a = ap.parse_args()
     a.fn(a)

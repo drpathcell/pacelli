@@ -387,6 +387,28 @@ struct ChecklistDetailView: View {
                 }
             }
 
+            // Only when something on the list has a price: a plain to-do list
+            // gets no "€0.00" section it never asked for.
+            let pricing = ChecklistPricing.summary(checklist.items)
+            if pricing.pricedCount > 0 {
+                Section {
+                    LabeledContent("Estimated total") {
+                        Text(ChecklistPricing.euros(pricing.totalCents))
+                            .font(.headline)
+                            .monospacedDigit()
+                    }
+                    .accessibilityIdentifier("checklist_total")
+                    if pricing.checkedCents > 0 {
+                        LabeledContent("In the trolley", value: ChecklistPricing.euros(pricing.checkedCents))
+                            .monospacedDigit()
+                        LabeledContent("Still to get", value: ChecklistPricing.euros(pricing.remainingCents))
+                            .monospacedDigit()
+                    }
+                } footer: {
+                    Text(totalFooter(pricing))
+                }
+            }
+
             Section {
                 Button {
                     templateName = title
@@ -485,6 +507,18 @@ struct ChecklistDetailView: View {
     }
 
     // MARK: - Checklist
+
+    private func totalFooter(_ p: ChecklistPricing.Summary) -> String {
+        var parts = ["\(p.pricedCount) priced \(p.pricedCount == 1 ? "item" : "items")"]
+        if p.unpricedCount > 0 {
+            parts.append("\(p.unpricedCount) without a price \(p.unpricedCount == 1 ? "is" : "are") not included")
+        }
+        var text = parts.joined(separator: ", ") + "."
+        if let d = p.oldestObservedAt {
+            text += " Shelf prices as of \(d.formatted(date: .abbreviated, time: .omitted)); the till may differ slightly."
+        }
+        return text
+    }
 
     private func save() {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
@@ -726,14 +760,26 @@ private struct ChecklistItemRow: View {
                 .accessibilityLabel("Show \(item.title)")
             }
 
-            TextField("Item", text: $title)
-                .focused($focused, equals: .title)
-                .strikethrough(item.isChecked)
-                .foregroundStyle(item.isChecked ? .secondary : .primary)
-                .submitLabel(.done)
-                .onSubmit(commit)
-                .disabled(isEditing)
-                .accessibilityIdentifier("checklist_item_title")
+            VStack(alignment: .leading, spacing: 2) {
+                // Vertical axis so a long product name wraps onto as many
+                // lines as it needs instead of ending in "Dunnes Stores Sti...".
+                TextField("Item", text: $title, axis: .vertical)
+                    .lineLimit(1...)
+                    .focused($focused, equals: .title)
+                    .strikethrough(item.isChecked)
+                    .foregroundStyle(item.isChecked ? .secondary : .primary)
+                    .submitLabel(.done)
+                    .onSubmit(commit)
+                    .disabled(isEditing)
+                    .accessibilityIdentifier("checklist_item_title")
+                if let unit = ChecklistPricing.unitCents(item) {
+                    Text(priceLine(unit: unit))
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("checklist_item_price")
+                }
+            }
 
             TextField("Qty", text: $quantity)
                 .focused($focused, equals: .quantity)
@@ -769,9 +815,26 @@ private struct ChecklistItemRow: View {
         .onChange(of: item.title) { _, new in
             if focused == nil { title = new }
         }
+        // A vertical TextField turns return into a newline and never fires
+        // .onSubmit. A title has no business holding a newline: take it as
+        // "done", drop focus, and the focus-loss commit above writes it.
+        .onChange(of: title) { _, new in
+            if new.contains("\n") {
+                title = new.replacingOccurrences(of: "\n", with: "")
+                focused = nil
+            }
+        }
         .onChange(of: item.quantity) { _, new in
             if focused == nil { quantity = new ?? "" }
         }
+    }
+
+    /// "€0.89" for one, "€0.89 each · €3.56" for more. Follows the quantity
+    /// being typed, so the line total moves before the edit is committed.
+    private func priceLine(unit: Int) -> String {
+        let m = ChecklistPricing.multiplier(quantity)
+        guard m != 1 else { return ChecklistPricing.euros(unit) }
+        return "\(ChecklistPricing.euros(unit)) each · \(ChecklistPricing.euros(Int((Double(unit) * m).rounded())))"
     }
 
     private func commit() {

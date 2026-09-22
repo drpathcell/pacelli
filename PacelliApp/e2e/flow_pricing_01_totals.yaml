@@ -1,0 +1,44 @@
+appId: com.pacelli.pacelli
+---
+# Shopping-list pricing (1.11.1). Every value asserted here was written by the
+# API from scripts/check_pricing_e2e.sh and then COMPUTED by the app: none of
+# them is typed in this flow, and none can appear unless ChecklistPricing ran.
+#
+#   water  €3.10 × 2  -> "€3.10 each · €6.20"
+#   beans  €0.89 × 4  -> "€0.89 each · €3.56"   (ticked by the CLI)
+#   soup   €2.50, no qty -> "€2.50"
+#   torch  free text, no price -> excluded, counted in the footer
+#   total  €12.26 · in the trolley €3.56 · still to get €8.70
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Checklists"
+    timeout: 45000
+- tapOn: "Checklists"
+- extendedWaitUntil:
+    visible: "PriceProbe"
+    timeout: 30000
+- tapOn: "PriceProbe"
+
+- extendedWaitUntil:
+    visible: "€3.10 each · €6.20"
+    timeout: 30000
+- assertVisible: "€0.89 each · €3.56"
+- assertVisible: "€2.50"
+- takeScreenshot: /tmp/pacelli_pricing_01_rows
+
+- scrollUntilVisible:
+    element:
+      id: "checklist_total"
+    centerElement: true
+    timeout: 20000
+# LabeledContent exposes label and value as ONE accessibility string
+# ("Estimated total, €12.26"), so an exact "€12.26" never matches. Found on the
+# first run with the UI visibly correct; hence contains-matches.
+- assertVisible:
+    id: "checklist_total"
+    text: ".*€12\\.26.*"
+- assertVisible: ".*Still to get.*€8\\.70.*"
+- assertVisible: ".*1 without a price is not included.*"
+- takeScreenshot: /tmp/pacelli_pricing_02_total
