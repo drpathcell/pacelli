@@ -313,11 +313,11 @@
         <div class="metadata">
             <div class="metadata-item">
                 <span class="metadata-label">Last Updated</span>
-                <span class="metadata-value">April 2026</span>
+                <span class="metadata-value">23 September 2026</span>
             </div>
             <div class="metadata-item">
                 <span class="metadata-label">Effective Date</span>
-                <span class="metadata-value">April 2026</span>
+                <span class="metadata-value">23 September 2026</span>
             </div>
             <div class="metadata-item">
                 <span class="metadata-label">App Version</span>
@@ -458,7 +458,7 @@
             </p>
             <ul>
                 <li>Stored in your household's secure database in Firebase Firestore</li>
-                <li>End-to-end encrypted (see Data Security below)</li>
+                <li>Encrypted on your device before upload (see Data Security below for exactly what that does and does not protect against)</li>
                 <li>Shared only with household members you invite</li>
                 <li>Never sold, rented, or used for marketing</li>
             </ul>
@@ -522,9 +522,12 @@
                 You can choose to store all data locally on your device using SQLite. In this mode, data stays entirely on your phone and is never transmitted to any cloud server. You can still use all app features offline.
             </p>
 
-            <h3>End-to-End Encryption (Cloud Only)</h3>
+            <h3>Encryption</h3>
             <p>
-                <strong>If you use Firebase Cloud storage, all sensitive household data is encrypted end-to-end before it ever leaves your device.</strong>
+                <strong>All household content is encrypted on your device before it is uploaded. This is not yet end-to-end encryption, and we do not describe it as such.</strong>
+            </p>
+            <p>
+                The household key is stored on the server wrapped with a key derived from your account identifier. That protects your content from anyone who reaches the database without also having Pacelli's code and your account identifier. It does not protect it from the developer, who holds both and could unwrap a household key and read its content and photos. When you connect an AI assistant, our server decrypts and encrypts on its behalf, so your household's content passes through the server in readable form for the assistant's requests. We are replacing the account-derived wrapping with keys that only your devices hold, and this policy will change when that is true. Until then, do not store anything in Pacelli that you would not want the developer to be able to read.
             </p>
             <p>
                 Here's how it works:
@@ -533,8 +536,8 @@
                 <li><strong>Encryption Standard:</strong> AES-256-CBC (military-grade encryption)</li>
                 <li><strong>Scope:</strong> All user-generated content (task titles, descriptions, notes, inventory names, etc.) is encrypted before transmission</li>
                 <li><strong>Structural Data:</strong> Metadata required for app functionality (timestamps, status flags, unique IDs, user relationships) are stored unencrypted so the app can query and filter your data correctly</li>
-                <li><strong>Key Management:</strong> Each household has a unique encryption key. Keys are derived from your Google ID and securely stored on your device and in Firebase</li>
-                <li><strong>Household Sharing:</strong> When you invite another family member, their device securely receives a copy of the household encryption key so they can decrypt shared data</li>
+                <li><strong>Key Management:</strong> Each household has a unique random encryption key, cached in the device Keychain. A copy is stored in Firebase wrapped with a key derived from your account identifier (see above for what that means)</li>
+                <li><strong>Household Sharing:</strong> When someone joins with a join code, a copy of the household key wrapped under that code is stored for them to unwrap</li>
             </ul>
 
             <h3>Security Measures</h3>
@@ -542,7 +545,7 @@
                 <li><strong>HTTPS/TLS:</strong> All communication between your device and Google Cloud is encrypted in transit</li>
                 <li><strong>Authentication:</strong> Only your Google account can access your household data. Firebase security rules enforce membership checks</li>
                 <li><strong>Secure Storage:</strong> Encryption keys are stored securely on your device using platform-specific secure storage (Keychain on iOS, Keystore on Android)</li>
-                <li><strong>No Backdoors:</strong> We do not have a master key or backdoor access to decrypt your data</li>
+                <li><strong>No master key, but no true end-to-end either:</strong> there is no separate master key. The account-derived wrapping described above is what the developer could use, and it is what we are replacing</li>
             </ul>
 
             <h3>Data Retention & Deletion</h3>
@@ -801,7 +804,7 @@
 
     <footer>
         <p>
-            Pacelli Privacy Policy — Last updated April 2026<br>
+            Pacelli Privacy Policy — Last updated September 2026<br>
             <a href="https://drpathcell.github.io/pacelli">Visit Pacelli Website</a> | <a href="mailto:juancarlos.celis92@gmail.com">Contact Support</a>
         </p>
         <p style="margin-top: 1.5rem; font-size: 0.85rem;">

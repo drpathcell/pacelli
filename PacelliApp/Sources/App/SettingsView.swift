@@ -436,7 +436,11 @@ struct PrivacyEncryptionView: View {
         List {
             Section {
                 Text(
-                    "Your content is encrypted on this device with AES-256 before it is uploaded. Each household has its own random key; that key is wrapped with a key derived from your account and stored so only household members can unwrap it. Your keys are cached in the device Keychain and never leave your devices unencrypted."
+                    "Your content is encrypted on this device with AES-256 before it is uploaded. Each household has its own random key, and that key is stored on the server wrapped with a key derived from your account identifier."
+                )
+                .font(.callout)
+                Text(
+                    "Be clear about what that protects against: anyone who reaches the database without also having Pacelli's code and your account identifier sees only ciphertext. It does not stop the developer. Because the wrapping key is derived from your account identifier rather than from a secret only your phone holds, the developer could unwrap a household key and read its content and photos. We are replacing this with keys that only your devices hold, and this screen will say so when it is true. Until then, do not put anything in Pacelli that you would not want the developer to be able to read."
                 )
                 .font(.callout)
             }
@@ -474,7 +478,7 @@ struct PrivacyEncryptionView: View {
             // would have left the screen quietly inaccurate.
             Section {
                 Text(
-                    "The picture itself is encrypted on this device before it is stored, and what is stored is bytes — no one operating the servers can open it. A readable copy of each photo stays on the phones of your household and nowhere else. It is kept in a Pacelli folder you can open in the Files app, and it is deliberately left out of your iCloud backup, because that is the one place readable content would otherwise leave your devices."
+                    "The picture itself is encrypted on this device before it is stored, and what is stored is bytes. The same limit as above applies: the developer could unwrap your household key and open them, and when a connected AI assistant asks for a photo, the server decrypts it to hand it over. A readable copy of each photo stays on the phones of your household and nowhere else. It is kept in a Pacelli folder you can open in the Files app, and it is deliberately left out of your iCloud backup, because that is the one place readable content would otherwise leave your devices."
                 )
                 .font(.callout)
                 Text(
@@ -486,7 +490,7 @@ struct PrivacyEncryptionView: View {
                 )
                 .font(.callout)
                 Text(
-                    "Your phone reads the text in a photo so you can search for it later. That happens on the device, and what it reads is encrypted like everything else — no photo is sent anywhere to be looked at."
+                    "Your phone reads the text in a photo so you can search for it later. That happens on the device, and what it reads is encrypted like everything else. No photo is sent to a third party to be looked at."
                 )
                 .font(.callout)
             } header: {
@@ -495,11 +499,11 @@ struct PrivacyEncryptionView: View {
 
             Section("Notifications") {
                 Text(
-                    "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple — it says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it, and neither can we."
+                    "Reminders about your own tasks are created on this device and never leave it. When the other person adds a task, a notification is sent through Apple. It says only that a task was added, and the title travels with it still encrypted. Apple never has your household key, so it cannot read it."
                 )
                 .font(.callout)
                 Text(
-                    "Feedback you send us is encrypted on this device so that only the Pacelli developer can read it — not with your household key, which never leaves your devices."
+                    "Feedback you send us is encrypted on this device with a separate key so that only the Pacelli developer can read it, not with your household key."
                 )
                 .font(.callout)
             }
@@ -507,6 +511,13 @@ struct PrivacyEncryptionView: View {
             Section("Access control") {
                 Text(
                     "Every record is tied to your household. Server rules only allow access to signed-in members of that household — including for guest accounts."
+                )
+                .font(.callout)
+            }
+
+            Section("Connected AI assistants") {
+                Text(
+                    "If you connect an AI assistant, it is a member of your household and reads and writes through our server, which decrypts and encrypts on its behalf. While an assistant is connected, your household's content passes through the server in readable form for those requests. Disconnecting the assistant ends that."
                 )
                 .font(.callout)
             }
