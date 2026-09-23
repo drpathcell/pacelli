@@ -11,7 +11,7 @@
  * `isPlainGuest` reddens "an account with a federated provider is not a plain
  * guest".
  */
-import { lastActive, isPlainGuest } from "../src/functions/maintenance";
+import { lastActive, isPlainGuest, protectsHousehold } from "../src/functions/maintenance";
 
 const CREATED = "2026-05-01T10:00:00.000Z";
 
@@ -103,5 +103,36 @@ describe("isPlainGuest", () => {
 
   it("the App Review account is not a plain guest", () => {
     expect(isPlainGuest(user({ uid: "appreview", email: "appreview@pacelli.app" }))).toBe(false);
+  });
+});
+
+describe("protectsHousehold", () => {
+  const NOW = new Date("2026-09-23T10:00:00.000Z").getTime();
+  const IDLE = 14 * 24 * 60 * 60 * 1000;
+
+  it("a person (email) always protects the household", () => {
+    expect(protectsHousehold(user({ email: "a@b.c" }), NOW, IDLE)).toBe(true);
+  });
+
+  it("an ACTIVE guest protects it — the 2026-09-23 finding", () => {
+    // Household founded by an idle guest, shared with a guest who opened the
+    // app this morning. The old `humanUids` set held only people with an
+    // email, so this guest counted for nothing and lost everything.
+    const u = user({
+      metadata: { creationTime: CREATED, lastSignInTime: CREATED, lastRefreshTime: "2026-09-23T08:00:00.000Z" },
+    });
+    expect(protectsHousehold(u, NOW, IDLE)).toBe(true);
+  });
+
+  it("an idle guest does not", () => {
+    expect(protectsHousehold(user(), NOW, IDLE)).toBe(false);
+  });
+
+  it("an assistant does not", () => {
+    expect(protectsHousehold(user({ uid: "ai_x", email: "ai@x" }), NOW, IDLE)).toBe(false);
+  });
+
+  it("a member row whose account no longer exists does not", () => {
+    expect(protectsHousehold(undefined, NOW, IDLE)).toBe(false);
   });
 });

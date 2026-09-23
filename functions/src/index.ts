@@ -386,15 +386,17 @@ export const checklistItemsAdd = apiHandler(async (ctx, body) => {
         }
         const entries = (o.entries as unknown[]).slice(0, SOURCE_LIMITS.entries).map((y) => {
           const e = y as Record<string, unknown>;
-          if (!e || typeof e.name !== "string" || typeof e.amount !== "number" || !isFinite(e.amount)) {
-            throw new Error("source.nutrition entry needs string name and numeric amount");
+          // Bounded, not just finite: the app renders these through Int(),
+          // which traps outside Int's range. No food has 1e300 of anything.
+          if (!e || typeof e.name !== "string" || typeof e.amount !== "number" || !isFinite(e.amount) || Math.abs(e.amount) > 1e6) {
+            throw new Error("source.nutrition entry needs string name and a numeric amount within ±1e6");
           }
           return {
             name: e.name.slice(0, 60),
             amount: e.amount,
             unit: typeof e.unit === "string" ? e.unit.slice(0, 12) : "",
             ...(e.trace === true ? { trace: true } : {}),
-            ...(typeof e.dailyPercent === "number" && isFinite(e.dailyPercent) ? { dailyPercent: e.dailyPercent } : {}),
+            ...(typeof e.dailyPercent === "number" && isFinite(e.dailyPercent) && e.dailyPercent >= 0 && e.dailyPercent <= 10000 ? { dailyPercent: e.dailyPercent } : {}),
           };
         });
         return { profile: o.profile.slice(0, 40), entries };

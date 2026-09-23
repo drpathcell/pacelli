@@ -98,6 +98,20 @@ export function isPlainGuest(user: admin.auth.UserRecord): boolean {
   );
 }
 
+/** Does this member's account, by itself, make its household worth keeping?
+ *  A person (email, phone or provider) always does. A guest does while they
+ *  are still inside the idle window. An account that no longer exists, or an
+ *  assistant, never does. */
+export function protectsHousehold(
+  u: admin.auth.UserRecord | undefined,
+  now: number,
+  minIdleMs: number
+): boolean {
+  if (!u || u.uid.startsWith("ai_")) return false;
+  if (!isPlainGuest(u)) return true;
+  return now - lastActive(u) < minIdleMs;
+}
+
 export async function sweepAbandonedGuests(opts: {
   minIdleMs?: number;
   dryRun?: boolean;
@@ -123,12 +137,12 @@ export async function sweepAbandonedGuests(opts: {
     pageToken = page.pageToken;
   } while (pageToken);
 
-  // Who is a person. Used to refuse any household a real account is in, even
-  // when the guest created it — sharing a household with someone who has an
-  // email means the content is not the guest's alone to lose.
-  const humanUids = new Set(
-    users.filter((u) => !isPlainGuest(u) && !u.uid.startsWith("ai_")).map((u) => u.uid)
-  );
+  // Who else counts. Any household with another member who is a person, or
+  // a guest still using the app, is not the candidate's alone to lose. The
+  // first version of this set held only people with an email or a provider,
+  // so a household founded by an idle guest and shared with an ACTIVE guest
+  // was swept out from under the second one (AUDIT_2026-09-23).
+  const byUid = new Map(users.map((u) => [u.uid, u]));
 
   const candidates = users.filter(isPlainGuest);
   result.examined = candidates.length;
@@ -173,10 +187,10 @@ export async function sweepAbandonedGuests(opts: {
           (m) =>
             m.user_id !== user.uid &&
             m.role !== ASSISTANT_ROLE &&
-            humanUids.has(m.user_id)
+            protectsHousehold(byUid.get(m.user_id), now, minIdleMs)
         );
       if (otherHumans.length > 0) {
-        refusal = `household ${hid} has ${otherHumans.length} other human member(s)`;
+        refusal = `household ${hid} has ${otherHumans.length} other live member(s)`;
         break;
       }
     }

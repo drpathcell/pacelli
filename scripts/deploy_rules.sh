@@ -24,6 +24,15 @@ echo
 echo "── deploy guard ──"
 python3 scripts/check_rules_deploy.py
 
+# /usr/local/bin/firebase is an x86_64 standalone that this Mac cannot run
+# ("Bad CPU type in executable", 2026-09-22). Fall back to the npm CLI, which
+# is what both the 1.11.1 function deploy and this one actually used.
+FB=(firebase)
+if ! firebase --version >/dev/null 2>&1; then
+  echo "(firebase binary unusable here; using npx firebase-tools)"
+  FB=(npx -y firebase-tools@latest)
+fi
+
 echo
 echo "── deploy ──"
-firebase deploy --only firestore:rules
+"${FB[@]}" deploy --only firestore:rules

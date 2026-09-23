@@ -6,6 +6,7 @@
  * from Firestore. Cloud Functions are stateless, so no caching between requests.
  */
 import * as admin from "firebase-admin";
+import { logger } from "firebase-functions";
 import {
   decryptKeyWithMigration,
   deriveUserKey,
@@ -66,14 +67,29 @@ export async function loadHouseholdKey(
 export async function resolveHouseholdId(uid: string): Promise<string | null> {
   const db = admin.firestore();
 
-  // household_members uses deterministic doc IDs: {userId}_{householdId}
+  // household_members uses deterministic doc IDs: {userId}_{householdId}.
+  // Every API caller today is a paired assistant, and an assistant belongs to
+  // exactly one household. A person in two households would otherwise get
+  // whichever row Firestore returned first — for a burn, that is the wrong
+  // thing to leave to chance — so the choice is made deterministic and the
+  // ambiguity is logged rather than silently resolved (AUDIT_2026-09-23).
   const snapshot = await db
     .collection("household_members")
     .where("user_id", "==", uid)
-    .limit(1)
+    .limit(2)
     .get();
 
   if (snapshot.empty) return null;
 
-  return snapshot.docs[0].data().household_id as string;
+  const ids = snapshot.docs
+    .map((d) => d.data().household_id as string | undefined)
+    .filter((h): h is string => !!h)
+    .sort();
+  if (ids.length > 1) {
+    logger.warn("[resolveHouseholdId] caller is in more than one household; using the lowest id", {
+      uid,
+      chosen: ids[0],
+    });
+  }
+  return ids[0] ?? null;
 }

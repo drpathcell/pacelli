@@ -189,7 +189,18 @@ service cloud.firestore {
         && request.resource.data.created_by == resource.data.created_by
         && burnPolicyValid()
         && (burnPolicyUnchanged() || request.auth.uid == resource.data.created_by);
-      allow delete: if isMember(householdId);
+      // Delete was open to any member, and create is open to anyone naming
+      // themselves. Together that was ownership in two writes: delete the
+      // document, create it again with created_by = me. Every member row
+      // survives, so isMember() still holds — and now so does
+      // isHouseholdOwner(), for a plain member or a paired assistant. So:
+      // the owner may delete it, or anyone left once the owner's own member
+      // row is gone. That second branch is the Guideline 5.1.1(v) path —
+      // live BurnService deletes this document when the last person out is
+      // not the founder — and it is why this went out ahead of an app change.
+      allow delete: if isMember(householdId)
+        && (request.auth.uid == resource.data.created_by
+            || !exists(/databases/$(database)/documents/household_members/$(resource.data.created_by + '_' + householdId)));
     }
 
     // ── Household Members ────────────────────────────────────────

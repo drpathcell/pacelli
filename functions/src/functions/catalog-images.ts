@@ -11,7 +11,7 @@
  * document on the row; nothing in the app changes.
  *
  * Two copies live in the bucket:
- *   catalog/dunnes/{sku}/{cell|detail}.jpg   plaintext cache, shared by every
+ *   catalog/dunnes/{sku}/{index}/{cell|detail}.jpg  plaintext cache, shared by every
  *                                            household (public retailer imagery)
  *   households/{hid}/photos/{photoId}.enc    per-household, encrypted, deleted
  *                                            with the document like any photo
@@ -96,7 +96,9 @@ async function fetchFromCdn(variant: "cell" | "detail", sku: string, index: stri
 
 /** The plaintext cache copy, fetching from the CDN only on a miss. */
 export async function cachedCatalogImage(variant: "cell" | "detail", sku: string, index: string): Promise<Buffer> {
-  const file = bucket().file(`${CATALOG_PREFIX}/${sku}/${variant}.jpg`);
+  // Keyed on the index too: `{sku}_1` and `{sku}_2` are different pictures
+  // of the same product, and the first one asked for used to be served for both.
+  const file = bucket().file(`${CATALOG_PREFIX}/${sku}/${index}/${variant}.jpg`);
   const [exists] = await file.exists();
   if (exists) {
     const [buf] = await file.download();
@@ -155,6 +157,8 @@ export async function attachCatalogPhoto(ctx: AuthContext, req: AttachCatalogPho
     created_at: now,
     source: "catalog:dunnes",
   });
-  logger.info("[attachCatalogPhoto] attached", { itemId: req.itemId, photoId: ref.id, sku: parsed.sku });
+  // No sku in the log line: Cloud Logging is readable by anyone with project
+  // access, and the sku is the product, which is the list.
+  logger.info("[attachCatalogPhoto] attached", { itemId: req.itemId, photoId: ref.id });
   return ref.id;
 }
