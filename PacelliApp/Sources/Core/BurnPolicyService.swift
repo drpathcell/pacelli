@@ -45,13 +45,13 @@ enum BurnPolicyService {
         var explanation: String {
             switch self {
             case .owner:
-                String(localized: "You are the only person who can erase the household's shared data.")
+                String(localized: "Only you can use Delete data to erase everything at once.")
             case .selected:
-                String(localized: "Only the people you tick below can erase the household's shared data. Add yourself if you want to keep the ability.")
+                String(localized: "Only the people you tick below can use Delete data to erase everything at once. Add yourself if you want to keep the ability.")
             case .everyone:
-                String(localized: "Any member — including a connected AI assistant — can erase everything the household shares.")
+                String(localized: "Any member — including a connected AI assistant — can use Delete data to erase everything at once.")
             case .nobody:
-                String(localized: "Nobody can erase the household's shared data from this screen, including you. You can change this setting back at any time.")
+                String(localized: "Nobody can use Delete data to erase everything at once, including you. You can change this setting back at any time.")
             }
         }
     }

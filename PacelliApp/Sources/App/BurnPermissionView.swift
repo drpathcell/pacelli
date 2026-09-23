@@ -76,7 +76,7 @@ struct BurnPermissionView: View {
             } header: {
                 Text("Who can erase shared data")
             } footer: {
-                Text("This covers tasks, checklists, plans, photos and the manual — everything the household shares.")
+                Text("This controls the Delete data button, which erases tasks, checklists, plans, photos and the manual in one go. It is not a lock: any member can still delete individual items, and someone determined could delete them one by one.")
             }
 
             if permission == .selected {

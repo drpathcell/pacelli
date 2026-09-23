@@ -139,7 +139,7 @@ struct ChecklistItemDetailView: View {
                             .gridColumnAlignment(.trailing)
                             .monospacedDigit()
                         if let pct = e.dailyPercent {
-                            Text("\(Int(pct.rounded()))%")
+                            Text("\(Self.clampedInt(pct))%")
                                 .foregroundStyle(.tertiary)
                                 .gridColumnAlignment(.trailing)
                                 .monospacedDigit()
@@ -156,8 +156,16 @@ struct ChecklistItemDetailView: View {
         .accessibilityIdentifier("item_detail_nutrition")
     }
 
+    /// `Int(_:)` traps on NaN, infinity and anything outside Int's range.
+    /// `source` is a member-written encrypted field, so a hostile or merely
+    /// broken value must never take the app down (AUDIT_2026-09-23).
+    static func clampedInt(_ v: Double) -> Int {
+        guard v.isFinite else { return 0 }
+        return Int(min(max(v.rounded(), -1e9), 1e9))
+    }
+
     private func amountText(_ e: ChecklistItemSource.NutritionEntry) -> String {
-        let amount = e.amount == e.amount.rounded() ? String(Int(e.amount)) : String(format: "%.1f", e.amount)
+        let amount = e.amount == e.amount.rounded() && abs(e.amount) < 1e9 ? String(Self.clampedInt(e.amount)) : String(format: "%.1f", e.amount)
         return "\(amount) \(e.unit)".trimmingCharacters(in: .whitespaces)
     }
 

@@ -159,9 +159,10 @@ enum BurnService {
     }
 
     /// Leaves one household. Removes the caller's own membership and nothing
-    /// of anyone else's — **unless the caller is the last member out**, in
+    /// of anyone else's — **unless the caller is the last person out**, in
     /// which case the household's content is theirs alone and is deleted with
-    /// them.
+    /// them. A paired AI assistant does not count as a person here: it is
+    /// revoked, not left holding the keys to an empty house.
     ///
     /// That exception is what keeps 5.1.1(v) satisfied without handing a
     /// restricted member a way around the burn policy: nobody else can be
@@ -181,17 +182,37 @@ enum BurnService {
         let members = try await db.collection("household_members")
             .whereField("household_id", isEqualTo: householdId)
             .getDocuments()
-        let otherMembers = members.documents.filter { $0.documentID != ownMemberDocID }
+        let others = members.documents.filter { $0.documentID != ownMemberDocID }
+        // An assistant is a member row, but it is not a person the content is
+        // shared WITH — it was paired by one of the people. Counting it here
+        // meant the last person's account deletion left every task, photo,
+        // wrapped key and the assistant's own access behind for ever: the
+        // sweep never reclaims a household that still has a member row
+        // (AUDIT_2026-09-23).
+        let otherPeople = others.filter { ($0.data()["role"] as? String) != "assistant" }
+        let assistants = others.filter { ($0.data()["role"] as? String) == "assistant" }
 
-        guard otherMembers.isEmpty else {
-            await log("Leaving \(otherMembers.count) member(s) and their shared data in place")
+        guard otherPeople.isEmpty else {
+            await log("Leaving \(otherPeople.count) member(s) and their shared data in place")
             try await commitWithRetry(
                 [db.collection("household_members").document(ownMemberDocID)],
                 label: "membership", log: log)
             return
         }
 
-        await log("You are the last member — this household's data goes with you")
+        await log("You are the last person — this household's data goes with you")
+
+        // Assistants go through `aiLinkRevoke`, never a bare row delete: the
+        // row alone leaves a live refresh token and a usable wrapped key. Any
+        // member may revoke, so this works for a non-owner too. Done BEFORE
+        // the wipe, while our own member row still satisfies the rules, and a
+        // failure is a failure — leaving a live assistant on a household we
+        // are about to erase is the state this branch exists to prevent.
+        for assistant in assistants {
+            guard let assistantUid = assistant.data()["user_id"] as? String else { continue }
+            await log("Disconnecting assistant \(assistantUid.prefix(12))…")
+            try await AILinkService.revoke(assistantUid: assistantUid)
+        }
 
         // Drive config FIRST — its rule needs the member doc to still exist.
         try? await db.collection("household_drive_config")
