@@ -2,7 +2,7 @@ import Foundation
 
 /// A subtask of a household task. Firestore doc: `subtasks/{id}`.
 ///
-/// Wire parity with Dart `lib/core/models/task.dart` `Subtask.toMap()` —
+/// Wire parity with Dart `flutter-final:lib/core/models/task.dart` `Subtask.toMap()` —
 /// flat snake_case map, `title` E2E-encrypted at rest. `household_id` is
 /// denormalized onto every doc because the security rules require it for
 /// list queries.

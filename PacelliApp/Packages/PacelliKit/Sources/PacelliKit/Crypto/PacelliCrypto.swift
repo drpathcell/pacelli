@@ -14,7 +14,7 @@ public enum PacelliCryptoError: Error, Equatable {
 
 /// AES-256-CBC end-to-end encryption service for Pacelli.
 ///
-/// **Byte-exact Swift port of `lib/core/crypto/encryption_service.dart`.**
+/// **Byte-exact Swift port of `flutter-final:lib/core/crypto/encryption_service.dart`.**
 /// Wire format: `base64(iv_16_bytes || ciphertext)`, AES-CBC, PKCS7 padding,
 /// keys are 64-char lowercase hex strings (256-bit). Existing Firestore
 /// ciphertexts produced by the Dart/TypeScript implementations MUST remain

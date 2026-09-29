@@ -1,7 +1,7 @@
 /**
  * AES-256-CBC end-to-end encryption service for Pacelli.
  *
- * TypeScript port of `lib/core/crypto/encryption_service.dart`.
+ * TypeScript port of `flutter-final:lib/core/crypto/encryption_service.dart`.
  * Produces identical ciphertext format: base64(iv_16_bytes + ciphertext_bytes).
  *
  * Uses Node.js built-in `crypto` module — no external dependencies.

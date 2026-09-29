@@ -2,7 +2,7 @@ import Foundation
 
 /// A checklist. Firestore doc: `checklists/{id}`.
 ///
-/// Wire parity with Dart `lib/core/models/checklist.dart` — flat snake_case
+/// Wire parity with Dart `flutter-final:lib/core/models/checklist.dart` — flat snake_case
 /// map, ISO dates, `title` E2E-encrypted at rest. `items` live in their own
 /// collection (`checklist_items`) and are attached client-side; `toMap()`
 /// writes only the checklist doc fields (Dart parity).

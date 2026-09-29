@@ -52,7 +52,6 @@ Before any deployment, verify:
   cd functions && npx tsc --noEmit
   cd ../mcp-server && npx tsc --noEmit
   ```
-- [ ] Flutter app builds: `flutter analyze` (no errors)
 
 ## Phase 1: Deploy Firestore Rules
 

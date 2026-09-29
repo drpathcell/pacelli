@@ -3,7 +3,7 @@ import Foundation
 /// A scratch plan. Firestore doc: `scratch_plans/{id}` (the collection name
 /// is historic — this is the plans feature).
 ///
-/// Wire parity with Dart `lib/core/models/plan.dart` — flat snake_case map,
+/// Wire parity with Dart `flutter-final:lib/core/models/plan.dart` — flat snake_case map,
 /// date-ONLY strings (`yyyy-MM-dd`) for start/end dates, ISO timestamps for
 /// created/updated, `title` + `template_name` E2E-encrypted at rest.
 /// Entries and checklist items live in `plan_entries` /

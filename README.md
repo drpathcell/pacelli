@@ -1,17 +1,5 @@
-# pacelli
+# Pacelli
 
-A household management app born from love and peace.
+A household management app born from love and peace. Native SwiftUI iOS app (`PacelliApp/`) on a Firebase backend (`functions/`, `firestore.rules`, `mcp-server/`), with end-to-end field encryption.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Working notes, layout and release process: [`CLAUDE.md`](CLAUDE.md). The original Flutter app is preserved at tag `flutter-final`.

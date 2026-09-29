@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Colour schemes ported from the Flutter app
-/// (`lib/config/theme/color_schemes.dart`): pacelli (sage/teal),
+/// (`flutter-final:lib/config/theme/color_schemes.dart`): pacelli (sage/teal),
 /// lavender (warm purple), ocean (ocean blue). Stored locally
 /// (@AppStorage — SharedPreferences parity), never in Firestore.
 ///

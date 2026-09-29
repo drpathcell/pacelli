@@ -2,7 +2,7 @@ import Foundation
 
 /// A task within a household. Firestore doc: `tasks/{id}`.
 ///
-/// Wire parity with Dart `lib/core/models/task.dart` `toMap()` — flat
+/// Wire parity with Dart `flutter-final:lib/core/models/task.dart` `toMap()` — flat
 /// snake_case map, ISO-8601 string dates, explicit nulls on create,
 /// `title`/`description` E2E-encrypted at rest.
 ///

@@ -7,14 +7,12 @@ Guidance for Claude working in this repository.
 **`PacelliApp/` — a native SwiftUI iOS app.** That is the product. iPhone-only,
 Firebase backend, end-to-end field encryption.
 
-**`lib/` is the Flutter app and it is FROZEN.** It is kept only as the
-wire-contract reference: every native repository is a field-parity port of
-`lib/core/data/firebase_data_repository.dart`. Read it to answer "what shape
-does this document have on the server". **Do not edit it, do not run
-`flutter` anything, and never take its architecture as current** — Riverpod,
-GoRouter, the SQLite second backend and the ARB localisation described in the
-pre-2026-07 version of this file are all gone from the shipping app. Same for
-`android/`, `macos/`, `linux/`, `windows/`, `web/`.
+**The Flutter app was removed on 2026-09-29; tag `flutter-final` keeps it.** It
+is still the wire-contract reference: every native repository is a field-parity
+port of `lib/core/data/firebase_data_repository.dart`. To answer "what shape does
+this document have on the server", read it with
+`git show flutter-final:lib/core/data/firebase_data_repository.dart`. Never take
+its architecture as current.
 
 ## Layout
 
@@ -133,12 +131,7 @@ point. `./scripts/asc.py screenshots-verify X.Y.Z` runs the same check alone.
 
 ## Repo skills (`.claude/skills/`)
 
-`/pacelli-security-audit` (native surface), `/pacelli-backend-audit`,
-`/pacelli-deploy`, `/pacelli-add-screen`, `/pacelli-theme-colours`,
-`/pacelli-ai-integration`, `/pacelli-rename-app`.
-
-`/pacelli-add-arb-keys`, `/pacelli-add-language` and
-`/flutter-firebase-security-audit` target the frozen Flutter tree. The native
-app localises through `Resources/Localizable.xcstrings` and
-`String(localized:)`; ignore the ARB skills unless you are deliberately reading
-Flutter history.
+`/pacelli-security-audit` (native surface) and `/pacelli-deploy`. The
+Flutter-era skills went with the Flutter tree (still in `flutter-final`). The
+native app localises through `Resources/Localizable.xcstrings` and
+`String(localized:)`.

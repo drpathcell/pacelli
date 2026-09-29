@@ -4,7 +4,7 @@ import Foundation
 import PacelliKit
 
 /// Manages per-household encryption keys.
-/// Port of `lib/core/crypto/key_manager.dart` — same Firestore collection
+/// Port of `flutter-final:lib/core/crypto/key_manager.dart` — same Firestore collection
 /// (`household_keys`: household_id, user_id, encrypted_key, created_at),
 /// same local cache key (`hk_<householdId>`), same v1→v2 rewrap-on-read.
 actor KeyManager {

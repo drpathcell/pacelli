@@ -2,16 +2,6 @@ default_platform(:ios)
 
 # ─── Shared helpers ────────────────────────────────────────────────────────────
 
-def flutter_build_version
-  # Parse version from pubspec.yaml e.g. "1.0.0+42"
-  pubspec = File.read("../pubspec.yaml")
-  version_line = pubspec.match(/^version:\s*(.+)\+(\d+)/)
-  {
-    name:   version_line[1],
-    number: version_line[2].to_i
-  }
-end
-
 def asc_api_key
   app_store_connect_api_key(
     key_id:        ENV["ASC_KEY_ID"],
@@ -47,129 +37,6 @@ platform :ios do
     )
   end
 
-  desc "Build a signed iOS IPA (no upload)"
-  lane :build do
-    v = flutter_build_version
-    api_key = asc_api_key  # sets global Spaceship session for pilot/deliver
-
-    # Match is optional. Without MATCH_GIT_URL we rely on Xcode automatic
-    # signing. Asymmetric flag handling in fastlane gym (2.233.1):
-    #   - archive call: gym does NOT auto-inject -allowProvisioningUpdates
-    #     or -authenticationKey* — we MUST pass them via xcargs.
-    #   - exportArchive call: gym DOES auto-inject these flags from the
-    #     app_store_connect_api_key Spaceship session — we MUST NOT pass
-    #     them via export_xcargs (would duplicate → xcodebuild exit 64).
-    use_match = !ENV["MATCH_GIT_URL"].nil? && !ENV["MATCH_GIT_URL"].empty?
-
-    if use_match
-      sync_signing(type: "appstore", readonly: true)
-    else
-      UI.message("MATCH_GIT_URL unset — using Xcode automatic signing with ASC API key.")
-    end
-
-    # Materialize ASC .p8 to disk for xcodebuild -authenticationKeyPath
-    require "base64"
-    require "fileutils"
-    asc_key_dir = File.expand_path("../tmp_asc", __FILE__)
-    FileUtils.mkdir_p(asc_key_dir)
-    asc_key_path = File.join(asc_key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-    File.binwrite(asc_key_path, Base64.decode64(ENV["ASC_KEY_CONTENT"]))
-
-    # Collision-proof build number: never reuse a number already on TestFlight.
-    # A re-tag or a double-triggered run would otherwise fail upload_to_testflight
-    # with altool 409 "buildUpload" (root cause of the v1.0.0+22 failure 2026-06-10).
-    latest_tf = (latest_testflight_build_number(
-      api_key:        api_key,
-      app_identifier: "com.pacelli.pacelli",
-      version:        v[:name]
-    ) rescue 0)
-    build_number = [v[:number], latest_tf.to_i + 1].max
-    UI.message("Build number: pubspec=#{v[:number]} latest_testflight=#{latest_tf} -> using #{build_number}")
-
-    sh("flutter build ios --release --no-codesign --build-name=#{v[:name]} --build-number=#{build_number}")
-
-    build_options = {
-      workspace:        "ios/Runner.xcworkspace",
-      scheme:           "Runner",
-      configuration:    "Release",
-      output_directory: "build/ios",
-      output_name:      "Pacelli.ipa",
-      export_method:    "app-store"
-    }
-
-    if use_match
-      build_options[:export_options] = {
-        provisioningProfiles: {
-          "com.pacelli.pacelli" => "match AppStore com.pacelli.pacelli"
-        }
-      }
-      # Surgically update ONLY the Runner target to manual signing with the
-      # match-installed cert and profile. Pod targets stay untouched (they
-      # have CODE_SIGNING_ALLOWED=NO and will reject any profile spec, so
-      # we cannot pass these as global xcargs — must be per-target).
-      update_code_signing_settings(
-        use_automatic_signing: false,
-        path:                  "ios/Runner.xcodeproj",
-        bundle_identifier:     "com.pacelli.pacelli",
-        team_id:               "5PCNU95W9V",
-        code_sign_identity:    "Apple Distribution",
-        profile_name:          "match AppStore com.pacelli.pacelli",
-        targets:               ["Runner"]
-      )
-    else
-      build_options[:export_options] = { signingStyle: "automatic" }
-      # Archive call needs explicit auth flags (gym does NOT auto-inject here)
-      build_options[:xcargs] = [
-        "-allowProvisioningUpdates",
-        "-authenticationKeyIssuerID", ENV["ASC_ISSUER_ID"],
-        "-authenticationKeyID",       ENV["ASC_KEY_ID"],
-        "-authenticationKeyPath",     asc_key_path
-      ].join(" ")
-      # NOTE: deliberately NOT setting :export_xcargs — gym auto-injects
-      # auth flags for the export step from the Spaceship session.
-    end
-
-    build_app(build_options)
-
-    File.unlink(asc_key_path) if File.exist?(asc_key_path)
-  end
-
-  desc "Build + upload to TestFlight"
-  lane :beta do
-    api_key = asc_api_key
-    build
-    upload_to_testflight(
-      api_key:           api_key,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,
-      notify_external_testers: false,
-      changelog:         changelog_from_git_commits(
-        commits_count: 10,
-        pretty:        "- %s"
-      )
-    )
-  end
-
-  desc "Submit latest TestFlight build to App Store review"
-  lane :release do
-    api_key = asc_api_key
-    deliver(
-      api_key:                 api_key,
-      submit_for_review:       true,
-      automatic_release:       false,   # manual release after approval
-      force:                   true,    # skip HTML preview
-      skip_screenshots:        false,
-      skip_metadata:           false,
-      submission_information: {
-        add_id_info_uses_idfa:                   false,
-        export_compliance_uses_encryption:        true,
-        export_compliance_is_exempt:              false,
-        export_compliance_contains_third_party_cryptography: true,
-        export_compliance_contains_proprietary_cryptography: false,
-      }
-    )
-  end
-
   desc "Create any missing App Store profiles (CI only — needs a writable match repo)"
   lane :sync_appstore_signing do
     # appstore ONLY, deliberately. `regenerate_signing` also syncs the
@@ -188,8 +55,7 @@ platform :ios do
   end
 
   # ─── Native SwiftUI app (PacelliApp/) — rewrite, 2026-07-07 ─────────────────
-  # The Flutter lanes above are retired with the Flutter tree; these lanes
-  # ship the native app on the SAME ASC record (version 1.0.0, builds ≥ 26).
+  # These lanes ship the native app on the SAME ASC record (version 1.0.0, builds ≥ 26).
 
   desc "Build the native app as a signed IPA (match)"
   lane :native_build do
@@ -211,7 +77,7 @@ platform :ios do
       )
     end
 
-    # Collision-proof build number (same lesson as the Flutter lane).
+    # Collision-proof build number (same lesson as the retired Flutter lane).
     # No version filter: build numbers are globally ascending across
     # versions (1.0.0 shipped builds 26-34 → 1.1.0 floor is 35), so query
     # the app-wide TestFlight max, not one version train's.
@@ -276,67 +142,6 @@ platform :ios do
       distribute_external:               false,
       notify_external_testers:           false,
       changelog: "Native SwiftUI rewrite — walking skeleton: guest-first onboarding, tasks (E2E-verified on simulator)"
-    )
-  end
-
-end
-
-# ─── Android ───────────────────────────────────────────────────────────────────
-
-platform :android do
-
-  desc "Build a signed Android AAB"
-  lane :build do
-    v = flutter_build_version
-
-    # Write key.properties from CI secrets
-    key_props = <<~PROPS
-      storePassword=#{ENV["ANDROID_STORE_PASSWORD"]}
-      keyPassword=#{ENV["ANDROID_KEY_PASSWORD"]}
-      keyAlias=#{ENV["ANDROID_KEY_ALIAS"]}
-      storeFile=#{ENV["ANDROID_KEYSTORE_PATH"] || "release.keystore"}
-    PROPS
-    File.write("../android/key.properties", key_props)
-
-    # Write keystore from base64 secret
-    if ENV["ANDROID_KEYSTORE_BASE64"]
-      require "base64"
-      File.binwrite(
-        "../android/#{ENV["ANDROID_KEYSTORE_PATH"] || "release.keystore"}",
-        Base64.decode64(ENV["ANDROID_KEYSTORE_BASE64"])
-      )
-    end
-
-    sh(
-      "flutter build appbundle --release " \
-      "--build-name=#{v[:name]} --build-number=#{v[:number]}"
-    )
-  end
-
-  desc "Build + upload to Play Store internal track"
-  lane :beta do
-    build
-    upload_to_play_store(
-      track:         "internal",
-      aab:           "../build/app/outputs/bundle/release/app-release.aab",
-      json_key_data: ENV["GOOGLE_PLAY_JSON_KEY"],
-      skip_upload_apk:         true,
-      skip_upload_metadata:    false,
-      skip_upload_changelogs:  false,
-      skip_upload_images:      false,
-      skip_upload_screenshots: false
-    )
-  end
-
-  desc "Promote internal build to production"
-  lane :release do
-    upload_to_play_store(
-      track:               "internal",
-      track_promote_to:    "production",
-      json_key_data:       ENV["GOOGLE_PLAY_JSON_KEY"],
-      skip_upload_apk:     true,
-      skip_upload_aab:     true,
-      skip_upload_metadata: false
     )
   end
 

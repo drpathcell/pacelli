@@ -2,7 +2,7 @@ import Foundation
 
 /// A task category. Firestore doc: `task_categories/{id}`.
 ///
-/// Wire parity with Dart `lib/core/models/task.dart` `TaskCategory.toMap()`
+/// Wire parity with Dart `flutter-final:lib/core/models/task.dart` `TaskCategory.toMap()`
 /// — flat snake_case map, `name` E2E-encrypted at rest, hex `color`.
 public struct TaskCategory: Identifiable, Equatable, Sendable {
     public static let defaultIcon = "category"

@@ -8,7 +8,7 @@ struct CurrentHousehold: Sendable {
     let role: String
 }
 
-/// Household CRUD. Port of `lib/features/household/data/household_service.dart`
+/// Household CRUD. Port of `flutter-final:lib/features/household/data/household_service.dart`
 /// — identical collections, doc IDs, field names, and encryption points.
 enum HouseholdService {
     private static var db: Firestore { Firestore.firestore() }

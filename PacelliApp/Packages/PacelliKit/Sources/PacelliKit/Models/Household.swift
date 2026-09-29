@@ -1,7 +1,7 @@
 import Foundation
 
 /// A household group. Firestore doc: `households/{id}`.
-/// Wire parity with Dart `lib/core/models/household.dart` — snake_case
+/// Wire parity with Dart `flutter-final:lib/core/models/household.dart` — snake_case
 /// fields, ISO-8601 string dates, `name` stored E2E-encrypted.
 public struct Household: Identifiable, Equatable, Sendable {
     public let id: String
