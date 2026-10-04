@@ -213,14 +213,15 @@ describe('households create', () => {
 });
 
 describe('email-invite proof', () => {
-  test('invitee CAN join naming their invite doc', async () => {
+  test('invitee CAN join naming their invite doc (consumed in the same batch)', async () => {
     const db = ctxFor(INVITEE_UID, INVITEE_EMAIL);
-    await assertSucceeds(
-      setDoc(
-        doc(db, 'household_members', `${INVITEE_UID}_${HH}`),
-        memberDoc(INVITEE_UID, HH, { joined_via: INVITE_ID })
-      )
+    const batch = writeBatch(db);
+    batch.set(
+      doc(db, 'household_members', `${INVITEE_UID}_${HH}`),
+      memberDoc(INVITEE_UID, HH, { joined_via: INVITE_ID })
     );
+    batch.update(doc(db, 'household_invites', INVITE_ID), { status: 'accepted' });
+    await assertSucceeds(batch.commit());
   });
 
   test('someone else CANNOT reuse that invite doc as proof', async () => {

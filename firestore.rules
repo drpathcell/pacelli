@@ -42,6 +42,27 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
+    // ── Helper: the caller's email is one they have proved they own ──
+    // Email/password sign-up sets an address nobody has verified, so without
+    // this anyone could register as an invited address, read its invite
+    // (whose key is wrapped under that address) and accept it. Apple and
+    // Google tokens carry email_verified == true. Decided 2026-10-04: on
+    // that day production held 0 email/password accounts, so it costs nobody.
+    function verifiedEmail(email) {
+      return request.auth.token.email == email
+        && request.auth.token.get('email_verified', false) == true;
+    }
+
+    // ── Helper: an update may not move a document between households ──
+    // Every update rule below checks membership of the household the document
+    // is IN (resource.data). Without this, a member of A could rewrite
+    // household_id to B's ID and inject content into B, or move B-bound
+    // records about (AUDIT_2026-10-03 M1). Nothing in the app moves a record
+    // between households, so the field is simply frozen.
+    function householdUnchanged() {
+      return request.resource.data.household_id == resource.data.household_id;
+    }
+
     // ── Helper: proof that a membership was actually authorised ──
     // `joined_via` names the household_invites or household_join_codes doc
     // that let this user in, and we verify it server-side. Without this,
@@ -52,8 +73,20 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/household_invites/$(ref))
         && get(/databases/$(database)/documents/household_invites/$(ref))
              .data.household_id == householdId
+        && verifiedEmail(get(/databases/$(database)/documents/household_invites/$(ref))
+             .data.invited_email)
+        // Single use. Without this an ACCEPTED invite stayed valid proof for
+        // ever, so a member who had been removed could rejoin by naming it
+        // again (AUDIT_2026-10-03 C2). The accept batch still passes: get()
+        // reads the pre-batch state, in which the invite is still pending.
         && get(/databases/$(database)/documents/household_invites/$(ref))
-             .data.invited_email == request.auth.token.email;
+             .data.status == 'pending'
+        // ...and the same write must consume it. Otherwise a client could
+        // join and leave the invite pending, then rejoin with it after being
+        // removed. The shipped accept batch flips the status alongside the
+        // member create, so getAfter() sees 'accepted' (C2 residual).
+        && getAfter(/databases/$(database)/documents/household_invites/$(ref))
+             .data.status == 'accepted';
     }
 
     function holdsJoinCode(householdId, ref) {
@@ -159,7 +192,12 @@ service cloud.firestore {
     // Any authenticated user can read profiles (needed for household
     // member display). Users can only write their own profile.
     match /profiles/{userId} {
-      allow read:   if isAuth();
+      // GET by exact uid only. A bare `read` included `list`, so any signed-in
+      // user, an anonymous guest included, could enumerate every profile and
+      // its plaintext avatar URL (AUDIT_2026-10-03 Mi1). The app only ever
+      // fetches a co-member's profile by uid.
+      allow get:    if isAuth();
+      allow list:   if false;
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
@@ -217,8 +255,16 @@ service cloud.firestore {
       // `isAuth()` here let any signed-in user mint a membership for ANYONE
       // in any household; self-only alone still let anyone who learned a
       // household ID walk in.
+      // The doc ID MUST be {user_id}_{household_id}. isMember() trusts the
+      // NAME of this document, not its body, so an unpinned ID let anyone,
+      // an anonymous guest included, create `{me}_{B}` with the body pointed
+      // at an unused household ID (founding branch) and become a member of B:
+      // read and write all of B's content, list its invites and join codes
+      // and unwrap the household key from them. Found 2026-10-04 by the cold
+      // re-review of the 2026-10-03 fixes (X1).
       allow create: if isAuth()
         && request.resource.data.user_id == request.auth.uid
+        && docId == request.auth.uid + '_' + request.resource.data.household_id
         && joinAuthorised(request.resource.data.household_id)
         && roleOnCreateIsHonest(request.resource.data.household_id);
       // Nothing in the app has ever UPDATED a member doc — the write path is
@@ -261,18 +307,32 @@ service cloud.firestore {
         && request.resource.data.created_by == request.auth.uid
         && request.resource.data.expires_at > request.time
         && request.resource.data.expires_at < request.time + duration.value(8, 'd');
-      allow update, delete: if isAuth() && isMember(resource.data.household_id);
+      // Codes are immutable. "Regenerate" is a new random code plus a delete of
+      // the old ones (JoinCodeService.regenerate), never an update. An open
+      // update let a member point their code at another household's ID and
+      // then join it, and stretch expiry past the 8-day cap that create
+      // enforces (AUDIT_2026-10-03 C1).
+      allow update: if false;
+      allow delete: if isAuth() && isMember(resource.data.household_id);
     }
 
     // ── Household Invites ────────────────────────────────────────
     match /household_invites/{docId} {
       allow read: if isAuth() && (
-        resource.data.invited_email == request.auth.token.email ||
+        verifiedEmail(resource.data.invited_email) ||
         isMember(resource.data.household_id)
       );
       allow create: if isAuth() && isMember(request.resource.data.household_id);
-      // Household members manage the invites they issued (revoke, re-issue).
-      allow update, delete: if isAuth() && isMember(resource.data.household_id);
+      // Household members revoke invites (a delete). An update may not change
+      // where the invite leads, who it is for, or its status: a member could
+      // otherwise readdress an invite to themselves for another household, or
+      // reset an accepted one to pending (AUDIT_2026-10-03 C2). The app never
+      // updates an invite as a member; re-issuing creates a new one.
+      allow delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id)
+        && householdUnchanged()
+        && request.resource.data.invited_email == resource.data.invited_email
+        && request.resource.data.status == resource.data.status;
       // Self-acceptance. checkAndAcceptInvite commits the caller's member doc
       // and this status flip in ONE batch; rules never observe a batch's own
       // uncommitted writes, so isMember() above is still false here and the
@@ -280,7 +340,7 @@ service cloud.firestore {
       // Narrowest possible grant: the addressed user only, pending -> accepted,
       // status the only field that may change, single-use (no replay).
       allow update: if isAuth()
-        && resource.data.invited_email == request.auth.token.email
+        && verifiedEmail(resource.data.invited_email)
         && resource.data.status == 'pending'
         && request.resource.data.status == 'accepted'
         && request.resource.data.diff(resource.data)
@@ -298,31 +358,36 @@ service cloud.firestore {
     // ── Tasks ────────────────────────────────────────────────────
     // Only household members can CRUD tasks in their household.
     match /tasks/{taskId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Subtasks ─────────────────────────────────────────────────
     match /subtasks/{subtaskId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Task Categories ──────────────────────────────────────────
     match /task_categories/{categoryId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Checklists ───────────────────────────────────────────────
     match /checklists/{checklistId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Checklist Items ──────────────────────────────────────────
     match /checklist_items/{itemId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
@@ -332,79 +397,92 @@ service cloud.firestore {
     // inside the doc as one encrypted blob rather than in their own
     // collection, so there is nothing else to guard.
     match /checklist_templates/{templateId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Scratch Plans ────────────────────────────────────────────
     match /scratch_plans/{planId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Plan Entries ─────────────────────────────────────────────
     match /plan_entries/{entryId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Plan Checklist Items ─────────────────────────────────────
     match /plan_checklist_items/{itemId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Task Attachments ───────────────────────────────────────
     match /task_attachments/{attachmentId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Plan Attachments ────────────────────────────────────────
     match /plan_attachments/{attachmentId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Items ──────────────────────────────────────────
     match /inventory_items/{itemId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Categories ───────────────────────────────────
     match /inventory_categories/{categoryId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Locations ────────────────────────────────────
     match /inventory_locations/{locationId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Logs ─────────────────────────────────────────
     match /inventory_logs/{logId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Inventory Attachments ──────────────────────────────────
     match /inventory_attachments/{attachmentId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Manual Entries ─────────────────────────────────────────
     match /manual_entries/{entryId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Manual Categories ────────────────────────────────────
     match /manual_categories/{categoryId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
@@ -487,14 +565,22 @@ service cloud.firestore {
 
     // ── Diagnostics ─────────────────────────────────────────
     match /diagnostics/{diagnosticId} {
-      allow read, update, delete: if isAuth() && isMember(resource.data.household_id);
+      allow read, delete: if isAuth() && isMember(resource.data.household_id);
+      allow update: if isAuth() && isMember(resource.data.household_id) && householdUnchanged();
       allow create: if isAuth() && isMember(request.resource.data.household_id);
     }
 
     // ── Weekly Digests ──────────────────────────────────────
     match /weekly_digests/{digestId} {
       allow read: if isAuth() && isMember(resource.data.household_id);
-      allow create, update: if isAuth() && isMember(request.resource.data.household_id);
+      // Written only by the API (admin SDK, which bypasses rules), never by
+      // the app. The client rule used to check only the NEW household, so a
+      // member of A could take over B's digest, whose ID is the guessable
+      // `${householdId}_${week}` (AUDIT_2026-10-03 M2). Delete was missing
+      // entirely, which made the last-person-out account deletion fail for
+      // any household that had a digest.
+      allow create, update: if false;
+      allow delete: if isAuth() && isMember(resource.data.household_id);
     }
 
     // ── Household Drive Config ─────────────────────────────────
@@ -523,7 +609,11 @@ service cloud.firestore {
       allow read: if isMember(resource.data.household_id);
       allow create: if isMember(request.resource.data.household_id)
         && request.resource.data.created_by == request.auth.uid;
-      allow update, delete: if isMember(resource.data.household_id);
+      allow delete: if isMember(resource.data.household_id);
+      // household_id and created_by are frozen (AUDIT_2026-10-03 Mo1).
+      allow update: if isMember(resource.data.household_id)
+        && householdUnchanged()
+        && request.resource.data.created_by == resource.data.created_by;
     }
 
     match /ai_link_codes/{code} {

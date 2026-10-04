@@ -154,9 +154,11 @@ describe('household_invites — discovery', () => {
 });
 
 describe('household_invites — acceptance (the shipped batch)', () => {
-  test('invitee CAN create their own member doc on its own', async () => {
+  // Was 'CAN ... on its own' until 2026-10-04: a join must now consume the
+  // invite in the same write (C2 residual), and the app always batches.
+  test('invitee CANNOT create their own member doc on its own', async () => {
     const db = invitee();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(db, 'household_members', `${INVITEE_UID}_${HH}`), {
         user_id: INVITEE_UID,
         household_id: HH,
