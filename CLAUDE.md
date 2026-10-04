@@ -131,7 +131,10 @@ point. `./scripts/asc.py screenshots-verify X.Y.Z` runs the same check alone.
 
 ## Repo skills (`.claude/skills/`)
 
-`/pacelli-security-audit` (native surface) and `/pacelli-deploy`. The
+`/pacelli-security-audit` (native surface), `/pacelli-deploy`, and the vendored
+`firebase-security-rules-auditor` (firebase/agent-skills, Apache-2.0, pinned in its
+VENDORED.txt) as an independent rules red-team checklist. Agent: `swift-reviewer`
+(`.claude/agents/`), run before a TestFlight build. The
 Flutter-era skills went with the Flutter tree (still in `flutter-final`). The
 native app localises through `Resources/Localizable.xcstrings` and
 `String(localized:)`.

@@ -1,0 +1,5 @@
+source: https://github.com/firebase/agent-skills
+commit: de359da26586e4fad59b7ebab7592aa137c49b8a
+pinned: 2026-10-03
+licence: Apache-2.0
+note: project-scoped; complements pacelli-security-audit (independent red-team checklist)
